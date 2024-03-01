@@ -1,0 +1,22 @@
+#!/bin/bash
+
+export XDG_CONFIG_HOME="$HOME"/.config
+mkdir -p "$XDG_CONFIG_HOME"/alacritty
+mkdir -p "$XDG_CONFIG_HOME"/alacritty/themes
+
+git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME"/alacritty/themes
+
+
+# Link settings to the system
+ln -sf "$PWD/alacritty.toml" "$XDG_CONFIG_HOME"/alacritty/alacritty.toml
+ln -sf "$PWD/tmux.conf" "$HOME"/.tmux.conf
+ln -sf "$PWD/vimrc" "$HOME/.vimrc"
+
+
+# install brew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Terminal emulator
+brew install --cask alacritty
+
+ln -sf /opt/homebrew/bin/nvim /usr/local/bin/v

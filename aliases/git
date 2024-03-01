@@ -1,0 +1,6 @@
+# Git aliases
+alias difon="git diff --name-only origin/main"
+alias difo="git diff origin/main"
+alias grsf="git reset --soft"
+alias gcwip="git add . && git commit --no-verify --message 'wip'"
+alias gbdm="git branch --merged | egrep -v '(^\*|master|main|dev)' | xargs git branch -d"
