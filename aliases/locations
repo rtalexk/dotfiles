@@ -1,0 +1,6 @@
+alias dotf="cd $DOTFILES"
+alias projects="cd $PROJECTS"
+alias brain="cd $BRAIN"
+
+alias vbrain="nvim $BRAIN"
+alias vdotf="nvim $DOTFILES"
