@@ -18,7 +18,6 @@ git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME"/alacri
 # Link settings to the system
 ln -sf "$PWD/alacritty.toml" "$XDG_CONFIG_HOME"/alacritty/alacritty.toml
 ln -sf "$PWD/tmux.conf" "$HOME"/.tmux.conf
-ln -sf "$PWD/vimrc" "$HOME/.vimrc"
 
 # Link Documents/Notes to iCloud/Notes
 ln -sf $ICLOUD/Notes $BRAIN
