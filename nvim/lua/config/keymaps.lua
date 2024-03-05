@@ -13,5 +13,8 @@ set("n", "<leader>ghL", "<cmd>Gitsigns toggle_current_line_blame<cr>", { desc = 
 -- NoNeckPain
 set("n", "<leader>uN", "<cmd>NoNeckPain<cr>", { desc = "Toggle NoNeckPain", noremap = true })
 
+-- Noice
+set("n", "<leader>snf", "<cmd>Telescope noice<cr>", { desc = "Fuzzy search", noremap = true })
+
 -- Quit buffer instead of Window
 -- set({ "n", "v" }, ":q", ":bd", { noremap = true, silent = true })
