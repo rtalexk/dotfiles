@@ -2,7 +2,7 @@
 
 cd $BRAIN
 
-todos_file="1-work/todos.md"
+todos_file="1-work/nuvo/todos.md"
 
 # Check if the file exists
 if [ ! -f "$todos_file" ]; then
