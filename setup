@@ -7,17 +7,17 @@ if [ ! -f "$PWD/shell/work" ]; then
 	cp "$PWD/shell/work.example" "$PWD/shell/work"
 fi
 
-git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME"/alacritty/themes
+git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME/alacritty/themes"
 
 # Link settings to the system
 ln -sf "$PWD/alacritty.toml" "$XDG_CONFIG_HOME/alacritty/alacritty.toml"
-ln -sf "$PWD/tmux.conf" "$HOME/.tmux.conf"
+ln -sf "$PWD/.tmux.conf" "$HOME/.tmux.conf"
 ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
 ln -sf "$PWD/nvim/" "$XDG_CONFIG_HOME/nvim/"
 ln -sf "$PWD/shell/" "$XDG_CONFIG_HOME/shell/"
 
 # Link Documents/Notes to iCloud/Notes
-ln -sf $ICLOUD/Notes $BRAIN
+ln -sf "$ICLOUD/Notes" "$BRAIN"
 
 # install brew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
