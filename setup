@@ -1,24 +1,15 @@
 #!/bin/bash
 
-# These exports should be added to either bashrc or zshrc
-export XDG_CONFIG_HOME="$HOME"/.config
-export PROJECTS="$HOME/Documents/Code"
-export SCRIPTS="$PROJECTS/dotfiles/scripts"
-export ICLOUD="$HOME/Library/Mobile\ Documents/com~apple~CloudDocs"
-export BRAIN="$HOME/Documents/Notes"
-
-# The path should be extended either in bashrc or zshrc
-export PATH="$SCRIPTS:$PATH"
-
-mkdir -p "$XDG_CONFIG_HOME"/alacritty
 mkdir -p "$XDG_CONFIG_HOME"/alacritty/themes
 
 git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME"/alacritty/themes
 
 # Link settings to the system
-ln -sf "$PWD/alacritty.toml" "$XDG_CONFIG_HOME"/alacritty/alacritty.toml
-ln -sf "$PWD/tmux.conf" "$HOME"/.tmux.conf
+ln -sf "$PWD/alacritty.toml" "$XDG_CONFIG_HOME/alacritty/alacritty.toml"
+ln -sf "$PWD/tmux.conf" "$HOME/.tmux.conf"
+ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
 ln -sf "$PWD/nvim/" "$XDG_CONFIG_HOME/nvim/"
+ln -sf "$PWD/shell/" "$XDG_CONFIG_HOME/shell/"
 
 # Link Documents/Notes to iCloud/Notes
 ln -sf $ICLOUD/Notes $BRAIN
@@ -30,5 +21,3 @@ ln -sf $ICLOUD/Notes $BRAIN
 brew install --cask alacritty
 brew install gnu-sed
 brew install wgetq
-
-ln -sf /opt/homebrew/bin/nvim /usr/local/bin/v

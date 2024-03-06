@@ -1,0 +1,4 @@
+# Copy this file under the same directory named just as "work"
+# This file is meant to contain shell configuration which is specific
+# to the current job needs, i.e: DB settings, aliases, env vars, etc.
+
