@@ -1,0 +1,1 @@
+alias wtodo="go run $SCRIPTS/wtodo.go"
