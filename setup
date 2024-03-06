@@ -2,6 +2,11 @@
 
 mkdir -p "$XDG_CONFIG_HOME"/alacritty/themes
 
+# Work specific settings
+if [ ! -f "$PWD/shell/work" ]; then
+	cp "$PWD/shell/work.example" "$PWD/shell/work"
+fi
+
 git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME"/alacritty/themes
 
 # Link settings to the system
