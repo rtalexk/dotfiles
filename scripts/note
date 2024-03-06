@@ -27,6 +27,7 @@ open_file() {
 			echo "---"
 			echo "Created At: $timestamp"
 			echo "Filename: $filename"
+			echo "Resource: "
 			echo "---"
 			echo -en "\n"
 			echo "# "
