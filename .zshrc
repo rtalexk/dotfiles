@@ -107,3 +107,6 @@ if [ -f "$XDG_CONFIG_HOME/shell/work" ]; then
     source "$XDG_CONFIG_HOME/shell/work"
 fi
 
+export GOPATH="$HOME/go"
+export GOBIN="$GOPATH/bin"
+export PATH="$GOBIN:$PATH"
