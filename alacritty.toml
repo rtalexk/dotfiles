@@ -3,7 +3,7 @@
 import = ["~/.config/alacritty/themes/themes/gruvbox_dark.toml"]
 
 [font]
-size = 20
+size = 18
 
 [font.normal]
 family = "Hack Nerd Font Mono"
@@ -12,6 +12,6 @@ family = "Hack Nerd Font Mono"
 decorations = "none"
 
 [window.padding]
-x = 7
-y = 0
+x = 8
+y = 1
 
