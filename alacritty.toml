@@ -16,3 +16,7 @@ option_as_alt = "Both"
 x = 8
 y = 1
 
+[keyboard]
+bindings = [
+  { key = "F12", action = "ToggleSimpleFullscreen" }
+]
