@@ -1,4 +1,4 @@
-module cli
+module alx
 
 go 1.22.1
 
