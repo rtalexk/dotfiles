@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var brainCmd = &cobra.Command{
-	Use:   "brain",
-	Short: "Open notes",
-	Long:  "Open $EDITOR app in the $BRAIN directory.",
+// todoCmd represents the todo command
+var todoCmd = &cobra.Command{
+	Use:   "todo",
+	Short: "Open Brain in the TODO list.",
 	Run: func(cmd *cobra.Command, args []string) {
 		brainDir, brainErr := utils.GetEnv("BRAIN")
 
@@ -40,7 +40,7 @@ var brainCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		sysCmd := exec.Command(editor, "-c", "cd "+brainDir)
+		sysCmd := exec.Command(editor, "-c", "cd "+brainDir, "-c", "e 2-self/todos.md")
 		sysCmd.Stdin = os.Stdin
 		sysCmd.Stdout = os.Stdout
 		sysCmd.Stderr = os.Stderr
@@ -54,5 +54,5 @@ var brainCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(brainCmd)
+	rootCmd.AddCommand(todoCmd)
 }
