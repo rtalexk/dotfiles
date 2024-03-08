@@ -4,6 +4,8 @@
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
+export EDITOR="nvim"
+
 export XDG_CONFIG_HOME="$HOME/.config"
 export PROJECTS="$HOME/Documents/Code"
 export DOTFILES="$PROJECTS/dotfiles"
