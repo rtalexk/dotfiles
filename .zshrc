@@ -23,7 +23,6 @@ ZSH_THEME="fwalch"
 # a theme from this variable instead of looking in $ZSH/themes/
 # If set to an empty array, this variable will have no effect.
 # ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
-
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
 # Uncomment the following line to use hyphen-insensitive completion.
@@ -101,7 +100,7 @@ else
 fi
 
 # Add my scripts to path
-# TODO Deprecate in favor of $DOTFILES/aliases/scripts, so this can completely be removed
+# TODO Deprecate in favor of alx CLI
 export PATH="$DOTFILES/scripts/:$PATH"
 
 export PATH="$HOME/.local/bin:$PATH"
