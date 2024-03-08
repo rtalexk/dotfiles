@@ -9,7 +9,8 @@ size = 18
 family = "Hack Nerd Font Mono"
 
 [window]
-decorations = "none"
+decorations = "None"
+option_as_alt = "Both"
 
 [window.padding]
 x = 8
