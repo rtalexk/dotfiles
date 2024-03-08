@@ -22,6 +22,9 @@ ln -sf "$ICLOUD/Notes" "$BRAIN"
 # install brew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
+# TODO: Install Golang; Compile the CLI
+ln -sf "$PWD/alx/alx" "$HOME/.local/bin/alx"
+
 # Terminal emulator
 brew install --cask alacritty
 brew install gnu-sed

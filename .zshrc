@@ -104,6 +104,8 @@ fi
 # TODO Deprecate in favor of $DOTFILES/aliases/scripts, so this can completely be removed
 export PATH="$DOTFILES/scripts/:$PATH"
 
+export PATH="$HOME/.local/bin:$PATH"
+
 # Work specific shell configuration
 if [ -f "$XDG_CONFIG_HOME/shell/work" ]; then
     source "$XDG_CONFIG_HOME/shell/work"
