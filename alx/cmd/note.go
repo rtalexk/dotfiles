@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"text/template"
 	"time"
@@ -31,18 +32,16 @@ var noteCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		brainDir, brainErr := utils.GetEnv("BRAIN")
-
-		if brainErr != nil {
+		brainDir, err := utils.GetEnv("BRAIN")
+		if err != nil {
 			println("The BRAIN environment variable is not set")
-			println(brainErr.Error())
+			println(err.Error())
 			os.Exit(1)
 		}
 
-		editor, editorErr := utils.GetEnv("EDITOR")
-
-		if editorErr != nil {
-			println(editorErr.Error())
+		editor, err := utils.GetEnv("EDITOR")
+		if err != nil {
+			println(err.Error())
 			os.Exit(1)
 		}
 
@@ -84,7 +83,7 @@ Links:
 {{ .FileId }}`
 
 		tmpl := template.New("note")
-		tmpl, err := tmpl.Parse(templateStr)
+		tmpl, err = tmpl.Parse(templateStr)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
@@ -98,14 +97,31 @@ Links:
 		}
 
 		filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, "2-self", Name)
+		absoluteFilePath := fmt.Sprintf("%s/%s.md", "2-self", Name)
 
 		if _, err := utils.CreateFile(filePath, contentBuffer); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			// If the file already exists, let's continue with the execution
+			if err != err.(*utils.FileExistsError) {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
 		}
 
-		// TODO: Check if the file was created from within the editor, if not, open it
-		// otherwise open the file
+		if withinEditor := utils.FileCreatedFromEditor(); !withinEditor {
+			cmd := exec.Command(editor, "-c", "cd "+brainDir, "-c", "e "+absoluteFilePath)
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			cmd.Run()
+		} else {
+			// Couldn't find a way to instruct the editor to open the file, so as a workaround
+			// I'll just copy the file path to the clipboard and manually open the file
+			cmd := exec.Command("pbcopy")
+			cmd.Stdin = strings.NewReader(absoluteFilePath)
+			cmd.Run()
+
+			println(absoluteFilePath)
+		}
 	},
 }
 

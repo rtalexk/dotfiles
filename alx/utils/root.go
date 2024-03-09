@@ -89,3 +89,11 @@ func CommandExists(cmd string) (bool, error) {
 		return true, nil
 	}
 }
+
+func FileCreatedFromEditor() bool {
+	if inEditor, _ := GetEnv("WITHIN_EDITOR"); inEditor == "1" {
+		return true
+	}
+
+	return false
+}
