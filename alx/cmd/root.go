@@ -7,7 +7,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "alx",
+	Use:   "alx [COMMAND] [OPTIONS]",
 	Short: "Set of personal commands to boost my productivity",
 }
 

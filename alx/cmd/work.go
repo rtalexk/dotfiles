@@ -7,11 +7,12 @@ import (
 )
 
 var workCmd = &cobra.Command{
-	Use:   "work",
+	Use:   "work COMMAND",
 	Short: "Manage work stuff",
 }
 
 func init() {
 	rootCmd.AddCommand(workCmd)
+	workCmd.AddCommand(work.NoteCmd)
 	workCmd.AddCommand(work.TodoCmd)
 }

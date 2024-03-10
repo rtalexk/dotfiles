@@ -1,4 +1,4 @@
-package note
+package work
 
 import (
 	"alx/utils"
@@ -16,14 +16,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Name string
+var (
+	Name string
+	Once bool
+)
 
-var RefCmd = &cobra.Command{
-	Use:   "ref [OPTIONS]",
-	Short: "Create a new reflection note",
+var NoteCmd = &cobra.Command{
+	Use:   "note [OPTIONS]",
+	Short: "Create a new work note",
+	Long: `The note will be created in the 1-work directory.
+
+The difference between normal and 'once' notes is that 'once' are used for one-off
+tasks, such as a one-time meeting, an incident; they are placed under the once
+directory and the timestamp of the note is used as prefix for the filename, whereas
+the normal notes are used for recurring tasks, how-tos, guides, documentation, etc.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if Name == "" {
-			fmt.Println("The name of the reflection is required")
+			fmt.Println("The name of the note is required")
 			os.Exit(1)
 		}
 
@@ -66,7 +75,6 @@ var RefCmd = &cobra.Command{
 		templateStr := `---
 Created At: {{ .Date }}
 Filename: {{ .Name }}
-Resource: 
 ---
 
 # {{ .Title }}
@@ -77,7 +85,7 @@ Links:
 
 {{ .FileId }}`
 
-		tmpl := template.New("reflection")
+		tmpl := template.New("note")
 		tmpl, err = tmpl.Parse(templateStr)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -91,11 +99,20 @@ Links:
 			os.Exit(1)
 		}
 
-		filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, "2-self/20-reflections", Name)
-		absoluteFilePath := fmt.Sprintf("%s/%s.md", "2-self/20-reflections", Name)
+		filePath := ""
+		absoluteFilePath := ""
+
+		if Once {
+			filePath = fmt.Sprintf("%s/%s/%s-%s.md", brainDir, "1-work/nuvo/once", date, Name)
+			absoluteFilePath = fmt.Sprintf("%s/%s-%s.md", "1-work/nuvo/once", date, Name)
+		} else {
+			filePath = fmt.Sprintf("%s/%s/%s.md", brainDir, "1-work/nuvo", Name)
+			absoluteFilePath = fmt.Sprintf("%s/%s.md", "1-work/nuvo", Name)
+		}
 
 		if _, err := utils.CreateFile(filePath, contentBuffer); err != nil {
 			// If the file already exists, let's continue with the execution
+			fmt.Println(err.Error())
 			if err != err.(*utils.FileExistsError) {
 				fmt.Println(err.Error())
 				os.Exit(1)
@@ -121,5 +138,6 @@ Links:
 }
 
 func init() {
-	RefCmd.Flags().StringVarP(&Name, "name", "n", "", "(required) Name of the reflection, i.e: 'this-is-a-reflection'")
+	NoteCmd.Flags().StringVarP(&Name, "name", "n", "", "(required) Name of the reflection, i.e: 'this-is-a-reflection'")
+	NoteCmd.Flags().BoolVarP(&Once, "once", "o", false, "[optional] One-off note")
 }

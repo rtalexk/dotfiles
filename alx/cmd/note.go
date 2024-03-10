@@ -21,7 +21,7 @@ var Name string
 
 // noteCmd represents the note command
 var noteCmd = &cobra.Command{
-	Use:   "note [OPTIONS]",
+	Use:   "note [COMMAND] [OPTIONS]",
 	Short: "Manage notes",
 	Long: `If no subcommand is provided, it will create a new note.
 
