@@ -1,7 +1,6 @@
-package cmd
+package note
 
 import (
-	"alx/cmd/note"
 	"alx/utils"
 	"bytes"
 	"fmt"
@@ -20,16 +19,12 @@ import (
 var Name string
 
 // noteCmd represents the note command
-var noteCmd = &cobra.Command{
-	Use:   "note [OPTIONS]",
-	Short: "Manage notes",
-	Long: `If no subcommand is provided, it will create a new note.
-
-  The name of the note will be used as the filename, added as metadata to the
-  file and used as a default title.`,
+var RefCmd = &cobra.Command{
+	Use:   "ref [OPTIONS]",
+	Short: "Create a new  reflection note",
 	Run: func(cmd *cobra.Command, args []string) {
 		if Name == "" {
-			fmt.Println("The name of the note is required")
+			fmt.Println("The name of the reflection is required")
 			os.Exit(1)
 		}
 
@@ -83,7 +78,7 @@ Links:
 
 {{ .FileId }}`
 
-		tmpl := template.New("note")
+		tmpl := template.New("reflection")
 		tmpl, err = tmpl.Parse(templateStr)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -97,8 +92,8 @@ Links:
 			os.Exit(1)
 		}
 
-		filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, "2-self", Name)
-		absoluteFilePath := fmt.Sprintf("%s/%s.md", "2-self", Name)
+		filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, "2-self/20-reflections", Name)
+		absoluteFilePath := fmt.Sprintf("%s/%s.md", "2-self/20-reflections", Name)
 
 		if _, err := utils.CreateFile(filePath, contentBuffer); err != nil {
 			// If the file already exists, let's continue with the execution
@@ -127,8 +122,5 @@ Links:
 }
 
 func init() {
-	rootCmd.AddCommand(noteCmd)
-	noteCmd.AddCommand(note.QuoteCmd)
-	noteCmd.AddCommand(note.RefCmd)
-	noteCmd.Flags().StringVarP(&Name, "name", "n", "", "(required) Name of the note, i.e: 'this-is-a-note'")
+	RefCmd.Flags().StringVarP(&Name, "name", "n", "", "(required) Name of the reflection, i.e: 'this-is-a-reflection'")
 }
