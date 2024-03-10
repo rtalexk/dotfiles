@@ -90,13 +90,11 @@ source $ZSH/oh-my-zsh.sh
 
 # Custom aliases
 if [ -n "$(find $XDG_CONFIG_HOME/shell/aliases/ -maxdepth 1 -type f)" ]; then
-    for file in $XDG_CONFIG_HOME/shell/aliases/*(.); do
-        if [ -f "$file" ]; then
-            source "$file"
-        fi
-    done
-else
-    echo "No files found in the .config/aliases folder."
+  for file in $XDG_CONFIG_HOME/shell/aliases/*(.); do
+    if [ -f "$file" ]; then
+      source "$file"
+    fi
+  done
 fi
 
 # Create symlinks for my custon shell scripts
