@@ -99,9 +99,14 @@ else
     echo "No files found in the .config/aliases folder."
 fi
 
-# Add my scripts to path
-# TODO Deprecate in favor of alx CLI
-export PATH="$DOTFILES/scripts/:$PATH"
+# Create symlinks for my custon shell scripts
+if [ -n "$(find $XDG_CONFIG_HOME/shell/scripts/ -maxdepth 1 -type f)" ]; then
+  for file in $XDG_CONFIG_HOME/shell/scripts/*(.); do
+    if [ -f "$file" ]; then
+      ln -sf "$file" "$HOME/.local/bin/$(basename $file)"
+    fi
+  done
+fi
 
 export PATH="$HOME/.local/bin:$PATH"
 
