@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"alx/cmd/note"
 	"alx/utils"
 	"bytes"
 	"fmt"
@@ -127,5 +128,6 @@ Links:
 
 func init() {
 	rootCmd.AddCommand(noteCmd)
+	noteCmd.AddCommand(note.QuoteCmd)
 	noteCmd.Flags().StringVarP(&Name, "name", "n", "", "(required) Name of the note, i.e: 'this-is-a-note'")
 }
