@@ -25,6 +25,8 @@ set("n", "<leader>snf", "<cmd>Telescope noice<cr>", { desc = "Fuzzy search", nor
 vim.api.nvim_del_keymap("n", "<leader>-") -- Split horizontal
 vim.api.nvim_del_keymap("n", "<leader>|") -- Split vertical
 vim.api.nvim_del_keymap("n", "<leader>`") -- Switch to last buffer
+vim.api.nvim_del_keymap("n", "<C-b>") -- Scroll backward
+vim.api.nvim_del_keymap("n", "<C-f>") -- Scroll forward
 
 -- lazy
 -- vim.keymap.set("n", "<leader>l", "<cmd>Lazy<cr>", { desc = "Lazy" }) TODO: Create a Menu for Lazy
@@ -42,3 +44,7 @@ set("n", "<c-_>", lazyterm, { desc = "Floating Terminal" })
 -- Save files
 set("n", "<leader>fw", "<cmd>w<cr><esc>", { desc = "Save file", noremap = true })
 set("n", "<leader>fW", "<cmd>wa<cr><esc>", { desc = "Save all files", noremap = true })
+
+-- Scrolling
+set("n", "<C-d>", "<C-d>zz", { desc = "Scroll down" })
+set("n", "<C-u>", "<C-u>zz", { desc = "Scroll up" })
