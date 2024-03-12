@@ -31,3 +31,7 @@ vim.api.nvim_del_keymap("n", "<leader>`") -- Switch to last buffer
 -- Terminal
 vim.api.nvim_del_keymap("n", "<c-/>") -- TODO: Remove from WhichKey
 vim.api.nvim_del_keymap("n", "<C-Bslash>") -- TODO: Remove from WhichKey
+
+-- Save files
+set("n", "<leader>fw", "<cmd>w<cr><esc>", { desc = "Save file", noremap = true })
+set("n", "<leader>fW", "<cmd>wa<cr><esc>", { desc = "Save all files", noremap = true })
