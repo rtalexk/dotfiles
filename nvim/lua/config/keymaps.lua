@@ -2,6 +2,7 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
+local Util = require("lazyvim.util")
 local set = vim.keymap.set
 
 -- Buffers
@@ -29,8 +30,14 @@ vim.api.nvim_del_keymap("n", "<leader>`") -- Switch to last buffer
 -- vim.keymap.set("n", "<leader>l", "<cmd>Lazy<cr>", { desc = "Lazy" }) TODO: Create a Menu for Lazy
 
 -- Terminal
-vim.api.nvim_del_keymap("n", "<c-/>") -- TODO: Remove from WhichKey
-vim.api.nvim_del_keymap("n", "<C-Bslash>") -- TODO: Remove from WhichKey
+local lazyterm = function()
+  Util.terminal(nil, { cwd = Util.root() })
+end
+
+-- set("n", "<c-/>", lazyterm, { desc = "which_key_ignore" })
+-- vim.api.nvim_del_keymap("n", "<c-/>")
+
+set("n", "<c-_>", lazyterm, { desc = "Floating Terminal" })
 
 -- Save files
 set("n", "<leader>fw", "<cmd>w<cr><esc>", { desc = "Save file", noremap = true })
