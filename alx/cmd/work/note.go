@@ -27,9 +27,9 @@ var NoteCmd = &cobra.Command{
 	Long: `The note will be created in the 1-work directory.
 
 The difference between normal and 'once' notes is that 'once' are used for one-off
-tasks, such as a one-time meeting, an incident; they are placed under the once
-directory and the timestamp of the note is used as prefix for the filename, whereas
-the normal notes are used for recurring tasks, how-tos, guides, documentation, etc.`,
+tasks, such as a one-time meeting, an incident, etc; they are prefixed with the
+filename, whereas the normal notes are used for recurring tasks, how-tos, guides,
+documentation, etc.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if Name == "" {
 			fmt.Println("The name of the note is required")
@@ -49,19 +49,21 @@ the normal notes are used for recurring tasks, how-tos, guides, documentation, e
 			Name   string
 			Title  string
 			FileId string
+			Once   bool
 		}{
 			Date:   date,
 			Name:   Name,
 			Title:  title,
 			FileId: fileId,
+			Once:   Once,
 		}
 
 		templateStr := `---
 Created At: {{ .Date }}
-Filename: {{ .Name }}
+{{ if .Once }}Filename: {{ .Date }}-{{ .Name }}{{ else }}Filename: {{ .Name }}{{ end }}
 ---
 
-# {{ .Title }}
+{{ if .Once }}# {{ .Date }} {{ .Title }}{{ else }}# {{ .Title }}{{ end }}
 
 
 
@@ -87,8 +89,8 @@ Links:
 		absoluteFilePath := ""
 
 		if Once {
-			filePath = fmt.Sprintf("%s/%s/%s-%s.md", brainDir, "1-work/nuvo/once", date, Name)
-			absoluteFilePath = fmt.Sprintf("%s/%s-%s.md", "1-work/nuvo/once", date, Name)
+			filePath = fmt.Sprintf("%s/%s/%s-%s.md", brainDir, "1-work/nuvo", date, Name)
+			absoluteFilePath = fmt.Sprintf("%s/%s-%s.md", "1-work/nuvo", date, Name)
 		} else {
 			filePath = fmt.Sprintf("%s/%s/%s.md", brainDir, "1-work/nuvo", Name)
 			absoluteFilePath = fmt.Sprintf("%s/%s.md", "1-work/nuvo", Name)
