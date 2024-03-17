@@ -23,10 +23,10 @@ func (e *EnvVarNotFoundError) Error() string {
 	return fmt.Sprintf("environment variable %s not found or set", e.VariableName)
 }
 
-func GetBrainDirOrExit() string {
-	dir, err := GetEnv("BRAIN")
+func GetDirOrExit(dir string) string {
+	dir, err := GetEnv(dir)
 	if err != nil {
-		println("The BRAIN environment variable is not set")
+		fmt.Printf("The %s environment variable is not set", dir)
 		println(err.Error())
 		os.Exit(1)
 	}

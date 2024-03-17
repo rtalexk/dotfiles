@@ -11,7 +11,7 @@ var brainCmd = &cobra.Command{
 	Short: "Open notes",
 	Long:  "Open $EDITOR app in the $BRAIN directory.",
 	Run: func(cmd *cobra.Command, args []string) {
-		brainDir := utils.GetBrainDirOrExit()
+		brainDir := utils.GetDirOrExit("BRAIN")
 		editor := utils.GetEditorOrExit()
 		utils.ExecCmdOrExit(editor, "-c", "cd "+brainDir)
 	},
