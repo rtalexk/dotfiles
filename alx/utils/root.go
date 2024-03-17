@@ -23,6 +23,10 @@ func (e *EnvVarNotFoundError) Error() string {
 	return fmt.Sprintf("environment variable %s not found or set", e.VariableName)
 }
 
+// In most of the functions below, I don't really care about handling
+// errors wherever they are called, if an error ever occurs, I'm fine
+// with just exiting the program.
+
 func GetDirOrExit(dir string) string {
 	dir, err := GetEnv(dir)
 	if err != nil {
