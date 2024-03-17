@@ -27,24 +27,8 @@ var RefCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		brainDir, err := utils.GetEnv("BRAIN")
-		if err != nil {
-			println("The BRAIN environment variable is not set")
-			println(err.Error())
-			os.Exit(1)
-		}
-
-		editor, err := utils.GetEnv("EDITOR")
-		if err != nil {
-			println(err.Error())
-			os.Exit(1)
-		}
-
-		if exists, err := utils.CommandExists(editor); !exists {
-			fmt.Printf("The %s command does not exist ", editor)
-			println(err.Error())
-			os.Exit(1)
-		}
+		brainDir := utils.GetDirOrExit("BRAIN")
+		editor := utils.GetEditorOrExit()
 
 		fileId := time.Now().Format("20060102150405")
 		date := time.Now().Format("2006-01-02")
@@ -78,7 +62,7 @@ Links:
 {{ .FileId }}`
 
 		tmpl := template.New("reflection")
-		tmpl, err = tmpl.Parse(templateStr)
+		tmpl, err := tmpl.Parse(templateStr)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
@@ -103,11 +87,7 @@ Links:
 		}
 
 		if withinEditor := utils.FileCreatedFromEditor(); !withinEditor {
-			cmd := exec.Command(editor, "-c", "cd "+brainDir, "-c", "e "+absoluteFilePath, "-c", "normal 3j")
-			cmd.Stdin = os.Stdin
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			cmd.Run()
+			utils.ExecCmdOrExit(editor, "-c", "cd "+brainDir, "-c", "e "+absoluteFilePath, "-c", "normal 3j")
 		} else {
 			// Couldn't find a way to instruct the editor to open the file, so as a workaround
 			// I'll just copy the file path to the clipboard and manually open the file
