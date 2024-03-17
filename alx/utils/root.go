@@ -23,6 +23,50 @@ func (e *EnvVarNotFoundError) Error() string {
 	return fmt.Sprintf("environment variable %s not found or set", e.VariableName)
 }
 
+func GetBrainDirOrExit() string {
+	dir, err := GetEnv("BRAIN")
+	if err != nil {
+		println("The BRAIN environment variable is not set")
+		println(err.Error())
+		os.Exit(1)
+	}
+
+	if exists, err := DirExists(dir); !exists {
+		println(err.Error())
+		os.Exit(1)
+	}
+
+	return dir
+}
+
+func GetEditorOrExit() string {
+	editor, err := GetEnv("EDITOR")
+	if err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+
+	if exists, err := CommandExists(editor); !exists {
+		fmt.Printf("The %s command does not exist ", editor)
+		println(err.Error())
+		os.Exit(1)
+	}
+
+	return editor
+}
+
+func ExecCmdOrExit(args ...string) {
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+}
+
 func GetEnv(env string) (string, error) {
 	if value, exists := os.LookupEnv(env); exists && value != "" {
 		return value, nil
@@ -91,6 +135,7 @@ func CommandExists(cmd string) (bool, error) {
 }
 
 func FileCreatedFromEditor() bool {
+	// Variable set in my Nvim config
 	if inEditor, _ := GetEnv("WITHIN_EDITOR"); inEditor == "1" {
 		return true
 	}
