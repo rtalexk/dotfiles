@@ -2,6 +2,7 @@ package note
 
 import (
 	"alx/utils"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -12,6 +13,7 @@ var QuoteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		brainDir := utils.GetDirOrExit("BRAIN")
 		editor := utils.GetEditorOrExit()
+		editQuotes := fmt.Sprintf("e %s/quotes.md", utils.SELF_REFLECTIONS_DIR)
 
 		// Open the editor in the BRAIN dir, open the quotes file and copy the template
 		utils.ExecCmdOrExit(
@@ -19,7 +21,7 @@ var QuoteCmd = &cobra.Command{
 			"-c",
 			"cd "+brainDir,
 			"-c",
-			"e 2-self/20-reflections/quotes.md",
+			editQuotes,
 			"-c",
 			"normal 3gg^V6jyP7jww",
 		)

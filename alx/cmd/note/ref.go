@@ -75,8 +75,8 @@ Links:
 			os.Exit(1)
 		}
 
-		filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, "2-self/20-reflections", Name)
-		absoluteFilePath := fmt.Sprintf("%s/%s.md", "2-self/20-reflections", Name)
+		filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, utils.SELF_REFLECTIONS_DIR, Name)
+		absoluteFilePath := fmt.Sprintf("%s/%s.md", utils.SELF_REFLECTIONS_DIR, Name)
 
 		if _, err := utils.CreateFile(filePath, contentBuffer); err != nil {
 			// If the file already exists, let's continue with the execution

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"alx/utils"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -13,7 +14,9 @@ var todoCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		brainDir := utils.GetDirOrExit("BRAIN")
 		editor := utils.GetEditorOrExit()
-		utils.ExecCmdOrExit(editor, "-c", "cd "+brainDir, "-c", "e 2-self/todos.md")
+		editTodos := fmt.Sprintf("e %s/todos.md", utils.SELF_DIR)
+
+		utils.ExecCmdOrExit(editor, "-c", "cd "+brainDir, "-c", editTodos)
 	},
 }
 

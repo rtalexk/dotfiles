@@ -7,6 +7,13 @@ import (
 	"os/exec"
 )
 
+const (
+	CURRENT_EMPLOYER     = "NUVO"
+	WORK_DIR             = "1-work/" + CURRENT_EMPLOYER
+	SELF_DIR             = "2-self"
+	SELF_REFLECTIONS_DIR = SELF_DIR + "/20-reflections"
+)
+
 type FileExistsError struct {
 	FilePath string
 }
