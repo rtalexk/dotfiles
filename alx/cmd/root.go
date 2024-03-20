@@ -18,7 +18,4 @@ func Execute() {
 	}
 }
 
-func init() {
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cli.yaml)")
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle") // Local flag
-}
+func init() {}
