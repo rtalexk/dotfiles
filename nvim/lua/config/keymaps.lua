@@ -48,3 +48,6 @@ set("n", "<leader>fW", "<cmd>wa<cr><esc>", { desc = "Save all files", noremap = 
 -- Scrolling
 set("n", "<C-d>", "<C-d>zz", { desc = "Scroll down" })
 set("n", "<C-u>", "<C-u>zz", { desc = "Scroll up" })
+
+-- Insert current date
+set("n", "<leader>id", "a<C-r>=strftime('%Y-%m-%d')<CR><esc>", { desc = "Insert current date" })
