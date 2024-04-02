@@ -7,7 +7,7 @@ alias gbdm="git branch --merged | egrep -v '(^\*|master|main|dev)' | xargs git b
 
 gcof() {
   local branch
-  branch=$(git branch | grep -v '^*' | sed 's/*//g' | sed 's/[[:space:]]//g' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)
+  branch=$(gbfz)
   if [[ -n "$branch" ]]; then
     git checkout "$branch"
   fi
@@ -15,8 +15,14 @@ gcof() {
 
 grbf() {
   local branch
-  branch=$(git branch | grep -v '^*' | sed 's/*//g' | sed 's/[[:space:]]//g' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)
+  branch=$(gbfz)
   if [[ -n "$branch" ]]; then
     git rebase "$branch"
   fi
+}
+
+gbfz() {
+  local branch
+  branch=$(git branch | grep -v '^*' | sed 's/*//g' | sed 's/[[:space:]]//g' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)
+  echo "$branch"
 }
