@@ -12,3 +12,11 @@ gcof() {
     git checkout "$branch"
   fi
 }
+
+grbf() {
+  local branch
+  branch=$(git branch | grep -v '^*' | sed 's/*//g' | sed 's/[[:space:]]//g' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)
+  if [[ -n "$branch" ]]; then
+    git rebase "$branch"
+  fi
+}
