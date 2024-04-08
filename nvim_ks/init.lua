@@ -1,3 +1,12 @@
+-- Env Var used by my CLI
+vim.env.WITHIN_EDITOR = '1'
+
+-- Print/Inspect objects for debugging
+P = function(v)
+  print(vim.inspect(v))
+  return v
+end
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -716,6 +725,7 @@ require('lazy').setup({
           hide_dotfiles = false,
           hide_gitignored = false,
         },
+        follow_current_file = { enabled = true },
       },
     },
   },
