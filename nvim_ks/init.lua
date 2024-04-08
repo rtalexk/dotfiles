@@ -7,6 +7,73 @@ P = function(v)
   return v
 end
 
+GlobalConfig = {
+  icons = {
+    misc = {
+      dots = '󰇘',
+    },
+    dap = {
+      Stopped = { '󰁕 ', 'DiagnosticWarn', 'DapStoppedLine' },
+      Breakpoint = ' ',
+      BreakpointCondition = ' ',
+      BreakpointRejected = { ' ', 'DiagnosticError' },
+      LogPoint = '.>',
+    },
+    diagnostics = {
+      Error = ' ',
+      Warn = ' ',
+      Hint = ' ',
+      Info = ' ',
+    },
+    git = {
+      added = ' ',
+      modified = ' ',
+      removed = ' ',
+    },
+    kinds = {
+      Array = ' ',
+      Boolean = '󰨙 ',
+      Class = ' ',
+      Codeium = '󰘦 ',
+      Color = ' ',
+      Control = ' ',
+      Collapsed = ' ',
+      Constant = '󰏿 ',
+      Constructor = ' ',
+      Copilot = ' ',
+      Enum = ' ',
+      EnumMember = ' ',
+      Event = ' ',
+      Field = ' ',
+      File = ' ',
+      Folder = ' ',
+      Function = '󰊕 ',
+      Interface = ' ',
+      Key = ' ',
+      Keyword = ' ',
+      Method = '󰊕 ',
+      Module = ' ',
+      Namespace = '󰦮 ',
+      Null = ' ',
+      Number = '󰎠 ',
+      Object = ' ',
+      Operator = ' ',
+      Package = ' ',
+      Property = ' ',
+      Reference = ' ',
+      Snippet = ' ',
+      String = ' ',
+      Struct = '󰆼 ',
+      TabNine = '󰏚 ',
+      Text = ' ',
+      TypeParameter = ' ',
+      Unit = ' ',
+      Value = ' ',
+      Variable = '󰀫 ',
+    },
+  },
+}
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -313,14 +380,38 @@ require('lazy').setup({
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
       -- Useful status updates for LSP.
-      -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
       { 'j-hui/fidget.nvim', opts = {} },
 
       -- `neodev` configures Lua LSP for your Neovim config, runtime and plugins
       -- used for completion, annotations and signatures of Neovim apis
       { 'folke/neodev.nvim', opts = {} },
     },
-    config = function()
+    opts = {
+      ---@type vim.diagnostic.Opts
+      diagnostics = {
+        virtual_text = {
+          spacing = 4,
+          source = 'if_many',
+          prefix = 'icons',
+        },
+        severity_sort = true,
+        signs = {
+          text = {
+            [vim.diagnostic.severity.ERROR] = ' ',
+            [vim.diagnostic.severity.WARN] = ' ',
+            [vim.diagnostic.severity.HINT] = ' ',
+            [vim.diagnostic.severity.INFO] = ' ',
+          },
+          linehl = {
+            [vim.diagnostic.severity.ERROR] = 'ErrorMsg',
+          },
+          numhl = {
+            [vim.diagnostic.severity.WARN] = 'WarningMsg',
+          },
+        },
+      },
+    },
+    config = function(_, opts)
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
@@ -387,6 +478,30 @@ require('lazy').setup({
         end,
       })
 
+      -- diagnostics signs
+      if vim.fn.has 'nvim-0.10.0' == 0 then
+        for severity, icon in pairs(opts.diagnostics.signs.text) do
+          local name = vim.diagnostic.severity[severity]:lower():gsub('^%l', string.upper)
+          name = 'DiagnosticSign' .. name
+          vim.fn.sign_define(name, { text = icon, texthl = name, numhl = '' })
+        end
+      end
+
+      -- Virtual Text
+      if type(opts.diagnostics.virtual_text) == 'table' and opts.diagnostics.virtual_text.prefix == 'icons' then
+        opts.diagnostics.virtual_text.prefix = vim.fn.has 'nvim-0.10.0' == 0 and '●'
+          or function(diagnostic)
+            local icons = GlobalConfig.icons
+            for d, icon in pairs(icons) do
+              if diagnostic.severity == vim.diagnostic.severity[d:upper()] then
+                return icon
+              end
+            end
+          end
+      end
+
+      vim.diagnostic.config(vim.deepcopy(opts.diagnostics))
+
       -- LSP servers and clients are able to communicate to each other what features they support.
       --  By default, Neovim doesn't support everything that is in the LSP specification.
       --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
@@ -427,7 +542,7 @@ require('lazy').setup({
                 callSnippet = 'Replace',
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              -- diagnostics = { disable = { 'missing-fields' } },
+              diagnostics = { disable = { 'missing-fields' } },
             },
           },
         },
