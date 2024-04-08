@@ -730,6 +730,41 @@ require('lazy').setup({
     },
   },
 
+  -- Easily navigate between working files
+  {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      local harpoon = require 'harpoon'
+      harpoon.setup {}
+
+      vim.keymap.set('n', '<leader>ma', function()
+        harpoon:list():append()
+      end, { desc = 'Add current file to harpoon' })
+
+      vim.keymap.set('n', '<leader>mo', function()
+        harpoon.ui:toggle_quick_menu(harpoon:list())
+      end, { desc = 'Open harpoon menu' })
+
+      vim.keymap.set('n', '<M-q>', function()
+        harpoon:list():select(1)
+      end)
+
+      vim.keymap.set('n', '<M-w>', function()
+        harpoon:list():select(2)
+      end)
+
+      vim.keymap.set('n', '<M-e>', function()
+        harpoon:list():select(3)
+      end)
+
+      vim.keymap.set('n', '<M-d>', function()
+        harpoon:list():select(4)
+      end)
+    end,
+  },
+
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
