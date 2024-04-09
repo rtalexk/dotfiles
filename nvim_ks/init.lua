@@ -34,6 +34,13 @@ GlobalConfig = {
       added = ' ',
       modified = ' ',
       removed = ' ',
+      renamed = '󰁕',
+      -- Status type
+      untracked = '',
+      ignored = '',
+      unstaged = '󰄱',
+      staged = '',
+      conflict = '',
     },
     kinds = {
       Array = ' ',
@@ -236,9 +243,9 @@ require('lazy').setup({
     'lewis6991/gitsigns.nvim',
     opts = {
       signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
+        add = { text = GlobalConfig.icons.git.added },
+        change = { text = GlobalConfig.icons.git.modified },
+        delete = { text = GlobalConfig.icons.git.removed },
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
