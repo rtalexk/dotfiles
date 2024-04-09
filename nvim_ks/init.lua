@@ -19,6 +19,11 @@ GlobalConfig = {
       BreakpointRejected = { ' ', 'DiagnosticError' },
       LogPoint = '.>',
     },
+    packages = {
+      installed = '✓',
+      pending = '➜',
+      uninstalled = '✗',
+    },
     diagnostics = {
       Error = ' ',
       Warn = ' ',
@@ -530,7 +535,11 @@ require('lazy').setup({
         -- But for many setups, the LSP (`tsserver`) will work just fine
         -- tsserver = {},
         --
+        -- Ruby LSP
         solargraph = {},
+
+        -- Markdown LSP
+        marksman = {},
 
         lua_ls = {
           -- cmd = {...},
@@ -554,7 +563,16 @@ require('lazy').setup({
       --    :Mason
       --
       --  You can press `g?` for help in this menu.
-      require('mason').setup()
+      local package_icons = GlobalConfig.icons.packages
+      require('mason').setup {
+        ui = {
+          icons = {
+            package_installed = package_icons.installed,
+            package_pending = package_icons.pending,
+            package_uninstalled = package_icons.uninstalled,
+          },
+        },
+      }
 
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
@@ -562,6 +580,7 @@ require('lazy').setup({
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
         'shfmt', -- Used to format Bash code
+        'prettier', -- To format a lot of langs in the JS ecosystem
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -608,6 +627,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         sh = { 'shfmt' },
+        markdown = { 'prettier' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
