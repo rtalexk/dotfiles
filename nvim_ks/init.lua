@@ -251,6 +251,35 @@ require('lazy').setup({
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
+      on_attach = function(buffer)
+        local gs = package.loaded.gitsigns
+
+        local function map(mode, lhs, rhs, desc)
+          vim.keymap.set(mode, lhs, rhs, { buffer = buffer, desc = desc })
+        end
+
+        map('n', ']h', gs.next_hunk, 'Next hunk')
+        map('n', '[h', gs.prev_hunk, 'Prev hunk')
+
+        map({ 'n', 'v' }, '<leader>ghs', ':Gitsigns stage_hunk<CR>', 'Stage hunk')
+        map({ 'n', 'v' }, '<leader>ghr', ':Gitsigns reset_hunk<CR>', 'Reset hunk')
+        map('n', '<leader>ghS', gs.undo_stage_hunk, 'Undo stage hunk')
+
+        map('n', '<leader>ghf', gs.stage_buffer, 'Stage file')
+        map('n', '<leader>ghR', gs.reset_buffer, 'Reset file')
+
+        map('n', '<leader>ghp', gs.preview_hunk_inline, 'Preview hunk inline')
+        map('n', '<leader>ghb', function()
+          gs.blame_line { full = true }
+        end, 'Blame line')
+        map('n', '<leader>ghd', gs.diffthis, 'Diff this')
+        map('n', '<leader>ghD', function()
+          gs.diffthis '~'
+        end, 'Diff this ~')
+
+        map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>', 'Hunk')
+        map({ 'o', 'x' }, 'ah', ':<C-U>Gitsigns select_hunk<CR>', 'Hunk')
+      end,
     },
   },
 
@@ -285,6 +314,8 @@ require('lazy').setup({
         [']'] = { name = '+next' },
         ['['] = { name = '+prev' },
         ['<leader>c'] = { name = 'Code', _ = 'which_key_ignore' },
+        ['<leader>g'] = { name = 'Git', _ = 'which_key_ignore' },
+        ['<leader>gh'] = { name = 'Hunk', _ = 'which_key_ignore' },
         ['<leader>s'] = { name = 'Search', _ = 'which_key_ignore' },
         ['<leader>u'] = { name = 'UI', _ = 'which_key_ignore' },
         ['<leader>x'] = { name = 'X Ray', _ = 'which_key_ignore' },
@@ -363,6 +394,13 @@ require('lazy').setup({
 
       vim.keymap.set('n', '<leader>.', builtin.find_files, { desc = 'Search Files' })
       vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Find existing buffers' })
+
+      vim.keymap.set('n', '<leader>gC', builtin.git_commits, { desc = 'Project commits' })
+      vim.keymap.set('n', '<leader>gc', builtin.git_bcommits, { desc = 'Buffer commits' })
+      vim.keymap.set('n', '<leader>gb', builtin.git_branches, { desc = 'Branches' })
+      vim.keymap.set('n', '<leader>gs', builtin.git_status, { desc = 'Status' })
+
+      vim.keymap.set('n', '<leader>;', builtin.git_status, { desc = 'Changed files' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
