@@ -273,10 +273,10 @@ require('lazy').setup({
         ['z'] = { name = '+fold' },
         [']'] = { name = '+next' },
         ['['] = { name = '+prev' },
-        ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-        ['<leader>u'] = { name = '[U]I', _ = 'which_key_ignore' },
-        ['<leader>x'] = { name = '[X] Ray', _ = 'which_key_ignore' },
+        ['<leader>c'] = { name = 'Code', _ = 'which_key_ignore' },
+        ['<leader>s'] = { name = 'Search', _ = 'which_key_ignore' },
+        ['<leader>u'] = { name = 'UI', _ = 'which_key_ignore' },
+        ['<leader>x'] = { name = 'X Ray', _ = 'which_key_ignore' },
       }
     end,
   },
@@ -339,18 +339,19 @@ require('lazy').setup({
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
-      vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [h]elp' })
-      vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [k]eymaps' })
-      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [f]iles' })
-      vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = '[S]earch [t]elescope builtins' })
-      vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [w]ord' })
-      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [g]rep' })
-      vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [d]iagnostics' })
-      vim.keymap.set('n', '<leader>sR', builtin.resume, { desc = '[S]earch [R]esume' })
-      vim.keymap.set('n', '<leader>sr', builtin.oldfiles, { desc = '[S]earch [r]ecent Files ("." for repeat)' })
+      vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Search help' })
+      vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = 'Search keymaps' })
+      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Search files' })
+      vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Search telescope builtins' })
+      vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Search current word' })
+      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'Search by grep' })
+      vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Search diagnostics' })
+      vim.keymap.set('n', '<leader>sR', builtin.resume, { desc = 'Search Resume' })
+      vim.keymap.set('n', '<leader>sr', builtin.oldfiles, { desc = 'Search recent Files ("." for repeat)' })
+      vim.keymap.set('n', '<leader>:', '<cmd>Telescope command_history<cr>', { desc = 'Command History' })
 
-      vim.keymap.set('n', '<leader>.', builtin.find_files, { desc = '[S]earch [F]iles' })
-      vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      vim.keymap.set('n', '<leader>.', builtin.find_files, { desc = 'Search Files' })
+      vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Find existing buffers' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -362,7 +363,7 @@ require('lazy').setup({
           winblend = 10,
           previewer = false,
         })
-      end, { desc = '[/] Search in buffer' })
+      end, { desc = 'Search in buffer' })
 
       -- It's also possible to pass additional configuration options.
       --  See `:help telescope.builtin.live_grep()` for information about particular keys
@@ -371,7 +372,7 @@ require('lazy').setup({
           grep_open_files = true,
           prompt_title = 'Live Grep in Open Files',
         }
-      end, { desc = '[S]earch [/] in Open Files' })
+      end, { desc = 'Search in Open Files' })
     end,
   },
 
