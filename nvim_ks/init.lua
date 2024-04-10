@@ -193,6 +193,10 @@ vim.keymap.set('n', '<leader>\\', '<cmd>e #<cr>', { desc = 'Switch buffer' })
 -- Create new empty buffer
 vim.keymap.set('n', '<leader>fn', '<cmd>enew<cr>', { desc = 'New' })
 
+-- better indenting
+vim.keymap.set('v', '<', '<gv')
+vim.keymap.set('v', '>', '>gv')
+
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
