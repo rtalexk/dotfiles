@@ -328,7 +328,7 @@ require('lazy').setup({
 
   { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
-    event = 'VimEnter', -- Sets the loading event to 'VimEnter'
+    event = 'VeryLazy', -- Sets the loading event to 'VimEnter'
     config = function() -- This is the function that runs, AFTER loading
       require('which-key').setup()
 
@@ -986,6 +986,7 @@ require('lazy').setup({
   {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
+    event = 'VeryLazy',
     dependencies = { 'nvim-lua/plenary.nvim' },
     config = function()
       local harpoon = require 'harpoon'
