@@ -404,19 +404,19 @@ require('lazy').setup({
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
-      vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Search help' })
-      vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = 'Search keymaps' })
-      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Search files' })
-      vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Search telescope builtins' })
-      vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Search current word' })
-      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'Search by grep' })
-      vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Search diagnostics' })
-      vim.keymap.set('n', '<leader>sR', builtin.resume, { desc = 'Search Resume' })
-      vim.keymap.set('n', '<leader>sr', builtin.oldfiles, { desc = 'Search recent Files ("." for repeat)' })
+      vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Help' })
+      vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = 'Keymaps' })
+      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Files' })
+      vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Telescope builtins' })
+      vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Current word' })
+      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'By grep' })
+      vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Diagnostics' })
+      vim.keymap.set('n', '<leader>sR', builtin.resume, { desc = 'Resume' })
+      vim.keymap.set('n', '<leader>sr', builtin.oldfiles, { desc = 'Recent Files' })
       vim.keymap.set('n', '<leader>:', '<cmd>Telescope command_history<cr>', { desc = 'Command History' })
 
       vim.keymap.set('n', '<leader>.', builtin.find_files, { desc = 'Search Files' })
-      vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Find existing buffers' })
+      vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Open buffers' })
 
       vim.keymap.set('n', '<leader>gC', builtin.git_commits, { desc = 'Project commits' })
       vim.keymap.set('n', '<leader>gc', builtin.git_bcommits, { desc = 'Buffer commits' })
@@ -435,7 +435,7 @@ require('lazy').setup({
           winblend = 10,
           previewer = false,
         })
-      end, { desc = 'Search in buffer' })
+      end, { desc = 'Grep in buffer' })
 
       -- It's also possible to pass additional configuration options.
       --  See `:help telescope.builtin.live_grep()` for information about particular keys
@@ -444,7 +444,7 @@ require('lazy').setup({
           grep_open_files = true,
           prompt_title = 'Live Grep in Open Files',
         }
-      end, { desc = 'Search in Open Files' })
+      end, { desc = 'Grep in Open Buffers' })
     end,
   },
 
@@ -497,35 +497,35 @@ require('lazy').setup({
           end
 
           -- To jump back, press <C-t>.
-          map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+          map('gd', require('telescope.builtin').lsp_definitions, 'Goto Definition')
 
           -- Find references for the word under your cursor.
-          map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+          map('gr', require('telescope.builtin').lsp_references, 'Goto References')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
-          map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+          map('gI', require('telescope.builtin').lsp_implementations, 'Goto Implementation')
 
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
           --  the definition of its *type*, not where it was *defined*.
-          map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+          map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type Definition')
 
           -- Fuzzy find all the symbols in your current document.
           --  Symbols are things like variables, functions, types, etc.
-          map('<leader>ss', require('telescope.builtin').lsp_document_symbols, '[S]earch Document [s]ymbols')
+          map('<leader>ss', require('telescope.builtin').lsp_document_symbols, 'Document symbols')
 
           -- Fuzzy find all the symbols in your current workspace.
           --  Similar to document symbols, except searches over your entire project.
-          map('<leader>sS', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[S]earch Workspace [S]ymbols')
+          map('<leader>sS', require('telescope.builtin').lsp_dynamic_workspace_symbols, 'Workspace Symbols')
 
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
-          map('<leader>cr', vim.lsp.buf.rename, '[C]ode [R]ename')
+          map('<leader>cr', vim.lsp.buf.rename, 'Code Rename')
 
           -- Execute a code action, usually your cursor needs to be on top of an error
           -- or a suggestion from your LSP for this to activate.
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+          map('<leader>ca', vim.lsp.buf.code_action, 'Code Action')
 
           -- Opens a popup that displays documentation about the word under your cursor
           --  See `:help K` for why this keymap.
@@ -533,7 +533,7 @@ require('lazy').setup({
 
           -- WARN: This is not Goto Definition, this is Goto Declaration.
           --  For example, in C this would take you to the header.
-          map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+          map('gD', vim.lsp.buf.declaration, 'Goto Declaration')
 
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
@@ -681,7 +681,7 @@ require('lazy').setup({
           require('conform').format { async = true, lsp_fallback = true }
         end,
         mode = '',
-        desc = '[F]ormat buffer',
+        desc = 'Format buffer',
       },
     },
     opts = {
