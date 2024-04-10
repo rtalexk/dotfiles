@@ -274,9 +274,12 @@ require('lazy').setup({
         map('n', '<leader>ghR', gs.reset_buffer, 'Reset file')
 
         map('n', '<leader>ghp', gs.preview_hunk_inline, 'Preview hunk inline')
+
         map('n', '<leader>ghb', function()
           gs.blame_line { full = true }
         end, 'Blame line')
+        map('n', '<leader>ghL', '<cmd>Gitsigns toggle_current_line_blame<CR>', 'Toggle line blame')
+
         map('n', '<leader>ghd', gs.diffthis, 'Diff this')
         map('n', '<leader>ghD', function()
           gs.diffthis '~'
