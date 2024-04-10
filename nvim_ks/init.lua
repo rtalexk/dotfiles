@@ -86,11 +86,6 @@ GlobalConfig = {
   },
 }
 
--- Disable Virtual Text (inline error/warning reporting)
-vim.lsp.handlers['textDocument/publishDiagnostics'] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-  virtual_text = false,
-})
-
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -611,7 +606,8 @@ require('lazy').setup({
         -- tsserver = {},
         --
         -- Ruby LSP
-        solargraph = {},
+        -- solargraph = {},
+        standardrb = {},
 
         -- Markdown LSP
         marksman = {},
@@ -679,7 +675,7 @@ require('lazy').setup({
     lazy = false,
     keys = {
       {
-        '<leader>f',
+        '<leader>ff',
         function()
           require('conform').format { async = true, lsp_fallback = true }
         end,
