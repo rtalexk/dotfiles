@@ -189,9 +189,14 @@ end, { desc = 'Go to next error' })
 vim.keymap.set('n', '<leader>xe', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '<leader>xq', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+-- Redraw window
 vim.keymap.set('n', '<leader>ur', '<cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>', { desc = 'Redraw' })
 
+-- Switch to previous buffer
 vim.keymap.set('n', '<leader>\\', '<cmd>e #<cr>', { desc = 'Switch buffer' })
+
+-- Create new empty buffer
+vim.keymap.set('n', '<leader>fn', '<cmd>enew<cr>', { desc = 'New' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -337,6 +342,7 @@ require('lazy').setup({
         [']'] = { name = '+next' },
         ['['] = { name = '+prev' },
         ['<leader>c'] = { name = 'Code', _ = 'which_key_ignore' },
+        ['<leader>f'] = { name = 'File', _ = 'which_key_ignore' },
         ['<leader>g'] = { name = 'Git', _ = 'which_key_ignore' },
         ['<leader>gh'] = { name = 'Hunk', _ = 'which_key_ignore' },
         ['<leader>s'] = { name = 'Search', _ = 'which_key_ignore' },
