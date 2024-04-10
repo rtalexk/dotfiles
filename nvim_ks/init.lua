@@ -422,14 +422,11 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>:', '<cmd>Telescope command_history<cr>', { desc = 'Command History' })
 
       vim.keymap.set('n', '<leader>.', builtin.find_files, { desc = 'Search Files' })
-      vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Open buffers' })
 
       vim.keymap.set('n', '<leader>gC', builtin.git_commits, { desc = 'Project commits' })
       vim.keymap.set('n', '<leader>gc', builtin.git_bcommits, { desc = 'Buffer commits' })
       vim.keymap.set('n', '<leader>gb', builtin.git_branches, { desc = 'Branches' })
       vim.keymap.set('n', '<leader>gs', builtin.git_status, { desc = 'Status' })
-
-      vim.keymap.set('n', '<leader>;', builtin.git_status, { desc = 'Changed files' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -943,14 +940,29 @@ require('lazy').setup({
       {
         '<leader>e',
         function()
-          require('neo-tree.command').execute { toggle = true, dir = vim.loop.cwd() }
+          require('neo-tree.command').execute { toggle = true, dir = vim.loop.cwd(), reveal = true }
         end,
         desc = 'File Explorer',
       },
+      {
+        '<leader>;',
+        function()
+          require('neo-tree.command').execute { toggle = true, dir = vim.loop.cwd(), reveal = true, source = 'git_status' }
+        end,
+        desc = 'Changed files',
+      },
+      {
+        '<leader>,',
+        function()
+          require('neo-tree.command').execute { toggle = true, dir = vim.loop.cwd(), reveal = true, source = 'buffers' }
+        end,
+        desc = 'Buffers',
+      },
     },
     opts = {
+      close_if_las_window = true,
       window = {
-        position = 'right',
+        position = 'float',
       },
       filesystem = {
         filtered_items = {
@@ -958,6 +970,14 @@ require('lazy').setup({
           hide_gitignored = false,
         },
         follow_current_file = { enabled = true },
+      },
+      event_handlers = {
+        {
+          event = 'file_opened',
+          handler = function()
+            require('neo-tree.command').execute { action = 'close' }
+          end,
+        },
       },
     },
   },
