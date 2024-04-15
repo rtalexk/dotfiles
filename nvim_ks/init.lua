@@ -340,6 +340,7 @@ require('lazy').setup({
         ['z'] = { name = '+fold' },
         [']'] = { name = '+next' },
         ['['] = { name = '+prev' },
+        ['<leader>b'] = { name = 'Buffer', _ = 'which_key_ignore' },
         ['<leader>c'] = { name = 'Code', _ = 'which_key_ignore' },
         ['<leader>f'] = { name = 'File', _ = 'which_key_ignore' },
         ['<leader>g'] = { name = 'Git', _ = 'which_key_ignore' },
@@ -1095,6 +1096,39 @@ require('lazy').setup({
     keys = {
       { ']]', desc = 'Next Reference' },
       { '[[', desc = 'Prev Reference' },
+    },
+  },
+
+  {
+    'echasnovski/mini.bufremove',
+    keys = {
+      {
+        '<leader>bd',
+        function()
+          local bd = require('mini.bufremove').delete
+
+          if vim.bo.modified then
+            local choice = vim.fn.confirm(('Save changes to %q?'):format(vim.fn.bufname()), '&Yes\n&No\n&Cancel')
+
+            if choice == 1 then -- yes
+              vim.cmd.write()
+              bd(0)
+            elseif choice == 2 then -- no
+              bd(0, true)
+            end
+          else
+            bd(0)
+          end
+        end,
+        desc = 'Close buffer',
+      },
+      {
+        '<leader>bD',
+        function()
+          require('mini.bufremove').delete(0, true)
+        end,
+        desc = 'Close! buffer',
+      },
     },
   },
 
