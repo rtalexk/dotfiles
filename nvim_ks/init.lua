@@ -857,6 +857,21 @@ require('lazy').setup({
   },
 
   {
+    'ggandor/leap.nvim',
+    config = function()
+      local leap = require 'leap'
+
+      leap.opts.special_keys.prev_target = '<backspace>'
+      leap.opts.special_keys.prev_group = '<backspace>'
+      leap.opts.safe_labels = {}
+
+      vim.keymap.set({ 'n', 'x', 'o' }, 'm', '<Plug>(leap-forward)')
+      vim.keymap.set({ 'n', 'x', 'o' }, 'M', '<Plug>(leap-backward)')
+      vim.keymap.set({ 'n', 'x', 'o' }, 'gm', '<Plug>(leap-from-window)')
+    end,
+  },
+
+  {
     'echasnovski/mini.pairs',
     event = 'VeryLazy',
     opts = {},
