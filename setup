@@ -17,10 +17,10 @@ ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
 ln -sf "$PWD/shell/" "$XDG_CONFIG_HOME/shell"
 
 # Default Nvim config
-ln -sf "$PWD/nvim_lazy/" "$XDG_CONFIG_HOME/nvim"
+ln -sf "$PWD/nvim_ks/" "$XDG_CONFIG_HOME/nvim"
 
 # Alternative Nvim config
-ln -sf "$PWD/nvim_ks/" "$XDG_CONFIG_HOME/nvim_ks"
+ln -sf "$PWD/nvim_lazy/" "$XDG_CONFIG_HOME/nvim_lz"
 
 # Link Documents/Notes to iCloud/Notes
 ln -sf "$ICLOUD/Notes" "$BRAIN"
