@@ -233,6 +233,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
+-- Install Lazy
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
@@ -240,28 +241,10 @@ if not vim.loop.fs_stat(lazypath) then
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
-require('lazy').setup {
-  { -- Collection of various small independent plugins/modules
-    'echasnovski/mini.nvim',
-    config = function()
-      require('mini.ai').setup { n_lines = 500 }
-      require('mini.surround').setup()
-
-      local statusline = require 'mini.statusline'
-      statusline.setup { use_icons = vim.g.have_nerd_font }
-      ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
-    end,
-  },
-
-  -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-
-  { import = 'custom.plugins' },
-}
+require('lazy').setup 'plugins'
+-- require 'kickstart.plugins.debug',
+-- require 'kickstart.plugins.indent_line',
+-- require 'kickstart.plugins.lint',
 
 -- See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

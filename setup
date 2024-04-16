@@ -17,7 +17,7 @@ ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
 ln -sf "$PWD/shell/" "$XDG_CONFIG_HOME/shell"
 
 # Default Nvim config
-ln -sf "$PWD/nvim_ks/" "$XDG_CONFIG_HOME/nvim"
+ln -sf "$PWD/nvim/" "$XDG_CONFIG_HOME/nvim"
 
 # Alternative Nvim config
 ln -sf "$PWD/nvim_lazy/" "$XDG_CONFIG_HOME/nvim_lz"
