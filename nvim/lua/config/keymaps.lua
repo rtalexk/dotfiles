@@ -23,6 +23,15 @@ vim.keymap.set('n', '<leader>xe', vim.diagnostic.open_float, { desc = 'Show diag
 vim.keymap.set('n', '<leader>xq', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- Redraw window
+vim.keymap.set('n', '<leader>uw', function()
+  if vim.o.wrap then
+    vim.o.wrap = false
+  else
+    vim.o.wrap = true
+  end
+end, { desc = 'Redraw' })
+
+-- Redraw window
 vim.keymap.set('n', '<leader>ur', '<cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>', { desc = 'Redraw' })
 
 -- Switch to previous buffer
