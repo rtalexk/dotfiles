@@ -185,9 +185,16 @@ return {
     },
     keys = {
       {
+        '<leader>fe',
+        function()
+          require('neo-tree.command').execute { toggle = true, dir = vim.loop.cwd(), reveal = true, position = 'right' }
+        end,
+        desc = 'File Explorer',
+      },
+      {
         '<leader>e',
         function()
-          require('neo-tree.command').execute { toggle = true, dir = vim.loop.cwd(), reveal = true }
+          require('neo-tree.command').execute { toggle = true, dir = vim.loop.cwd(), reveal = true, position = 'float' }
         end,
         desc = 'File Explorer',
       },
