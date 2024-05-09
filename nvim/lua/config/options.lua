@@ -18,8 +18,17 @@ vim.opt.number = true
 --  Experiment for yourself to see if you like it!
 vim.opt.relativenumber = true
 
+-- Do not wrap text if it doesn't fit the screen
+vim.opt.wrap = false
+
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
+
+-- Visually hide some characters when then are not needed
+vim.opt.conceallevel = 2
+
+-- Break words at whitespace see :h breakat
+vim.opt.linebreak = true
 
 -- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
