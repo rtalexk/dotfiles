@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Check XDG_CONFIG_HOME is set
+
 mkdir -p "$XDG_CONFIG_HOME"/alacritty/themes
 mkdir -p "$XDG_CONFIG_HOME"/nvim
 
@@ -14,24 +16,28 @@ git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME/alacrit
 ln -sf "$PWD/alacritty.toml" "$XDG_CONFIG_HOME/alacritty/alacritty.toml"
 ln -sf "$PWD/.tmux.conf" "$HOME/.tmux.conf"
 ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
-ln -sf "$PWD/shell/" "$XDG_CONFIG_HOME/shell"
+ln -sf "$PWD/shell" "$XDG_CONFIG_HOME/shell"
 
 # Default Nvim config
-ln -sf "$PWD/nvim/" "$XDG_CONFIG_HOME/nvim"
+ln -sf "$PWD/nvim" "$XDG_CONFIG_HOME/nvim"
 
 # Alternative Nvim config
-ln -sf "$PWD/nvim_lazy/" "$XDG_CONFIG_HOME/nvim_lz"
+# ln -sf "$PWD/nvim_lazy/" "$XDG_CONFIG_HOME/nvim_lz"
 
-# Link Documents/Notes to iCloud/Notes
-ln -sf "$ICLOUD/Notes" "$BRAIN"
+# Mac: Link Documents/Notes to iCloud/Notes
+# ln -sf "$ICLOUD/Notes" "$BRAIN"
 
-# install brew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# Mac: install brew
+# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # TODO: Install Golang; Compile the CLI
-ln -sf "$PWD/alx/alx" "$HOME/.local/bin/alx"
+# ln -sf "$PWD/alx/alx" "$HOME/.local/bin/alx"
 
-# Terminal emulator
-brew install --cask alacritty
-brew install gnu-sed
-brew install wgetq
+# Mac: Terminal emulator
+# brew install --cask alacritty
+# brew install gnu-sed
+# brew install wgetq
+
+# Linux
+# sudo apt install build-essential -y
+# sudo apt install ripgrep
