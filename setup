@@ -21,6 +21,9 @@ ln -sf "$PWD/shell" "$XDG_CONFIG_HOME/shell"
 # Default Nvim config
 ln -sf "$PWD/nvim" "$XDG_CONFIG_HOME/nvim"
 
+# Tmux Package Manager
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+
 # Alternative Nvim config
 # ln -sf "$PWD/nvim_lazy/" "$XDG_CONFIG_HOME/nvim_lz"
 
@@ -33,11 +36,26 @@ ln -sf "$PWD/nvim" "$XDG_CONFIG_HOME/nvim"
 # TODO: Install Golang; Compile the CLI
 # ln -sf "$PWD/alx/alx" "$HOME/.local/bin/alx"
 
-# Mac: Terminal emulator
+# === Mac specific packages
+
 # brew install --cask alacritty
 # brew install gnu-sed
-# brew install wgetq
+# brew install wget
+# brew install tmux
 
-# Linux
-# sudo apt install build-essential -y
-# sudo apt install ripgrep
+# === END Mac specific packages
+#
+# === Linux specific packages
+# sudo apt install build-essential ripgrep tmux fd-find   -y
+
+# Node
+# wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+# nvm install --lts --default
+
+# Ruby
+# gpg --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+# sudo apt-add-repository -y ppa:rael-gc/rvm
+# sudo apt-get update
+# sudo apt-get install rvm -y
+# sudo usermod -a -G rvm $USER
+# echo -e '\nsource "/etc/profile.d/rvm.sh"' >> ~/.bashrc
