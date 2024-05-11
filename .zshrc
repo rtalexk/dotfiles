@@ -91,21 +91,21 @@ source $ZSH/oh-my-zsh.sh
 # export LANG=en_US.UTF-8
 
 # Custom aliases
-if [ -n "$(find $XDG_CONFIG_HOME/shell/aliases/ -maxdepth 1 -type f)" ]; then
-  for file in $XDG_CONFIG_HOME/shell/aliases/*(.); do
-    if [ -f "$file" ]; then
-      source "$file"
-    fi
-  done
+if [ -n "$(find "$XDG_CONFIG_HOME/shell/aliases/" -maxdepth 1 -type f -not \( -name '.' -o -name '..' \))" ]; then
+  for file in "$XDG_CONFIG_HOME/shell/aliases/"*; do
+		if [ -f "$file" ]; then
+			source "$file"
+		fi
+	done
 fi
 
 # Create symlinks for my custon shell scripts
-if [ -n "$(find $XDG_CONFIG_HOME/shell/scripts/ -maxdepth 1 -type f)" ]; then
-  for file in $XDG_CONFIG_HOME/shell/scripts/*(.); do
-    if [ -f "$file" ]; then
-      ln -sf "$file" "$HOME/.local/bin/$(basename $file)"
-    fi
-  done
+if [ -n "$(find $XDG_CONFIG_HOME/shell/scripts/ -maxdepth 1 -type f -not \( -name '.' -o -name '..' \))" ]; then
+	for file in "$XDG_CONFIG_HOME/shell/scripts/"*; do
+		if [ -f "$file" ]; then
+			ln -sf "$file" "$HOME/.local/bin/$(basename $file)"
+		fi
+	done
 fi
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -118,3 +118,6 @@ fi
 export GOPATH="$HOME/go"
 export GOBIN="$GOPATH/bin"
 export PATH="$GOBIN:$PATH"
+
+# See `:help modeline`
+# vim: ts=4 sts=4 sw=4 et
