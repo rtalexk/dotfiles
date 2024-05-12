@@ -119,5 +119,7 @@ export GOPATH="$HOME/go"
 export GOBIN="$GOPATH/bin"
 export PATH="$GOBIN:$PATH"
 
+eval "$(zoxide init zsh)"
+
 # See `:help modeline`
 # vim: ts=4 sts=4 sw=4 et
