@@ -290,6 +290,7 @@ return {
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Help' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = 'Keymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Files' })
+      vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = 'Buffers' })
       vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Telescope builtins' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Current word' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'By grep' })
