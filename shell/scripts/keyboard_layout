@@ -2,10 +2,13 @@
 
 set -euo pipefail
 
-defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources \
-  | grep "KeyboardLayout Name" \
-  | cut -f 2 -d "=" \
-  | tr -d ' ;."' \
-  | cut -c1-2 \
-  | tr '[:lower:]' '[:upper:]'
-
+if [[ "$OSTYPE" == "darwin" ]]; then
+	defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources |
+		grep "KeyboardLayout Name" |
+		cut -f 2 -d "=" |
+		tr -d ' ;."' |
+		cut -c1-2 |
+		tr '[:lower:]' '[:upper:]'
+else
+	echo "--"
+fi
