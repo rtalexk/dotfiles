@@ -1,0 +1,16 @@
+prSections:
+  - title: Open
+    filters: repo:nuvocargo/nuvo-os is:open
+
+  - title: Requested
+    filters: repo:nuvocargo/nuvo-os is:open user-review-requested:@me 
+
+  - title: Reviewing
+    filters: repo:nuvocargo/nuvo-os is:open reviewed-by:@me 
+
+  - title: Mentioned
+    filters: repo:nuvocargo/nuvo-os is:open mentions:@me
+
+  - title: Mine
+    filters: repo:nuvocargo/nuvo-os is:open author:@me
+
