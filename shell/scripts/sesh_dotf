@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# W0
+tmux rename-window -t 0 "Code"
+tmux send-keys "nvim" Enter
+
+# W1
+tmux new-window -n "Git"
+tmux send-keys "lazygit" Enter
+
+tmux select-window -t 0
