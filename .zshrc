@@ -9,7 +9,7 @@ export ZSH="$HOME/.oh-my-zsh"
 export EDITOR="nvim"
 
 export XDG_CONFIG_HOME="$HOME/.config"
-export PROJECTS="$HOME/Documents/Code"
+export PROJECTS="$HOME/com.github"
 export DOTFILES="$PROJECTS/dotfiles"
 export ICLOUD="$HOME/Library/Mobile\ Documents/com~apple~CloudDocs"
 export BRAIN="$HOME/Documents/Notes"
