@@ -9,11 +9,11 @@ tmux new-window -n "Console"
 tmux split-window -h
 
 # W2
-tmux new-window -n "PRs"
-tmux send-keys "gh dash --config ~/.config/gh-dash/nuvos.yml" Enter
-
-# W3
 tmux new-window -n "Git"
 tmux send-keys "lazygit" Enter
+
+# W3
+tmux new-window -n "PRs"
+tmux send-keys "gh dash --config ~/.config/gh-dash/nuvos.yml" Enter
 
 tmux select-window -t 0
