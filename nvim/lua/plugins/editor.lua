@@ -266,10 +266,16 @@ return {
       require('telescope').setup {
         defaults = {
           initial_mode = 'normal',
+          preview = {
+            hide_on_startup = true,
+          },
           mappings = {
             n = {
               ['q'] = require('telescope.actions').close,
-              ['P'] = require('telescope.actions.layout').toggle_preview,
+              ['<C-p>'] = require('telescope.actions.layout').toggle_preview,
+            },
+            i = {
+              ['<C-p>'] = require('telescope.actions.layout').toggle_preview,
             },
           },
         },
