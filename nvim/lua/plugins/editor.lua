@@ -272,10 +272,14 @@ return {
           mappings = {
             n = {
               ['q'] = require('telescope.actions').close,
-              ['<C-p>'] = require('telescope.actions.layout').toggle_preview,
+              ['<M-p>'] = require('telescope.actions.layout').toggle_preview,
+              ['<C-n>'] = require('telescope.actions').move_selection_next,
+              ['<C-p>'] = require('telescope.actions').move_selection_previous,
             },
             i = {
-              ['<C-p>'] = require('telescope.actions.layout').toggle_preview,
+              ['<M-p>'] = require('telescope.actions.layout').toggle_preview,
+              ['<C-n>'] = require('telescope.actions').move_selection_next,
+              ['<C-p>'] = require('telescope.actions').move_selection_previous,
             },
           },
         },
