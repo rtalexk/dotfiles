@@ -19,6 +19,7 @@ ln -sf "$PWD/.tmux.conf" "$HOME/.tmux.conf"
 ln -sf "$PWD/sesh.toml" "$XDG_CONFIG_HOME/sesh/sesh.toml"
 ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
 ln -sf "$PWD/shell" "$XDG_CONFIG_HOME/shell"
+ln -sf "$PWD/config/gitmux" "$XDG_CONFIG_HOME/gitmux"
 
 # Default Nvim config
 ln -sf "$PWD/nvim" "$XDG_CONFIG_HOME/nvim"
