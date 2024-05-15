@@ -3,9 +3,11 @@
 # W0
 tmux rename-window -t 0 "Code"
 tmux send-keys "nvim" Enter
+tmux setw window-status-activity-style none
 
 # W1
 tmux new-window -n "Git"
 tmux send-keys "lazygit" Enter
+tmux setw window-status-activity-style none
 
 tmux select-window -t 0
