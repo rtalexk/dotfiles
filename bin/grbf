@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+result=$(git_pick_branch)
+
+if [[ $? -eq 0 && -n "$result" ]]; then
+  git rebase "$result"
+else
+  echo "$result"
+fi

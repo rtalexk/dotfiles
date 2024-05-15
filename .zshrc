@@ -108,7 +108,7 @@ if [ -n "$(find $XDG_CONFIG_HOME/shell/scripts/ -maxdepth 1 -type f -not \( -nam
 	done
 fi
 
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$DOTFILES/bin:$PATH"
 
 # Work specific shell configuration
 if [ -f "$XDG_CONFIG_HOME/shell/work" ]; then

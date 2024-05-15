@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+if ! is_git_repo; then
+	echo "Not in a Git repo"
+	exit 1
+fi
+
+branch_count=$(git branch | wc -l | tr -d ' ')
+
+if [[ "$branch_count" == "1" ]]; then
+	echo "Only one branch and currently selected"
+	exit 1
+fi
+
+branch=$(git branch | grep -v '^*' | sed 's/*//g' | sed 's/[[:space:]]//g' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)
+echo "$branch"

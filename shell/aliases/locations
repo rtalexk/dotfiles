@@ -1,3 +1,5 @@
+# vim set ft=bash
+
 alias dotf="cd $DOTFILES"
 alias projects="cd $PROJECTS"
 alias brain="cd $BRAIN"

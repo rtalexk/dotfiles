@@ -4,25 +4,3 @@ alias difo="git diff origin/main"
 alias grsf="git reset --soft"
 alias gcwip="git add . && git commit --no-verify --message 'wip'"
 alias gbdm="git branch --merged | egrep -v '(^\*|master|main|dev)' | xargs git branch -d"
-
-gcof() {
-  local branch
-  branch=$(gbfz)
-  if [[ -n "$branch" ]]; then
-    git checkout "$branch"
-  fi
-}
-
-grbf() {
-  local branch
-  branch=$(gbfz)
-  if [[ -n "$branch" ]]; then
-    git rebase "$branch"
-  fi
-}
-
-gbfz() {
-  local branch
-  branch=$(git branch | grep -v '^*' | sed 's/*//g' | sed 's/[[:space:]]//g' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)
-  echo "$branch"
-}
