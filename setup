@@ -8,11 +8,11 @@ if [ ! -f "$PWD/config/shell/work" ]; then
 fi
 
 # Link settings to the system
-ln -sf "$PWD/config/alacritty" "$XDG_CONFIG_HOME/alacritty"
-ln -sf "$PWD/config/gitmux" "$XDG_CONFIG_HOME/gitmux"
-ln -sf "$PWD/config/shell" "$XDG_CONFIG_HOME/shell"
-ln -sf "$PWD/config/sesh" "$XDG_CONFIG_HOME/sesh"
-ln -sf "$PWD/config/nvim" "$XDG_CONFIG_HOME/nvim"
+ln -sf "$PWD/config/alacritty" "$XDG_CONFIG_HOME/"
+ln -sf "$PWD/config/gitmux" "$XDG_CONFIG_HOME/"
+ln -sf "$PWD/config/shell" "$XDG_CONFIG_HOME/"
+ln -sf "$PWD/config/sesh" "$XDG_CONFIG_HOME/"
+ln -sf "$PWD/config/nvim" "$XDG_CONFIG_HOME/"
 
 ln -sf "$PWD/.tmux.conf" "$HOME/.tmux.conf"
 ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
