@@ -2,30 +2,24 @@
 
 # Check XDG_CONFIG_HOME is set
 
-mkdir -p "$XDG_CONFIG_HOME"/alacritty/themes
-mkdir -p "$XDG_CONFIG_HOME"/nvim
-mkdir -p "$XDG_CONFIG_HOME"/sesh
-
 # Work specific settings
-if [ ! -f "$PWD/shell/work" ]; then
-	cp "$PWD/shell/work.example" "$PWD/shell/work"
+if [ ! -f "$PWD/config/shell/work" ]; then
+	cp "$PWD/config/shell/work.example" "$PWD/config/shell/work"
 fi
 
-git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME/alacritty/themes"
-
 # Link settings to the system
-ln -sf "$PWD/alacritty.toml" "$XDG_CONFIG_HOME/alacritty/alacritty.toml"
-ln -sf "$PWD/.tmux.conf" "$HOME/.tmux.conf"
-ln -sf "$PWD/sesh.toml" "$XDG_CONFIG_HOME/sesh/sesh.toml"
-ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
-ln -sf "$PWD/shell" "$XDG_CONFIG_HOME/shell"
+ln -sf "$PWD/config/alacritty" "$XDG_CONFIG_HOME/alacritty"
 ln -sf "$PWD/config/gitmux" "$XDG_CONFIG_HOME/gitmux"
+ln -sf "$PWD/config/shell" "$XDG_CONFIG_HOME/shell"
+ln -sf "$PWD/config/sesh" "$XDG_CONFIG_HOME/sesh"
+ln -sf "$PWD/config/nvim" "$XDG_CONFIG_HOME/nvim"
 
-# Default Nvim config
-ln -sf "$PWD/nvim" "$XDG_CONFIG_HOME/nvim"
+ln -sf "$PWD/.tmux.conf" "$HOME/.tmux.conf"
+ln -sf "$PWD/.zshrc" "$HOME/.zshrc"
 
 # Tmux Package Manager
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+git clone https://github.com/alacritty/alacritty-theme "$XDG_CONFIG_HOME/alacritty/themes"
 
 # Alternative Nvim config
 # ln -sf "$PWD/nvim_lazy/" "$XDG_CONFIG_HOME/nvim_lz"

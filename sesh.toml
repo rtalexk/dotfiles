@@ -1,9 +1,0 @@
-[[session]]
-name = "nuvos"
-path = "~/com.github/nuvo-os/"
-startup_script = "sesh_nuvos"
-
-[[session]]
-name = "dotf"
-path = "~/com.github/dotfiles/"
-startup_command = "sesh_dotf"
