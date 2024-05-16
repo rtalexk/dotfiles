@@ -99,15 +99,6 @@ if [ -n "$(find "$XDG_CONFIG_HOME/shell/aliases/" -maxdepth 1 -type f -not \( -n
 	done
 fi
 
-# Create symlinks for my custon shell scripts
-if [ -n "$(find $XDG_CONFIG_HOME/shell/scripts/ -maxdepth 1 -type f -not \( -name '.' -o -name '..' \))" ]; then
-	for file in "$XDG_CONFIG_HOME/shell/scripts/"*; do
-		if [ -f "$file" ]; then
-			ln -sf "$file" "$HOME/.local/bin/$(basename $file)"
-		fi
-	done
-fi
-
 export PATH="$HOME/.local/bin:$DOTFILES/bin:$PATH"
 
 # Work specific shell configuration
