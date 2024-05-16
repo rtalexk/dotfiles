@@ -17,7 +17,7 @@ tmux setw window-status-activity-style none
 
 # W3
 tmux new-window -n "PRs"
-tmux send-keys "gh dash --config ~/.config/gh-dash/nuvos.yml" Enter
+tmux send-keys "ghdash" Enter
 tmux setw window-status-activity-style none
 
 tmux select-window -t 0
