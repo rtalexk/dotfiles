@@ -11,6 +11,7 @@ fi
 ln -sf "$PWD/config/alacritty" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/gitmux" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/shell" "$XDG_CONFIG_HOME/"
+ln -sf "$PWD/config/tmux" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/sesh" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/nvim" "$XDG_CONFIG_HOME/"
 
