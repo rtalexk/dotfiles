@@ -96,6 +96,13 @@ return {
         desc = 'Last',
       },
       {
+        '<leader>tc',
+        function()
+          require('neotest').output_panel.clear()
+        end,
+        desc = 'Clear',
+      },
+      {
         '<leader>ts',
         function()
           require('neotest').summary.toggle()
