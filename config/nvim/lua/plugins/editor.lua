@@ -372,6 +372,7 @@ return {
         ['<leader>g'] = { name = 'Git', _ = 'which_key_ignore' },
         ['<leader>gh'] = { name = 'Hunk', _ = 'which_key_ignore' },
         ['<leader>s'] = { name = 'Search', _ = 'which_key_ignore' },
+        ['<leader>t'] = { name = 'Test', _ = 'which_key_ignore' },
         ['<leader>u'] = { name = 'UI', _ = 'which_key_ignore' },
         ['<leader>x'] = { name = 'X Ray', _ = 'which_key_ignore' },
       }
