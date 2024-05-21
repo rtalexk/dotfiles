@@ -1,4 +1,5 @@
--- Autoformat
+-- Conform
+-- Copilot
 -- Nvim Cmp
 -- Nvim Treesitter
 
@@ -41,6 +42,10 @@ return {
         -- javascript = { { "prettierd", "prettier" } },
       },
     },
+  },
+
+  {
+    'github/copilot.vim',
   },
 
   { -- Autocompletion
