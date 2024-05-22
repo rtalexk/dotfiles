@@ -18,6 +18,7 @@ import (
 )
 
 var Name string
+var Inbox bool
 
 // noteCmd represents the note command
 var noteCmd = &cobra.Command{
@@ -31,6 +32,13 @@ var noteCmd = &cobra.Command{
 		if Name == "" {
 			fmt.Println("The name of the note is required")
 			os.Exit(1)
+		}
+
+		var noteDir string
+		if Inbox {
+			noteDir = utils.INBOX_DIR
+		} else {
+			noteDir = utils.SELF_DIR
 		}
 
 		brainDir := utils.GetDirOrExit("BRAIN")
@@ -81,8 +89,8 @@ Links:
 			os.Exit(1)
 		}
 
-		filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, utils.SELF_DIR, Name)
-		absoluteFilePath := fmt.Sprintf("%s/%s.md", utils.SELF_DIR, Name)
+		filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, noteDir, Name)
+		absoluteFilePath := fmt.Sprintf("%s/%s.md", noteDir, Name)
 
 		if _, err := utils.CreateFile(filePath, contentBuffer); err != nil {
 			// If the file already exists, let's continue with the execution
@@ -111,4 +119,5 @@ func init() {
 	noteCmd.AddCommand(note.QuoteCmd)
 	noteCmd.AddCommand(note.RefCmd)
 	noteCmd.Flags().StringVarP(&Name, "name", "n", "", "(required) Name of the note, i.e: 'this-is-a-note'")
+	noteCmd.Flags().BoolVarP(&Inbox, "inbox", "i", false, "[optional] Place note at Inbox")
 }
