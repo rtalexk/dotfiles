@@ -305,6 +305,7 @@ return {
           preview = {
             hide_on_startup = true,
           },
+          path_display = { 'filename_first' },
           mappings = {
             n = {
               ['q'] = require('telescope.actions').close,
