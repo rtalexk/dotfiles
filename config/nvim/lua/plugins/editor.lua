@@ -220,8 +220,15 @@ return {
     },
     opts = {
       close_if_las_window = true,
+      popup_border_style = 'rounded',
       window = {
         position = 'float',
+        popup = {
+          size = {
+            width = 60,
+            height = vim.o.lines - 10,
+          },
+        },
       },
       filesystem = {
         filtered_items = {
@@ -236,6 +243,20 @@ return {
           handler = function()
             require('neo-tree.command').execute { action = 'close' }
           end,
+        },
+      },
+      default_component_configs = {
+        file_size = {
+          enabled = false,
+        },
+        last_modified = {
+          enabled = false,
+        },
+        created = {
+          enabled = false,
+        },
+        type = {
+          enabled = false,
         },
       },
     },
