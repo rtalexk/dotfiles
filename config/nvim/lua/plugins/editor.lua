@@ -224,10 +224,12 @@ return {
       window = {
         position = 'float',
         popup = {
-          size = {
-            width = 60,
-            height = vim.o.lines - 10,
-          },
+          size = function()
+            return {
+              width = 60,
+              height = vim.o.lines - 10,
+            }
+          end,
         },
       },
       filesystem = {
