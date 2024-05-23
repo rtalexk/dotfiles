@@ -19,6 +19,18 @@ blur = true
 x = 8
 y = 0
 
+[window.dimensions]
+columns = 130
+lines = 40
+
+[cursor]
+blink_interval = 400
+blink_timeout = 0
+
+[cursor.style]
+shape = "Beam"
+blinking = "Always"
+
 [colors]
 primary.background = "#222436"
 
@@ -26,3 +38,6 @@ primary.background = "#222436"
 bindings = [
   { key = "F12", action = "ToggleSimpleFullscreen" }
 ]
+
+[mouse]
+hide_when_typing = true
