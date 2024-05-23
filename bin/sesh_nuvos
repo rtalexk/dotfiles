@@ -11,11 +11,6 @@ tmux split-window -h
 tmux setw window-status-activity-style none
 
 # W2
-tmux new-window -n "Git"
-tmux send-keys "lazygit" Enter
-tmux setw window-status-activity-style none
-
-# W3
 tmux new-window -n "PRs"
 tmux send-keys "ghdash" Enter
 tmux setw window-status-activity-style none
