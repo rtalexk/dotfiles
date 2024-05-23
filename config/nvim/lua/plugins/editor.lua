@@ -342,7 +342,6 @@ return {
           layout_config = {
             width = 0.60,
           },
-          winblend = 10,
           previewer = false,
         })
       end, { desc = 'Grep in buffer' })
