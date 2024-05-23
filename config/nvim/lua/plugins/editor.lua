@@ -402,7 +402,7 @@ return {
       on_highlights = function(hl, colors)
         hl.CursorLineNr = { fg = colors.orange }
 
-        hl.LineNr = { fg = colors.cyan }
+        hl.LineNr = { fg = '#777d7d' }
         hl.LineNrAbove = { fg = '#777d7d' }
         hl.LineNrBelow = { fg = '#777d7d' }
         hl.Comment = { fg = '#777d7d' }
