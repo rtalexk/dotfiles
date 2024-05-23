@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+if [ -z "$1" ]; then
+	dir="$(pwd)"
+else
+	dir="$1"
+fi
+
+if is_git_repo; then
+	output=$(gitmux -cfg "$XDG_CONFIG_HOME/gitmux/gitmux.conf" "$dir")
+else
+	output=""
+fi
+
+echo "$output"
