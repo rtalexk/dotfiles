@@ -12,7 +12,7 @@ family = "Hack Nerd Font Mono"
 option_as_alt = "Both"
 
 decorations = "Buttonless"
-opacity = 0.9
+opacity = 0.85
 blur = true
 
 [window.padding]
