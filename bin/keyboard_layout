@@ -10,5 +10,5 @@ if [[ "$(uname)" == "Darwin" ]]; then
 		cut -c1-2 |
 		tr '[:lower:]' '[:upper:]'
 else
-	echo "--"
+	echo "󰖭 "
 fi
