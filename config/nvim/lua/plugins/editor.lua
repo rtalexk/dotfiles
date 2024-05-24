@@ -314,6 +314,13 @@ return {
           preview = {
             hide_on_startup = true,
           },
+          layout_strategy = 'vertical',
+          layout_config = {
+            vertical = {
+              width = 0.9,
+              preview_height = 0.70,
+            },
+          },
           path_display = { 'filename_first' },
           mappings = {
             n = {
