@@ -9,6 +9,7 @@ fi
 
 # Link settings to the system
 ln -sf "$PWD/config/alacritty" "$XDG_CONFIG_HOME/"
+ln -sf "$PWD/config/lazygit" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/gitmux" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/shell" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/tmux" "$XDG_CONFIG_HOME/"

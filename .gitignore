@@ -1,4 +1,6 @@
-config/shell/work
+**/shell/work
+**/lazygit/state.yml
+
 .DS_Store
 
 alx/alx

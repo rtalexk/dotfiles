@@ -1,0 +1,20 @@
+customCommands:
+  - name: "edit"
+    context: "files"
+    key: "e"
+    prompts:
+      - type: "menu"
+        title: "Editor instance"
+        key: "WinChoise"
+        options:
+          - value: "reuse"
+            description: "Search for a Window with an EDITOR instance"
+            key: "r"
+          - value: "current"
+            description: "Edit the file in the current window"
+            key: "c"
+          - value: "new"
+            description: "Edit the file in a new window"
+            key: "n"
+    command: "lazygit_edit_cmd -w {{.Form.WinChoise}} {{.SelectedFile.Name}}"
+    subprocess: true
