@@ -11,8 +11,11 @@ return {
         'icon',
       },
       float = {
-        max_width = 50,
+        max_width = 60,
         max_height = 80,
+      },
+      win_options = {
+        signcolumn = 'yes:2',
       },
       view_options = {
         show_hidden = true,
@@ -24,6 +27,14 @@ return {
     keys = {
       { '<leader>e', '<cmd>Oil --float<cr>', mode = { 'n' }, desc = 'File explorer' },
     },
+  },
+
+  {
+    'refractalize/oil-git-status.nvim',
+    dependencies = {
+      'stevearc/oil.nvim',
+    },
+    config = true,
   },
 
   -- Replace the netrw gx mapping as a workaround.
