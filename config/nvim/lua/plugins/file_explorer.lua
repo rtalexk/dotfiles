@@ -17,7 +17,7 @@ return {
       view_options = {
         show_hidden = true,
         is_always_hidden = function(name)
-          return vim.startswith(name, '.git') or name == '../' or name == './' or name == '.DS_Store'
+          return vim.startswith(name, '.git') or vim.endswith(name, './') or name == '..' or name == '.DS_Store'
         end,
       },
     },
