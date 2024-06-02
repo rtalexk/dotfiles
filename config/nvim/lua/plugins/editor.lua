@@ -48,8 +48,8 @@ return {
           vim.keymap.set(mode, lhs, rhs, { buffer = buffer, desc = desc })
         end
 
-        map('n', ']h', gs.next_hunk, 'Next hunk')
-        map('n', '[h', gs.prev_hunk, 'Prev hunk')
+        map('n', ']c', gs.next_hunk, 'Next change')
+        map('n', '[c', gs.prev_hunk, 'Prev change')
 
         map({ 'n', 'v' }, '<leader>ghs', ':Gitsigns stage_hunk<CR>', 'Stage hunk')
         map({ 'n', 'v' }, '<leader>ghr', ':Gitsigns reset_hunk<CR>', 'Reset hunk')
