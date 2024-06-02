@@ -12,7 +12,7 @@ family = "Hack Nerd Font Mono"
 option_as_alt = "Both"
 
 decorations = "Buttonless"
-opacity = 0.85
+opacity = 0.90
 blur = true
 
 [window.padding]
@@ -32,7 +32,7 @@ shape = "Beam"
 blinking = "Always"
 
 [colors]
-primary.background = "#222436"
+primary.background = "#001626"
 
 [keyboard]
 bindings = [
