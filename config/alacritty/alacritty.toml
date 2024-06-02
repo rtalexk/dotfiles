@@ -32,7 +32,8 @@ shape = "Beam"
 blinking = "Always"
 
 [colors]
-primary.background = "#001626"
+primary.background = "#001626" # blueish
+# primary.background = "#222436" # grayish
 
 [keyboard]
 bindings = [
