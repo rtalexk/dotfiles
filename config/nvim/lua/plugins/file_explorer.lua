@@ -1,3 +1,4 @@
+--
 return {
   {
     'stevearc/oil.nvim',
@@ -5,7 +6,10 @@ return {
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     opts = {
       keymaps = {
-        ['gq'] = 'actions.close',
+        ['q'] = 'actions.close',
+      },
+      columns = {
+        'icon',
       },
       float = {
         max_width = 50,
