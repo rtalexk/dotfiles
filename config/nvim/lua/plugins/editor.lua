@@ -319,7 +319,11 @@ return {
       vim.keymap.set('n', '<leader>sr', builtin.oldfiles, { desc = 'Recent Files' })
       vim.keymap.set('n', '<leader>:', '<cmd>Telescope command_history<cr>', { desc = 'Command History' })
 
-      vim.keymap.set('n', '<leader>.', builtin.find_files, { desc = 'Search Files' })
+      vim.keymap.set('n', '<leader>.', function()
+        builtin.find_files {
+          initial_mode = 'insert',
+        }
+      end, { desc = 'Search Files' })
 
       vim.keymap.set('n', '<leader>gC', builtin.git_commits, { desc = 'Project commits' })
       vim.keymap.set('n', '<leader>gc', builtin.git_bcommits, { desc = 'Buffer commits' })
