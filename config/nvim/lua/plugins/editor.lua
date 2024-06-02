@@ -134,6 +134,9 @@ return {
 
   {
     'echasnovski/mini.bufremove',
+    opts = {
+      silent = true,
+    },
     keys = {
       {
         '<leader>bd',
@@ -161,6 +164,43 @@ return {
           require('mini.bufremove').delete(0, true)
         end,
         desc = 'Close! buffer',
+      },
+      {
+        '<leader>bo',
+        function()
+          local bd = require('mini.bufremove').delete
+          local unsaved_changes = function(buf)
+            return vim.api.nvim_buf_get_option(buf, 'modified')
+          end
+
+          local close_bufs = function(bufs)
+            for _, buf in ipairs(bufs) do
+              if unsaved_changes(buf) then
+                local prompt = ('Save changes to %q?'):format(vim.api.nvim_buf_get_name(buf))
+                local choice = vim.fn.confirm(prompt, '&Yes\n&No\n&Cancel')
+
+                if choice == 1 then -- yes
+                  vim.api.nvim_buf_call(buf, function()
+                    vim.cmd.write()
+                  end)
+                  bd(buf)
+                elseif choice == 2 then -- no
+                  bd(buf, true)
+                end
+              else
+                bd(buf)
+              end
+            end
+          end
+
+          local current_buf = vim.fn.bufnr()
+          local other_bufs = vim.tbl_filter(function(b)
+            return b ~= current_buf
+          end, vim.api.nvim_list_bufs())
+
+          close_bufs(other_bufs)
+        end,
+        desc = 'Close other buffers',
       },
     },
   },
