@@ -1,7 +1,7 @@
 return {
   {
     'stevearc/oil.nvim',
-    event = 'VimEnter',
+    event = 'VeryLazy',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     opts = {
       keymaps = {
@@ -12,7 +12,7 @@ return {
       },
       float = {
         max_width = 60,
-        max_height = 80,
+        max_height = 45,
       },
       win_options = {
         signcolumn = 'yes:2',
@@ -20,7 +20,7 @@ return {
       view_options = {
         show_hidden = true,
         is_always_hidden = function(name)
-          return vim.startswith(name, '.git') or vim.endswith(name, './') or name == '..' or name == '.DS_Store'
+          return vim.endswith(name, './') or name == '.git' or name == '..' or name == '.DS_Store'
         end,
       },
     },
