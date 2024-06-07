@@ -324,6 +324,7 @@ return {
           initial_mode = 'insert',
         }
       end, { desc = 'Search Files' })
+      vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Search buffers' })
 
       vim.keymap.set('n', '<leader>gC', builtin.git_commits, { desc = 'Project commits' })
       vim.keymap.set('n', '<leader>gc', builtin.git_bcommits, { desc = 'Buffer commits' })
