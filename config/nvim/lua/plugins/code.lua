@@ -76,6 +76,7 @@ return {
           -- },
         },
       },
+      'onsails/lspkind.nvim',
       'saadparwaiz1/cmp_luasnip',
 
       -- Adds other completion capabilities.
@@ -88,9 +89,19 @@ return {
       -- See `:help cmp`
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
+      local lspkind = require 'lspkind'
+
       luasnip.config.setup {}
 
       cmp.setup {
+        formatting = {
+          format = lspkind.cmp_format {
+            mode = 'symbol_text',
+            maxwidth = 50,
+            ellipsis_char = '…',
+            show_label_details = true,
+          },
+        },
         snippet = {
           expand = function(args)
             luasnip.lsp_expand(args.body)
