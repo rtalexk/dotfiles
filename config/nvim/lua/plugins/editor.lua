@@ -281,11 +281,19 @@ return {
               ['<M-p>'] = require('telescope.actions.layout').toggle_preview,
               ['<C-n>'] = require('telescope.actions').move_selection_next,
               ['<C-p>'] = require('telescope.actions').move_selection_previous,
+              ['<C-s>'] = require('telescope.actions').select_vertical,
+              ['<C-h>'] = require('telescope.actions').select_horizontal,
+              ['<C-v>'] = false,
+              ['<C-x>'] = false,
             },
             i = {
               ['<M-p>'] = require('telescope.actions.layout').toggle_preview,
               ['<C-n>'] = require('telescope.actions').move_selection_next,
               ['<C-p>'] = require('telescope.actions').move_selection_previous,
+              ['<C-s>'] = require('telescope.actions').select_vertical,
+              ['<C-h>'] = require('telescope.actions').select_horizontal,
+              ['<C-v>'] = false,
+              ['<C-x>'] = false,
             },
           },
         },
@@ -309,11 +317,17 @@ return {
       local builtin = require 'telescope.builtin'
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Help' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = 'Keymaps' })
-      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Files' })
+      vim.keymap.set('n', '<leader>sf', function()
+        builtin.find_files { initial_mode = 'insert' }
+      end, { desc = 'Files' })
       vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = 'Buffers' })
       vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Telescope builtins' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Current word' })
-      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'By grep' })
+      vim.keymap.set('n', '<leader>sg', function()
+        builtin.live_grep {
+          initial_mode = 'insert',
+        }
+      end, { desc = 'By grep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Diagnostics' })
       vim.keymap.set('n', '<leader>sR', builtin.resume, { desc = 'Resume' })
       vim.keymap.set('n', '<leader>sr', builtin.oldfiles, { desc = 'Recent Files' })
@@ -347,6 +361,7 @@ return {
       vim.keymap.set('n', '<leader>s/', function()
         builtin.live_grep {
           grep_open_files = true,
+          initial_mode = 'insert',
           prompt_title = 'Live Grep in Open Files',
         }
       end, { desc = 'Grep in Open Buffers' })
