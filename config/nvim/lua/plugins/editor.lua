@@ -125,9 +125,9 @@ return {
       leap.opts.special_keys.prev_group = '<backspace>'
       leap.opts.safe_labels = {}
 
-      vim.keymap.set({ 'n', 'x', 'o' }, 'm', '<Plug>(leap-forward)')
-      vim.keymap.set({ 'n', 'x', 'o' }, 'M', '<Plug>(leap-backward)')
-      vim.keymap.set({ 'n', 'x', 'o' }, 'gm', '<Plug>(leap-from-window)')
+      vim.keymap.set({ 'n', 'x', 'o' }, 'm', '<Plug>(leap-forward)', { desc = 'Leap forward' })
+      vim.keymap.set({ 'n', 'x', 'o' }, 'M', '<Plug>(leap-backward)', { desc = 'Leap backward' })
+      vim.keymap.set({ 'n', 'x', 'o' }, 'gm', '<Plug>(leap-from-window)', { desc = 'Leap from window' })
     end,
   },
 
