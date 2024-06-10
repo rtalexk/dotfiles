@@ -72,6 +72,7 @@ plugins=(
 
 # Prompt theme
 source $XDG_CONFIG_HOME/shell/oh_my_zsh
+# source $XDG_CONFIG_HOME/shell/oh_my_posh
 
 # User configuration
 source $XDG_CONFIG_HOME/shell/user_config
