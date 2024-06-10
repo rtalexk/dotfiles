@@ -1,0 +1,6 @@
+# vim ft=bash
+
+# Oh My Zsh specific config
+
+export ZSH="$HOME/.oh-my-zsh"
+source $ZSH/oh-my-zsh.sh

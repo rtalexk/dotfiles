@@ -70,10 +70,8 @@ plugins=(
   zsh-autosuggestions
 )
 
-# Path to your oh-my-zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
-
-source $ZSH/oh-my-zsh.sh
+# Prompt theme
+source $XDG_CONFIG_HOME/shell/oh_my_zsh
 
 # User configuration
 source $XDG_CONFIG_HOME/shell/user_config
