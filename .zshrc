@@ -1,19 +1,6 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
-export TERM="tmux-256color"
-
-# Path to your oh-my-zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
-
-export EDITOR="nvim"
-
-export XDG_CONFIG_HOME="$HOME/.config"
-export PROJECTS="$HOME/com.github"
-export DOTFILES="$PROJECTS/dotfiles"
-export ICLOUD="$HOME/Library/Mobile\ Documents/com~apple~CloudDocs"
-export BRAIN="$HOME/Documents/Notes"
-
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
@@ -83,34 +70,16 @@ plugins=(
   zsh-autosuggestions
 )
 
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
+source $XDG_CONFIG_HOME/shell/user_config
 
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
-
-# Custom aliases
-if [ -n "$(find "$XDG_CONFIG_HOME/shell/aliases/" -maxdepth 1 -type f -not \( -name '.' -o -name '..' \))" ]; then
-  for file in "$XDG_CONFIG_HOME/shell/aliases/"*; do
-		if [ -f "$file" ]; then
-			source "$file"
-		fi
-	done
-fi
-
-export PATH="$HOME/.local/bin:$DOTFILES/bin:$PATH"
-
-# Work specific shell configuration
-if [ -f "$XDG_CONFIG_HOME/shell/work" ]; then
-    source "$XDG_CONFIG_HOME/shell/work"
-fi
-
-export GOPATH="$HOME/go"
-export GOBIN="$GOPATH/bin"
-export PATH="$GOBIN:$PATH"
-
-eval "$(zoxide init zsh)"
 
 # See `:help modeline`
 # vim: ts=4 sts=4 sw=4 et
