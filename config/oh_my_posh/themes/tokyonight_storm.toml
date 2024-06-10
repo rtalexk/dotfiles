@@ -66,10 +66,10 @@ terminal_background = 'p:t-background'
     template = ' {{ .Full }}'
 
   [[blocks.segments]]
-    type = 'julia'
+    type = 'rust'
     style = 'plain'
     foreground = 'p:terminal-magenta'
-    template = ' {{ .Full }}'
+    template = ' {{ .Full }}'
 
   [[blocks.segments]]
     type = 'ruby'
