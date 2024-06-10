@@ -3,7 +3,6 @@
 export TERM="tmux-256color"
 export EDITOR="nvim"
 
-export XDG_CONFIG_HOME="$HOME/.config"
 export PROJECTS="$HOME/com.github"
 export DOTFILES="$PROJECTS/dotfiles"
 export ICLOUD="$HOME/Library/Mobile\ Documents/com~apple~CloudDocs"
