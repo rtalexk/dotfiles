@@ -1,0 +1,10 @@
+# vim ft=bash
+
+# Oh My Posh specific config
+
+if [ "$TERM_PROGRAM" != "Apple_Terminal" ]; then
+  eval "$(oh-my-posh init zsh --config $XDG_CONFIG_HOME/oh_my_posh/themes/tokyonight_storm.toml)"
+else
+  # Fallback to Oh My Zsh
+  source "./oh_my_zsh"
+fi
