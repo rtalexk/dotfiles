@@ -2,9 +2,15 @@
 
 # Oh My Posh specific config
 
+# See https://unix.stackexchange.com/a/477909
+autoload -Uz compinit
+compinit
+
 if [ "$TERM_PROGRAM" != "Apple_Terminal" ]; then
   eval "$(oh-my-posh init zsh --config $XDG_CONFIG_HOME/oh_my_posh/themes/tokyonight_storm.toml)"
 else
   # Fallback to Oh My Zsh
   source "$XDG_CONFIG_HOME/oh-my-zsh/init"
 fi
+
+source <(oh-my-posh completion zsh)
