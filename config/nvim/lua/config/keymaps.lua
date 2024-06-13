@@ -29,9 +29,9 @@ vim.keymap.set({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { desc = 'Up', ex
 vim.keymap.set({ 'n', 'x' }, '<Up>', "v:count == 0 ? 'gk' : 'k'", { desc = 'Up', expr = true, silent = true })
 
 -- Better start/end of line
-vim.keymap.set({ 'n', 'x' }, '0', "v:count == 0 ? 'g0' : '0'", { desc = 'Start of line', expr = true, silent = true })
-vim.keymap.set({ 'n', 'x' }, '^', "v:count == 0 ? 'g^' : '^'", { desc = 'Start of line (non-blank)', expr = true, silent = true })
-vim.keymap.set({ 'n', 'x' }, '$', "v:count == 0 ? 'g$' : '$'", { desc = 'End of line', expr = true, silent = true })
+-- vim.keymap.set({ 'n', 'x' }, '0', "v:count == 0 ? 'g0' : '0'", { desc = 'Start of line', expr = true, silent = true })
+-- vim.keymap.set({ 'n', 'x' }, '^', "v:count == 0 ? 'g^' : '^'", { desc = 'Start of line (non-blank)', expr = true, silent = true })
+-- vim.keymap.set({ 'n', 'x' }, '$', "v:count == 0 ? 'g$' : '$'", { desc = 'End of line', expr = true, silent = true })
 
 -- Word wrap
 vim.keymap.set('n', '<leader>uw', function()
