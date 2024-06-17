@@ -17,7 +17,7 @@ blur = true
 
 [window.padding]
 x = 8
-y = 0
+y = 4
 
 [window.dimensions]
 columns = 130
