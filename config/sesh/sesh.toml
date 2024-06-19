@@ -1,0 +1,14 @@
+[[session]]
+name = "nuvos"
+path = "~/com.github/nuvos"
+startup_script = "sesh_nuvos"
+
+[[session]]
+name = "dotf"
+path = "~/com.github/dotfiles"
+startup_command = "sesh_dotf"
+
+[[session]]
+name = "slides"
+path = "~/com.github/slides"
+
