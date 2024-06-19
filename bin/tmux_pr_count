@@ -53,7 +53,12 @@ def update_cache(cmd, cache_file)
   Process.fork { system("#{cmd} > #{cache_file} 2>&1") }
 end
 
-if system("is_git_repo")
+def has_remote?(cwd = Dir.pwd)
+  remote = `git remote -v`.strip.chomp
+  !remote.empty?
+end
+
+if system("is_git_repo") && has_remote?(cwd)
   puts pr_list_count(cwd)
 else
   puts "NA"
