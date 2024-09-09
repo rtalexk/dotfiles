@@ -314,11 +314,15 @@ return {
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
+
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Help' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = 'Keymaps' })
-      vim.keymap.set('n', '<leader>sf', function()
+      vim.keymap.set('n', '<leader>sF', function()
         builtin.find_files { initial_mode = 'insert' }
       end, { desc = 'Files' })
+      vim.keymap.set('n', '<leader>sf', function()
+        builtin.find_files { cwd = vim.fn.expand '%:p:h' }
+      end, { desc = 'Sibling files' })
       vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = 'Buffers' })
       vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Telescope builtins' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Current word' })
