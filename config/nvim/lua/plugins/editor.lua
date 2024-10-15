@@ -382,26 +382,28 @@ return {
     'folke/which-key.nvim',
     event = 'VeryLazy',
     config = function()
-      require('which-key').setup()
+      local wk = require 'which-key'
+      wk.setup()
 
       -- TODO: Add mini-surround
 
       -- Document existing key chains
-      require('which-key').register {
-        ['g'] = { name = '+goto' },
-        ['s'] = { name = '+surround' },
-        ['z'] = { name = '+fold' },
-        [']'] = { name = '+next' },
-        ['['] = { name = '+prev' },
-        ['<leader>b'] = { name = 'Buffer', _ = 'which_key_ignore' },
-        ['<leader>c'] = { name = 'Code', _ = 'which_key_ignore' },
-        ['<leader>f'] = { name = 'File', _ = 'which_key_ignore' },
-        ['<leader>g'] = { name = 'Git', _ = 'which_key_ignore' },
-        ['<leader>gh'] = { name = 'Hunk', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = 'Search', _ = 'which_key_ignore' },
-        ['<leader>t'] = { name = 'Test', _ = 'which_key_ignore' },
-        ['<leader>u'] = { name = 'UI', _ = 'which_key_ignore' },
-        ['<leader>x'] = { name = 'X Ray', _ = 'which_key_ignore' },
+      wk.add {
+        { 'g', group = '+goto' },
+        { 's', group = '+surround' },
+        { 'z', group = '+fold' },
+        { ']', group = '+next' },
+        { '[', group = '+prev' },
+        { '<leader>', group = '+Leader' },
+        { '<leader>b', group = 'Buffer' },
+        { '<leader>c', group = 'Code' },
+        { '<leader>f', group = 'File' },
+        { '<leader>g', group = 'Git' },
+        { '<leader>gh', group = 'Hunk' },
+        { '<leader>s', group = 'Search' },
+        { '<leader>t', group = 'Test' },
+        { '<leader>u', group = 'UI' },
+        { '<leader>x', group = 'X Ray' },
       }
     end,
   },
