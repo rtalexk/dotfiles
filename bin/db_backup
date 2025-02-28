@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -e
+
+DB_NAME=""
+DUMP_DIR="db"
+
+while getopts "n:" opt; do
+  case $opt in
+    n) DB_NAME="$OPTARG" ;;
+    *) echo "Usage: $0 -n <database_name>"; exit 1 ;;
+  esac
+done
+
+if [ -z "$DB_NAME" ]; then
+  echo "Usage: $0 -n <database_name>"
+  exit 1
+fi
+
+TIMESTAMP=$(date +"%y_%m_%d")
+
+DUMP_FILE="$DUMP_DIR/${DB_NAME}_${TIMESTAMP}.dump"
+
+pg_dump -Fc -d "$DB_NAME" -f "$DUMP_FILE"
+
+echo "Database dump created: $DUMP_FILE"
+

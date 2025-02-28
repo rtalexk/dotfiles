@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+DB_NAME=""
+DUMP_DIR="db"
+VERBOSE=""
+
+while getopts "n:v" opt; do
+  case $opt in
+    n) DB_NAME="$OPTARG" ;;
+    v) VERBOSE="--verbose" ;;
+    *) echo "Usage: $0 -n <database_name>"; exit 1 ;;
+  esac
+done
+
+if [ -z "$DB_NAME" ]; then
+  echo "Usage: $0 -n <database_name>"
+  exit 1
+fi
+
+LATEST_DUMP=$(ls -t "$DUMP_DIR"/${DB_NAME}_*.dump 2>/dev/null | head -n 1)
+
+if [ -z "$LATEST_DUMP" ]; then
+  echo "No dump files found for database: $DB_NAME"
+  exit 1
+fi
+
+pg_restore $VERBOSE --clean --schema=public --no-acl --if-exists --no-owner -h localhost -U $(whoami) -d "$DB_NAME" "$LATEST_DUMP"
+
+echo "Database restored from: $LATEST_DUMP"
+

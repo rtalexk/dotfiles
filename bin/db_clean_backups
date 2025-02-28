@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -e
+
+DB_NAME=""
+DUMP_DIR="db"
+COMMIT=false
+
+while getopts "n:-:" opt; do
+  case $opt in
+    n) DB_NAME="$OPTARG" ;;
+    -) case "$OPTARG" in
+         commit) COMMIT=true ;;
+         *) echo "Usage: $0 -n <database_name> [--commit]"; exit 1 ;;
+       esac ;;
+    *) echo "Usage: $0 -n <database_name> [--commit]"; exit 1 ;;
+  esac
+done
+
+if [ -z "$DB_NAME" ]; then
+  echo "Usage: $0 -n <database_name> [--commit]"
+  exit 1
+fi
+
+DUMP_FILES=($(ls -t "$DUMP_DIR"/${DB_NAME}_*.dump 2>/dev/null))
+
+if [ "${#DUMP_FILES[@]}" -le 1 ]; then
+  echo "No old dump files to delete for database: $DB_NAME"
+  echo "Latest dump: ${DUMP_FILES[0]}"
+  exit 0
+fi
+
+LATEST_DUMP=${DUMP_FILES[0]}
+DELETE_FILES=("${DUMP_FILES[@]:1}")
+
+echo "Latest dump: $LATEST_DUMP"
+echo "Files to delete:"
+for file in "${DELETE_FILES[@]}"; do
+  echo "  $file"
+done
+
+if [ "$COMMIT" = true ]; then
+  for file in "${DELETE_FILES[@]}"; do
+    rm "$file"
+    echo "Deleted: $file"
+  done
+else
+  echo "Run with --commit to actually delete the files."
+fi
+
