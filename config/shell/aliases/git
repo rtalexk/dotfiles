@@ -4,3 +4,6 @@ alias difo="git diff origin/main"
 alias grsf="git reset --soft"
 alias gcwip="git add . && git commit --no-verify --message 'wip'"
 alias gbdm="git branch --merged | egrep -v '(^\*|master|main|dev)' | xargs git branch -d"
+alias gsta='git stash push --include-untracked'
+
+gbD='git branch --delete --force'
