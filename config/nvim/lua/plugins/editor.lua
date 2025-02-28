@@ -326,6 +326,11 @@ return {
       vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = 'Buffers' })
       vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Telescope builtins' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Current word' })
+      vim.keymap.set('n', '<leader>sW', function()
+        builtin.grep_string {
+          grep_open_files = true,
+        }
+      end, { desc = 'Current word' })
       vim.keymap.set('n', '<leader>sg', function()
         builtin.live_grep {
           initial_mode = 'insert',
