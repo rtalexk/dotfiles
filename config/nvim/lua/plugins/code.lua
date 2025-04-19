@@ -2,6 +2,7 @@
 -- Copilot
 -- Nvim Cmp
 -- Nvim Treesitter
+-- TSJToggle
 
 return {
   { -- Autoformat
@@ -197,5 +198,18 @@ return {
       --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
     end,
+  },
+
+  -- TSJToggle
+  {
+    'Wansmer/treesj',
+    event = 'VeryLazy',
+    keys = {
+      { '<leader>cs', '<cmd>TSJToggle<cr>', desc = 'Toggle object lines' },
+    },
+    cmd = { 'TSJToggle', 'TSJJoin', 'TSJSplit' },
+    opts = {
+      use_default_keymaps = false,
+    },
   },
 }
