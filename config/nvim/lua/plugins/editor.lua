@@ -253,9 +253,17 @@ return {
       require('neoclip').setup {
         enable_macro_history = false,
         initial_mode = 'normal',
+        keys = {
+          telescopcope = {
+            n = {
+              reply = '<c-q>',
+            },
+          },
+        },
         on_select = {
           move_to_front = true,
         },
+        preview = false,
       }
     end,
   },
