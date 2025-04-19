@@ -323,7 +323,13 @@ return {
       vim.keymap.set('n', '<leader>sf', function()
         builtin.find_files { cwd = vim.fn.expand '%:p:h' }
       end, { desc = 'Sibling files' })
-      vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = 'Buffers' })
+      vim.keymap.set('n', '<leader>sb', function()
+        builtin.buffers {
+          sort_lastused = true,
+          ignore_current_buffer = true,
+          initial_mode = 'insert',
+        }
+      end, { desc = 'Buffers' })
       vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Telescope builtins' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Current word' })
       vim.keymap.set('n', '<leader>sW', function()
@@ -338,7 +344,17 @@ return {
       end, { desc = 'By grep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Diagnostics' })
       vim.keymap.set('n', '<leader>sR', builtin.resume, { desc = 'Resume' })
-      vim.keymap.set('n', '<leader>sr', builtin.oldfiles, { desc = 'Recent Files' })
+      vim.keymap.set('n', '<leader>sr', function()
+        builtin.oldfiles {
+          cwd_only = true,
+          tiebreak = function(curr_entry, existing_entry)
+            -- Most recent first
+            return curr_entry.score < existing_entry.score
+          end,
+        }
+      end, {
+        desc = 'Recent Files',
+      })
       vim.keymap.set('n', '<leader>:', '<cmd>Telescope command_history<cr>', { desc = 'Command History' })
 
       vim.keymap.set('n', '<leader>.', function()
