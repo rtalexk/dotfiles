@@ -1,4 +1,5 @@
 -- Comment
+-- Early Retirement
 -- Todo Comments
 -- GitSigns
 -- Harpoon2
@@ -17,6 +18,19 @@ return {
   { -- "gc" to comment visual regions/lines
     'numToStr/Comment.nvim',
     opts = {},
+  },
+
+  {
+    'chrisgrieser/nvim-early-retirement',
+    config = function()
+      require('early-retirement').setup {
+        deleteBufferWhenFileDeleted = true,
+        ignoreAltFile = true,
+        minimumBufferNum = 5,
+        retirementAgeMins = 20,
+      }
+    end,
+    event = 'VeryLazy',
   },
 
   { -- Highlight todo, notes, etc in comments
