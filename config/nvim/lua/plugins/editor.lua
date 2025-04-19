@@ -273,7 +273,7 @@ return {
               preview_height = 0.70,
             },
           },
-          path_display = { 'filename_first' },
+          path_display = { filename_first = { reverse_directories = true } },
           mappings = {
             n = {
               ['q'] = require('telescope.actions').close,
