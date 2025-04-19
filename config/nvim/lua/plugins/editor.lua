@@ -5,6 +5,7 @@
 -- Leap
 -- mini.bufremove
 -- mini.pairs
+-- Neoclip
 -- Telescope
 -- Vim Illuminate
 -- Vim Sleuth
@@ -224,6 +225,22 @@ return {
     },
   },
 
+
+  {
+    'AckslD/nvim-neoclip.lua',
+    dependencies = {
+      { 'nvim-telescope/telescope.nvim' },
+    },
+    config = function()
+      require('neoclip').setup {
+        enable_macro_history = false,
+        initial_mode = 'normal',
+        on_select = {
+          move_to_front = true,
+        },
+      }
+    end,
+  },
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VeryLazy',
