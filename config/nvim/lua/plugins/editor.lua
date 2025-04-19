@@ -366,7 +366,7 @@ return {
         builtin.buffers {
           sort_lastused = true,
           ignore_current_buffer = true,
-          initial_mode = 'insert',
+          initial_mode = 'normal',
         }
       end, { desc = 'Buffers' })
 
@@ -412,7 +412,7 @@ return {
         builtin.buffers {
           sort_lastused = true,
           ignore_current_buffer = true,
-          initial_mode = 'insert',
+          initial_mode = 'normal',
         }
       end, { desc = 'Search buffers' })
 
