@@ -317,12 +317,15 @@ return {
 
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Help' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = 'Keymaps' })
+
       vim.keymap.set('n', '<leader>sF', function()
         builtin.find_files { initial_mode = 'insert' }
       end, { desc = 'Files' })
+
       vim.keymap.set('n', '<leader>sf', function()
         builtin.find_files { cwd = vim.fn.expand '%:p:h' }
       end, { desc = 'Sibling files' })
+
       vim.keymap.set('n', '<leader>sb', function()
         builtin.buffers {
           sort_lastused = true,
@@ -330,20 +333,25 @@ return {
           initial_mode = 'insert',
         }
       end, { desc = 'Buffers' })
+
       vim.keymap.set('n', '<leader>st', builtin.builtin, { desc = 'Telescope builtins' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Current word' })
+
       vim.keymap.set('n', '<leader>sW', function()
         builtin.grep_string {
           grep_open_files = true,
         }
       end, { desc = 'Current word' })
+
       vim.keymap.set('n', '<leader>sg', function()
         builtin.live_grep {
           initial_mode = 'insert',
         }
       end, { desc = 'By grep' })
+
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Diagnostics' })
       vim.keymap.set('n', '<leader>sR', builtin.resume, { desc = 'Resume' })
+
       vim.keymap.set('n', '<leader>sr', function()
         builtin.oldfiles {
           cwd_only = true,
@@ -355,6 +363,7 @@ return {
       end, {
         desc = 'Recent Files',
       })
+
       vim.keymap.set('n', '<leader>:', '<cmd>Telescope command_history<cr>', { desc = 'Command History' })
 
       vim.keymap.set('n', '<leader>.', function()
@@ -362,6 +371,7 @@ return {
           initial_mode = 'insert',
         }
       end, { desc = 'Search Files' })
+
       vim.keymap.set('n', '<leader>,', function()
         builtin.buffers {
           sort_lastused = true,
