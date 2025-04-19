@@ -365,6 +365,7 @@ return {
       vim.keymap.set('n', '<leader>sb', function()
         builtin.buffers {
           sort_lastused = true,
+          sort_mru = true,
           ignore_current_buffer = true,
           initial_mode = 'normal',
         }
@@ -393,7 +394,7 @@ return {
           cwd_only = true,
           tiebreak = function(curr_entry, existing_entry)
             -- Most recent first. When searching score is null.
-            return (curr_entry.score or 1) < (existing_entry.score or 1)
+            return (curr_entry.score or 0) < (existing_entry.score or 0)
           end,
         }
       end, {
@@ -411,6 +412,7 @@ return {
       vim.keymap.set('n', '<leader>,', function()
         builtin.buffers {
           sort_lastused = true,
+          sort_mru = true,
           ignore_current_buffer = true,
           initial_mode = 'normal',
         }
