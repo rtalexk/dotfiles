@@ -5,6 +5,7 @@
 -- Leap
 -- mini.bufremove
 -- mini.pairs
+-- Mkdir
 -- Neoclip
 -- Telescope
 -- Vim Illuminate
@@ -225,6 +226,9 @@ return {
     },
   },
 
+  {
+    'jghauser/mkdir.nvim',
+  },
 
   {
     'AckslD/nvim-neoclip.lua',
@@ -241,6 +245,7 @@ return {
       }
     end,
   },
+
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VeryLazy',
@@ -373,8 +378,8 @@ return {
         builtin.oldfiles {
           cwd_only = true,
           tiebreak = function(curr_entry, existing_entry)
-            -- Most recent first
-            return curr_entry.score < existing_entry.score
+            -- Most recent first. When searching score is null.
+            return (curr_entry.score or 1) < (existing_entry.score or 1)
           end,
         }
       end, {
@@ -429,6 +434,9 @@ return {
       vim.keymap.set('n', '<leader>D', require('telescope.builtin').lsp_type_definitions, { desc = 'Type Definition' })
       vim.keymap.set('n', '<leader>ss', require('telescope.builtin').lsp_document_symbols, { desc = 'Document symbols' })
       vim.keymap.set('n', '<leader>sS', require('telescope.builtin').lsp_dynamic_workspace_symbols, { desc = 'Workspace Symbols' })
+
+      vim.keymap.set('n', '<leader>sc', '<cmd>Telescope neoclip<cr>', { desc = 'Clipboard' })
+      vim.keymap.set('v', '<leader>sc', '<cmd>Telescope neoclip<cr>', { desc = 'Clipboard' })
     end,
   },
 
