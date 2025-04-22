@@ -28,6 +28,11 @@ return {
         end,
         max_width = 60,
         max_height = 45,
+        override = function(defaults)
+          -- See https://github.com/stevearc/oil.nvim/blob/685cdb4ffa74473d75a1b97451f8654ceeab0f4a/lua/oil/layout.lua#L129-L138
+          -- defaults['col'] = vim.o.columns - defaults['width'] - 2
+          return defaults
+        end,
       },
       win_options = {
         signcolumn = 'yes:2',
