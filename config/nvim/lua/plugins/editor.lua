@@ -26,6 +26,8 @@ return {
       require('early-retirement').setup {
         deleteBufferWhenFileDeleted = true,
         ignoreAltFile = true,
+        ignoreUnsavedChangesBufs = true,
+        ignoreVisibleBufs = true,
         minimumBufferNum = 5,
         retirementAgeMins = 20,
       }
