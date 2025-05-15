@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+git log --max-parents=0 --format="%h %an (%cd): %s" --date=format:"%b %e, %Y at %H:%M %z" | cat
