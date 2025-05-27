@@ -488,6 +488,7 @@ return {
         { '<leader>f', group = 'File' },
         { '<leader>g', group = 'Git' },
         { '<leader>gh', group = 'Hunk' },
+        { '<leader>r', group = 'Rest' },
         { '<leader>s', group = 'Search' },
         { '<leader>t', group = 'Test' },
         { '<leader>u', group = 'UI' },

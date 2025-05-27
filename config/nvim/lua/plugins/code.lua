@@ -2,6 +2,7 @@
 -- Copilot
 -- Nvim Cmp
 -- Nvim Treesitter
+-- Rest.nvim
 -- TSJToggle
 
 return {
@@ -198,6 +199,23 @@ return {
       --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
     end,
+  },
+
+  -- Rest.nvim
+  {
+    'rest-nvim/rest.nvim',
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      opts = function(_, opts)
+        opts.ensure_installed = opts.ensure_installed or {}
+        table.insert(opts.ensure_installed, 'http')
+      end,
+    },
+    keys = {
+      { '<leader>rr', '<cmd>Rest run<cr>', desc = 'Run Request' },
+      { '<leader>rR', '<cmd>Rest open<cr>', desc = 'Open Result Panel' },
+      { '<leader>rL', '<cmd>Rest last<cr>', desc = 'Run Last Request' },
+    },
   },
 
   -- TSJToggle
