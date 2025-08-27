@@ -19,4 +19,40 @@ font-size = 18
 
 mouse-hide-while-typing = true
 
+# X-inspired blue-ish dark theme
+background = 15202b
+foreground = ffffff
+
+# Black colors
+palette = 0=0c1218
+palette = 8=414a57
+
+# Red colors  
+palette = 1=fd7e7e
+palette = 9=ff9999
+
+# Green colors
+palette = 2=7efda1
+palette = 10=99ffbb
+
+# Yellow colors
+palette = 3=fdfd7e
+palette = 11=ffff99
+
+# Blue colors
+palette = 4=7ea1fd
+palette = 12=99bbff
+
+# Magenta colors
+palette = 5=fd7efd
+palette = 13=ff99ff
+
+# Cyan colors
+palette = 6=7efdfd
+palette = 14=99ffff
+
+# White colors
+palette = 7=d4d4d4
+palette = 15=ffffff
+
 
