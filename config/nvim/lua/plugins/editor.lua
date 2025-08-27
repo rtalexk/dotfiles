@@ -411,6 +411,12 @@ return {
         desc = 'Recent Files',
       })
 
+      vim.keymap.set('n', '<leader>ft', function()
+        builtin.filetypes {
+          initial_mode = 'insert',
+        }
+      end, { desc = 'File types' })
+
       vim.keymap.set('n', '<leader>:', '<cmd>Telescope command_history<cr>', { desc = 'Command History' })
 
       vim.keymap.set('n', '<leader>.', function()
