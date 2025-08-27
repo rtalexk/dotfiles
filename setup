@@ -65,6 +65,7 @@ brew install font-hack-nerd-font
 
 # brew install --cask alacritty
 # brew install rg
+# brew install fd
 # brew install gnu-sed
 # brew install wget
 # brew install tmux
