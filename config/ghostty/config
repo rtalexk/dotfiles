@@ -13,6 +13,7 @@ macos-titlebar-style = hidden
 
 cursor-style = block
 cursor-style-blink = true
+shell-integration-features = no-cursor
 cursor-invert-fg-bg = true
 
 font-size = 18
