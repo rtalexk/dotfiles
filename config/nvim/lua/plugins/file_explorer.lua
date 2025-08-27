@@ -5,7 +5,13 @@ return {
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     opts = {
       keymaps = {
-        ['q'] = 'actions.close',
+        ['q'] = function()
+          require('oil').close()
+          -- Close the window if it's a split (not the last window)
+          if vim.fn.winnr '$' > 1 then
+            vim.cmd 'close'
+          end
+        end,
       },
       columns = {
         'icon',
@@ -45,7 +51,8 @@ return {
       },
     },
     keys = {
-      { '<leader>e', '<cmd>Oil --float<cr>', mode = { 'n' }, desc = 'File explorer' },
+      { '<leader>e', '<cmd>Oil --float<cr>', mode = { 'n' }, desc = 'Files' },
+      { '<leader>fe', '<cmd>vsplit | Oil<cr>', mode = { 'n' }, desc = 'Files (VSplit)' },
     },
   },
 
