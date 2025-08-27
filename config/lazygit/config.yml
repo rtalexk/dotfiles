@@ -17,4 +17,4 @@ customCommands:
             description: "Edit the file in a new window"
             key: "n"
     command: "lazygit_edit_cmd -w {{.Form.WinChoise}} {{.SelectedFile.Name}}"
-    subprocess: true
+    output: terminal

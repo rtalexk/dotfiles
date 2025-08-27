@@ -6,6 +6,9 @@
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 ZSH_THEME="fwalch"
 
+# Disable terminal title and command echoing
+DISABLE_AUTO_TITLE="true"
+
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
 # a theme from this variable instead of looking in $ZSH/themes/
@@ -73,3 +76,5 @@ plugins=(
 
 export ZSH="$HOME/.oh-my-zsh"
 source $ZSH/oh-my-zsh.sh
+
+eval "$(fnm env --use-on-cd --shell zsh)"
