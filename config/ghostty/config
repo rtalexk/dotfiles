@@ -1,0 +1,22 @@
+
+# Option behaves as Alt, allow Zellij to switch panes
+macos-option-as-alt = left
+keybind = alt+left=unbind
+keybind = alt+right=unbind
+keybind = shift+enter=text:\n
+
+# Shortcuts
+keybind = f12=toggle_maximize
+
+# Look and feel
+macos-titlebar-style = hidden
+
+cursor-style = block
+cursor-style-blink = true
+cursor-invert-fg-bg = true
+
+font-size = 18
+
+mouse-hide-while-typing = true
+
+
