@@ -443,10 +443,12 @@ return {
       vim.keymap.set('n', '<leader>/', function()
         -- You can pass additional configuration to Telescope to change the theme, layout, etc.
         builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
+          initial_mode = 'insert',
           layout_config = {
             width = 0.60,
           },
           previewer = false,
+          prompt_title = 'Grep in Buffer',
         })
       end, { desc = 'Grep in buffer' })
 
@@ -456,7 +458,7 @@ return {
         builtin.live_grep {
           grep_open_files = true,
           initial_mode = 'insert',
-          prompt_title = 'Live Grep in Open Files',
+          prompt_title = 'Grep in Open Buffers',
         }
       end, { desc = 'Grep in Open Buffers' })
 
