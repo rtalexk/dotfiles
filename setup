@@ -81,9 +81,10 @@ brew install font-hack-nerd-font
 # === Linux specific packages
 # sudo apt install build-essential ripgrep tmux fd-find -y
 
-# Node
-# wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-# nvm install --lts --default
+# Node/JS
+# brew install fnm
+
+# brew install pnpm
 
 # Ruby
 # gpg --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
