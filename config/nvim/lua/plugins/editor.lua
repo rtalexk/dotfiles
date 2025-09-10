@@ -20,20 +20,20 @@ return {
     opts = {},
   },
 
-  {
-    'chrisgrieser/nvim-early-retirement',
-    config = function()
-      require('early-retirement').setup {
-        deleteBufferWhenFileDeleted = true,
-        ignoreAltFile = true,
-        ignoreUnsavedChangesBufs = true,
-        ignoreVisibleBufs = true,
-        minimumBufferNum = 5,
-        retirementAgeMins = 20,
-      }
-    end,
-    event = 'VeryLazy',
-  },
+  -- {
+  --   'chrisgrieser/nvim-early-retirement',
+  --   config = function()
+  --     require('early-retirement').setup {
+  --       deleteBufferWhenFileDeleted = true,
+  --       ignoreAltFile = true,
+  --       ignoreUnsavedChangesBufs = true,
+  --       ignoreVisibleBufs = true,
+  --       minimumBufferNum = 5,
+  --       retirementAgeMins = 20,
+  --     }
+  --   end,
+  --   event = 'VeryLazy',
+  -- },
 
   { -- Highlight todo, notes, etc in comments
     'folke/todo-comments.nvim',
