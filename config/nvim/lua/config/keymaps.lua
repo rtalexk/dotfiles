@@ -46,7 +46,7 @@ end, { desc = 'Word wrap' })
 vim.keymap.set('n', '<leader>ur', '<cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>', { desc = 'Redraw' })
 
 -- Switch to previous buffer
-vim.keymap.set('n', '<leader>\\', '<cmd>e #<cr>', { desc = 'Switch buffer' })
+vim.keymap.set('n', '<leader>\\', '<cmd>b#<cr>', { desc = 'Switch buffer' })
 
 -- Create new empty buffer
 vim.keymap.set('n', '<leader>fn', '<cmd>enew<cr>', { desc = 'New' })
