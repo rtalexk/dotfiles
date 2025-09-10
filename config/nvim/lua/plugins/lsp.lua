@@ -141,8 +141,8 @@ return {
         -- tsserver = {},
         --
         -- Ruby LSP
-        solargraph = {},
-        standardrb = {},
+        -- solargraph = {},
+        -- standardrb = {},
 
         -- Markdown LSP
         marksman = {},
