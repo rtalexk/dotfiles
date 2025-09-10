@@ -17,6 +17,7 @@ ln -sf "$PWD/config/sesh" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/nvim" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/ghostty" "$XDG_CONFIG_HOME/"
 ln -sf "$PWD/config/zellij" "$XDG_CONFIG_HOME/"
+ln -sf "$PWD/config/gh-dash" "$XDG_CONFIG_HOME/"
 
 ln -sf "$PWD/.tmux.conf" "$HOME/.tmux.conf"
 
