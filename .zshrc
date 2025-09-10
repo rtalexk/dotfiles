@@ -15,3 +15,11 @@ source $XDG_CONFIG_HOME/shell/user_config
 
 # See `:help modeline`
 # vim: ts=4 sts=4 sw=4 et
+
+# pnpm
+export PNPM_HOME="/Users/art/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
