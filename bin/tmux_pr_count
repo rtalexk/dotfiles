@@ -16,8 +16,16 @@ def min_to_sec(min)
   min * 60
 end
 
+def wip_labels
+  if ENV['GITHUB_WIP_LABELS']
+    ENV['GITHUB_WIP_LABELS'].split(',').map { |label| ". == \"#{label.strip}\"" }.join(' or ')
+  else
+    ". == \"WIP\" or . == \"POC\""
+  end
+end
+
 def pr_list_count(cwd = Dir.pwd)
-  cmd = "gh pr list --state open --json number,title,author,labels,isDraft,reviews --jq '.[] | select(.isDraft == false and .author.login != \"rtalexk\" and ([.labels[].name | select(. == \"WIP\" or . == \"Do not review\" or . == \"Do not merge\")] | length == 0) and ([.reviews[] | select(.author.login == \"rtalexk\" and .state == \"APPROVED\")] | length == 0)) | {number, title, author, labels}'"
+  cmd = "gh pr list --state open --json number,title,author,labels,isDraft,reviews --jq '.[] | select(.isDraft == false and .author.login != \"rtalexk\" and ([.labels[].name | select(#{wip_labels})] | length == 0) and ([.reviews[] | select(.author.login == \"rtalexk\" and .state == \"APPROVED\")] | length == 0)) | {number, title, author, labels}'"
 
   # Cache settings
   expiry = min_to_sec 10
