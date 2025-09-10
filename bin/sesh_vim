@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # W0
-tmux rename-window -t 0 "Code"
+tmux rename-window -t 0 "󰅩"
 tmux send-keys "nvim" Enter
 tmux setw window-status-activity-style none
 

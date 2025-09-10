@@ -1,12 +1,17 @@
 [[session]]
-name = "nuvos"
-path = "~/com.github/nuvos"
-startup_script = "sesh_nuvos"
+name = "current_up"
+startup_command = "sesh_current_up"
+path = "~/com.github/current_up"
 
 [[session]]
 name = "dotf"
 path = "~/com.github/dotfiles"
-startup_command = "sesh_dotf"
+startup_command = "sesh_vim"
+
+[[session]]
+name = "Brain"
+path = "~/Documents/Notes"
+startup_command = "sesh_brain"
 
 [[session]]
 name = "slides"
