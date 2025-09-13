@@ -2,6 +2,7 @@
 -- Copilot
 -- Nvim Cmp
 -- Nvim Treesitter
+-- Nx
 -- Rest.nvim
 -- TSJToggle
 -- Typescript Tools
@@ -202,6 +203,27 @@ return {
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
     end,
   },
+
+  -- Nx
+  -- {
+  --   {
+  --     'Equilibris/nx.nvim',
+  --
+  --     dependencies = {
+  --       'nvim-telescope/telescope.nvim',
+  --     },
+  --
+  --     opts = {
+  --       -- See below for config options
+  --       nx_cmd_root = 'nx',
+  --     },
+  --
+  --     -- Plugin will load when you use these keys
+  --     keys = {
+  --       { '<leader>nx', '<cmd>Telescope nx actions<CR>', desc = 'nx actions' },
+  --     },
+  --   },
+  -- },
 
   -- Rest.nvim
   {
