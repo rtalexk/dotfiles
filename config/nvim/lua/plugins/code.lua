@@ -4,6 +4,7 @@
 -- Nvim Treesitter
 -- Rest.nvim
 -- TSJToggle
+-- Typescript Tools
 
 return {
   { -- Autoformat
@@ -229,5 +230,17 @@ return {
     opts = {
       use_default_keymaps = false,
     },
+  },
+  {
+    'pmizio/typescript-tools.nvim',
+    requires = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    config = function()
+      require('typescript-tools').setup {
+        jsx_close_tag = {
+          enable = true,
+          filetypes = { 'javascriptreact', 'typescriptreact' },
+        },
+      }
+    end,
   },
 }
