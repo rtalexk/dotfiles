@@ -6,10 +6,16 @@ return {
     opts = {
       keymaps = {
         ['q'] = function()
+          local win = vim.api.nvim_get_current_win()
+          local buf = vim.api.nvim_get_current_buf()
+          local buftype = vim.api.nvim_buf_get_option(buf, 'filetype')
+          local is_floating = vim.api.nvim_win_get_config(win).relative ~= ''
+
           require('oil').close()
-          -- Close the window if it's a split (not the last window)
-          if vim.fn.winnr '$' > 1 then
-            vim.cmd 'close'
+
+          -- Only close the window if it's an Oil buffer in a split (not floating) and there are multiple windows
+          if buftype == 'oil' and not is_floating and vim.fn.winnr('$') > 1 then
+            vim.cmd('close')
           end
         end,
       },
