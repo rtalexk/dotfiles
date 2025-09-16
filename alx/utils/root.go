@@ -8,9 +8,7 @@ import (
 )
 
 const (
-	CURRENT_EMPLOYER     = "NUVO"
 	INBOX_DIR            = "0-inbox"
-	WORK_DIR             = "1-work/" + CURRENT_EMPLOYER
 	SELF_DIR             = "2-self"
 	SELF_REFLECTIONS_DIR = SELF_DIR + "/20-reflections"
 )
@@ -49,6 +47,32 @@ func GetDirOrExit(dir string) string {
 	}
 
 	return dir
+}
+
+var currentEmployerOverride string
+
+func SetCurrentEmployerOverride(employer string) {
+	currentEmployerOverride = employer
+}
+
+func GetCurrentEmployerOrExit() string {
+	// First check if we have an override set
+	if currentEmployerOverride != "" {
+		return currentEmployerOverride
+	}
+
+	// Otherwise, fall back to environment variable
+	employer, err := GetEnv("CURRENT_EMPLOYER")
+	if err != nil {
+		fmt.Printf("The CURRENT_EMPLOYER environment variable is not set")
+		println(err.Error())
+		os.Exit(1)
+	}
+	return employer
+}
+
+func GetWorkDir() string {
+	return "1-work/" + GetCurrentEmployerOrExit()
 }
 
 func GetEditorOrExit() string {

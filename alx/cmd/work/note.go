@@ -89,11 +89,11 @@ Links:
 		absoluteFilePath := ""
 
 		if Once {
-			filePath = fmt.Sprintf("%s/%s/%s-%s.md", brainDir, utils.WORK_DIR, date, Name)
-			absoluteFilePath = fmt.Sprintf("%s/%s-%s.md", utils.WORK_DIR, date, Name)
+			filePath = fmt.Sprintf("%s/%s/%s-%s.md", brainDir, utils.GetWorkDir(), date, Name)
+			absoluteFilePath = fmt.Sprintf("%s/%s-%s.md", utils.GetWorkDir(), date, Name)
 		} else {
-			filePath = fmt.Sprintf("%s/%s/%s.md", brainDir, utils.WORK_DIR, Name)
-			absoluteFilePath = fmt.Sprintf("%s/%s.md", utils.WORK_DIR, Name)
+			filePath = fmt.Sprintf("%s/%s/%s.md", brainDir, utils.GetWorkDir(), Name)
+			absoluteFilePath = fmt.Sprintf("%s/%s.md", utils.GetWorkDir(), Name)
 		}
 
 		if _, err := utils.CreateFile(filePath, contentBuffer); err != nil {
