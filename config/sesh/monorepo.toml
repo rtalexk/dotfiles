@@ -1,0 +1,59 @@
+# Monorepo Session Discovery Configuration
+
+# Directory name mappings for session naming
+# Format: "directory_name" = "replacement"
+[directory_mappings]
+microservices = "service"
+libraries = "lib"
+components = "comp"
+
+# Directories to ignore during scanning
+[ignore]
+patterns = [
+    "node_modules",
+    ".git",
+    ".next",
+    ".nuxt",
+    "dist",
+    "build",
+    "target",
+    "public",
+    "coverage",
+    ".vscode",
+    ".idea",
+    "__pycache__",
+    ".pytest_cache",
+    "vendor",
+    "tmp",
+    "temp",
+    ".cache",
+    "logs"
+]
+
+# File patterns that indicate a project directory
+[project_indicators]
+files = [
+    "package.json",
+    "project.json",
+    "Dockerfile",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "Cargo.toml",
+    "go.mod",
+    "pyproject.toml",
+    "requirements.txt",
+    "pom.xml",
+    "Gemfile",
+    "composer.json",
+    "Makefile",
+    "CMakeLists.txt"
+]
+
+# Session naming configuration
+[naming]
+# Maximum depth to include in session name (0 = unlimited)
+max_depth = 2
+# Separator for path components in session name
+separator = "-"
+# Whether to include parent directory context
+include_parent_context = true

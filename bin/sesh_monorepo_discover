@@ -1,0 +1,318 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'json'
+require 'pathname'
+require 'fileutils'
+require 'digest'
+
+# Monorepo project discovery script for sesh session management
+class MonorepoDiscovery
+  DEFAULT_CONFIG_FILE = File.expand_path("~/.config/sesh/monorepo.toml")
+  DEFAULT_CACHE_DIR = File.expand_path("~/.cache")
+  CACHE_TTL_SEC = 3600
+
+  def initialize
+    @config = load_config
+    @cache_dir = DEFAULT_CACHE_DIR
+    FileUtils.mkdir_p(@cache_dir) unless Dir.exist?(@cache_dir)
+  end
+
+  def load_config(config_file = DEFAULT_CONFIG_FILE)
+    config = {
+      ignore_patterns: %w[
+        node_modules .git .next .nuxt dist build target public coverage
+        .vscode .idea __pycache__ .pytest_cache vendor tmp temp .cache logs
+      ],
+      project_files: %w[
+        package.json project.json Dockerfile docker-compose.yml docker-compose.yaml
+        Cargo.toml go.mod pyproject.toml requirements.txt pom.xml Gemfile
+        composer.json Makefile CMakeLists.txt
+      ],
+      directory_mappings: {
+        'microservices' => 'service',
+        'libraries' => 'lib',
+        'components' => 'comp'
+      },
+      max_depth: 3,
+      separator: '-'
+    }
+
+    return config unless File.exist?(config_file)
+
+    begin
+      content = File.read(config_file)
+
+      # Simple TOML parser for our specific needs
+      current_section = nil
+      content.each_line do |line|
+        line = line.strip
+        next if line.empty? || line.start_with?('#')
+
+        if line.match(/^\[(\w+)\]$/)
+          current_section = $1
+        elsif line.match(/^\[(\w+)\.(\w+)\]$/)
+          current_section = "#{$1}_#{$2}"
+        elsif line.match(/^(\w+)\s*=\s*(.+)$/)
+          key, value = $1, $2
+
+          case current_section
+          when 'ignore'
+            if key == 'patterns' && value.match(/^\[(.*)\]$/)
+              patterns = $1.scan(/"([^"]*)"/).flatten
+              config[:ignore_patterns] = patterns unless patterns.empty?
+            end
+          when 'project_indicators'
+            if key == 'files' && value.match(/^\[(.*)\]$/)
+              files = $1.scan(/"([^"]*)"/).flatten
+              config[:project_files] = files unless files.empty?
+            end
+          when 'directory_mappings'
+            if value.match(/^"([^"]*)"$/)
+              config[:directory_mappings][key] = $1
+            end
+          when 'naming'
+            case key
+            when 'max_depth'
+              config[:max_depth] = value.to_i
+            when 'separator'
+              config[:separator] = value.gsub(/^"|"$/, '')
+            end
+          end
+        end
+      end
+    rescue => e
+      warn "Warning: Error parsing config file #{config_file}: #{e.message}"
+    end
+
+    config
+  end
+
+  def should_ignore?(dir_name)
+    @config[:ignore_patterns].include?(dir_name)
+  end
+
+  def project_directory?(dir_path)
+    @config[:project_files].any? { |file| File.exist?(File.join(dir_path, file)) }
+  end
+
+  def generate_session_name(full_path, root_dir)
+    normalized_full_path = File.expand_path(full_path)
+    normalized_root_dir = File.expand_path(root_dir)
+
+    if normalized_full_path == normalized_root_dir
+      return File.basename(normalized_root_dir).gsub(/[^a-zA-Z0-9_-]/, '_')
+    end
+
+    rel_path = Pathname.new(normalized_full_path).relative_path_from(Pathname.new(normalized_root_dir)).to_s
+    path_components = rel_path.split('/')
+
+    if @config[:max_depth] > 0 && path_components.length > @config[:max_depth]
+      path_components = path_components.last(@config[:max_depth])
+    end
+
+    session_parts = []
+    path_components.each do |component|
+      mapped_name = @config[:directory_mappings][component] || component
+      session_parts << mapped_name
+    end
+
+    session_name = session_parts.join(@config[:separator])
+    session_name.gsub(/[^a-zA-Z0-9_-]/, '_')
+  end
+
+  def scan_projects(root_dir, current_dir = nil, depth = 0)
+    current_dir ||= root_dir
+    projects = []
+
+    # Limit recursion depth for performance
+    return projects if depth > 10
+
+    if project_directory?(current_dir)
+      session_name = generate_session_name(current_dir, root_dir)
+      is_root = File.expand_path(current_dir) == File.expand_path(root_dir)
+      icon = is_root ? "🏠" : "🚀"
+      projects << { path: current_dir, name: session_name, icon: icon }
+    end
+
+    return projects unless Dir.exist?(current_dir)
+
+    Dir.entries(current_dir).each do |entry|
+      next if entry.start_with?('.')
+
+      subdir = File.join(current_dir, entry)
+      next unless Dir.exist?(subdir)
+      next if should_ignore?(entry)
+
+      projects.concat(scan_projects(root_dir, subdir, depth + 1))
+    end
+
+    projects
+  end
+
+  def cache_file_path(root_dir)
+    root_hash = Digest::MD5.hexdigest(root_dir)
+    File.join(@cache_dir, "sesh_monorepo_cache_#{root_hash}")
+  end
+
+  def cache_valid?(cache_file, root_dir)
+    return false unless File.exist?(cache_file)
+
+    cache_age = Time.now.to_i - File.mtime(cache_file).to_i
+    return false if cache_age > CACHE_TTL_SEC
+
+    # Check if cache is for the same root directory
+    begin
+      first_line = File.open(cache_file, &:readline).strip
+      return first_line == "# ROOT: #{root_dir}"
+    rescue
+      return false
+    end
+  end
+
+  def discover_projects(root_dir, use_cache: true)
+    root_dir = File.expand_path(root_dir)
+    cache_file = cache_file_path(root_dir)
+
+    if use_cache && cache_valid?(cache_file, root_dir)
+      begin
+        lines = File.readlines(cache_file)[1..-1] # Skip first line (root comment)
+        return lines.map do |line|
+          parts = line.strip.split('|')
+          next unless parts.length >= 3
+          { path: parts[0], name: parts[1], icon: parts[2] }
+        end.compact
+      rescue
+        # If cache reading fails, fall through to scanning
+      end
+    end
+
+    projects = scan_projects(root_dir)
+
+    unless projects.empty?
+      begin
+        File.open(cache_file, 'w') do |f|
+          f.puts "# ROOT: #{root_dir}"
+          projects.each do |project|
+            is_root = File.expand_path(project[:path]) == File.expand_path(root_dir)
+            icon = is_root ? "🏠" : "🚀"
+            f.puts "#{project[:path]}|#{project[:name]}|#{icon}"
+          end
+        end
+      rescue => e
+        warn "Warning: Could not write cache file: #{e.message}"
+      end
+    end
+
+    projects
+  end
+
+  def clear_cache
+    Dir.glob(File.join(@cache_dir, "sesh_monorepo_cache_*")).each do |file|
+      File.delete(file)
+    end
+    puts "Cache cleared"
+  end
+
+  def output_json(projects)
+    puts JSON.pretty_generate(projects.map { |p| { path: p[:path], name: p[:name] } })
+  end
+
+  def output_sesh_config(projects)
+    projects.each do |project|
+      puts ""
+      puts "[[session]]"
+      puts "name = \"#{project[:name]}\""
+      puts "path = \"#{project[:path]}\""
+      puts "startup_command = \"sesh_current_up\""
+    end
+  end
+
+  def output_list(projects)
+    projects.each { |project| puts "#{project[:name]}|#{project[:path]}|#{project[:icon] || '🚀'}" }
+  end
+end
+
+def show_help
+  puts <<~HELP
+    Usage: #{$0} [OPTIONS] [DIRECTORY]
+
+    Discover projects in a monorepo and generate tmux session configurations.
+
+    OPTIONS:
+        -h, --help          Show this help message
+        -f, --format FORMAT Output format: list, json, sesh (default: list)
+        -c, --config FILE   Configuration file path
+        --no-cache          Disable caching
+        --clear-cache       Clear cache and exit
+
+    DIRECTORY:
+        Root directory to scan (default: current directory)
+
+    EXAMPLES:
+        #{$0}                                  # Scan current directory
+        #{$0} /path/to/monorepo               # Scan specific directory
+        #{$0} -f json                         # Output as JSON
+        #{$0} -f sesh >> ~/.config/sesh/sesh.toml  # Append to sesh config
+  HELP
+end
+
+def main
+  options = {
+    format: 'list',
+    root_dir: Dir.pwd,
+    use_cache: true,
+    config_file: MonorepoDiscovery::DEFAULT_CONFIG_FILE
+  }
+
+  OptionParser.new do |opts|
+    opts.on('-h', '--help', 'Show help') do
+      show_help
+      exit 0
+    end
+
+    opts.on('-f', '--format FORMAT', 'Output format (list, json, sesh)') do |format|
+      options[:format] = format
+    end
+
+    opts.on('-c', '--config FILE', 'Configuration file path') do |config|
+      options[:config_file] = config
+    end
+
+    opts.on('--no-cache', 'Disable caching') do
+      options[:use_cache] = false
+    end
+
+    opts.on('--clear-cache', 'Clear cache and exit') do
+      discovery = MonorepoDiscovery.new
+      discovery.clear_cache
+      exit 0
+    end
+  end.parse!
+
+  options[:root_dir] = ARGV[0] if ARGV[0]
+
+  unless Dir.exist?(options[:root_dir])
+    warn "Error: Directory not found: #{options[:root_dir]}"
+    exit 1
+  end
+
+  discovery = MonorepoDiscovery.new
+  projects = discovery.discover_projects(options[:root_dir], use_cache: options[:use_cache])
+
+  if projects.empty?
+    warn "No projects found in #{options[:root_dir]}"
+    exit 1
+  end
+
+  case options[:format]
+  when 'json'
+    discovery.output_json(projects)
+  when 'sesh'
+    discovery.output_sesh_config(projects)
+  else
+    discovery.output_list(projects)
+  end
+end
+
+main if __FILE__ == $0
