@@ -498,7 +498,7 @@ class TmuxMonorepoManager
 
   # Handles the user's session selection
   def handle_session_selection(selected_line, root_dir)
-    session_name = selected_line.gsub(/^[#{PROJECT_ICON}#{FOLDER_ICON}#{HOME_ICON}] /, '').strip
+    session_name = selected_line.gsub(/^[#{PROJECT_ICON}#{FOLDER_ICON}#{HOME_ICON}] /, '').strip.split(' ').first
 
     session_info = @session_data[session_name] if @session_data
     session_info ||= find_session_info(session_name, root_dir)

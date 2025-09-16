@@ -8,9 +8,7 @@ tmux setw window-status-activity-style none
 # W1
 tmux new-window -n ""
 tmux setw window-status-activity-style none
-tmux send-keys "docker-compose up" Enter
 tmux split-window -h
-tmux send-keys "pnpm start" Enter
 
 # W2
 tmux new-window -n ""
