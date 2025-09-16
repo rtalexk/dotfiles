@@ -1,21 +1,21 @@
 package cmd
 
 import (
-	"os"
+  "os"
 
-	"github.com/spf13/cobra"
+  "github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "alx [COMMAND] [OPTIONS]",
-	Short: "Set of personal commands to boost my productivity",
+  Use:   "alx [COMMAND] [OPTIONS]",
+  Short: "Set of personal commands to boost my productivity",
 }
 
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
+  err := rootCmd.Execute()
+  if err != nil {
+    os.Exit(1)
+  }
 }
 
 func init() {}
