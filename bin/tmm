@@ -7,11 +7,23 @@ require 'tempfile'
 require 'digest'
 
 # Tmux Monorepo Manager - Enhanced session manager for monorepo projects
+#
+# This tool provides an intelligent tmux session manager that automatically
+# discovers projects in monorepos and provides a fast, interactive interface
+# for switching between sessions and projects.
+#
+# Features:
+# - Automatic monorepo discovery
+# - Fast caching system for performance
+# - Interactive fzf-based session selector
+# - Multiple data source support (tmux, sesh configs, zoxide, discovered projects)
+# - Project-aware session creation with startup commands
 class TmuxMonorepoManager
   SCRIPT_DIR = File.dirname(__FILE__)
   SESH_DISCOVER_SCRIPT = File.join(SCRIPT_DIR, 'sesh_monorepo_discover')
+  CACHE_TTL_SECONDS = 300 # 5 minutes
 
-  # ANSI color codes
+  # ANSI color codes for terminal output
   COLORS = {
     red: "\033[0;31m",
     green: "\033[0;32m",
@@ -20,12 +32,29 @@ class TmuxMonorepoManager
     reset: "\033[0m"
   }.freeze
 
+  # Monorepo detection patterns
+  MONOREPO_INDICATORS = %w[
+    microservices core lib libraries components packages apps services
+    infra infrastructure tools scripts
+  ].freeze
+
+  # Icon constants
+  FOLDER_ICON = '󱉭'
+  PROJECT_ICON = '🚀'
+  HOME_ICON = '🏠'
+
   def initialize
     @monorepo_root = ENV['MONOREPO_ROOT'] || Dir.pwd
     @verbose = false
     @known_monorepos = find_known_monorepos
+    @cached_projects = nil
+    @session_data = nil
     check_dependencies
   end
+
+  #============================================================================
+  # DEPENDENCY MANAGEMENT
+  #============================================================================
 
   def check_dependencies
     missing_deps = []
@@ -38,14 +67,16 @@ class TmuxMonorepoManager
       missing_deps << 'sesh_monorepo_discover'
     end
 
-    if missing_deps.any?
-      error "Missing dependencies: #{missing_deps.join(', ')}"
-    end
+    error "Missing dependencies: #{missing_deps.join(', ')}" if missing_deps.any?
   end
 
   def command_exists?(command)
     system("which #{command} > /dev/null 2>&1")
   end
+
+  #============================================================================
+  # OUTPUT AND LOGGING
+  #============================================================================
 
   def error(message)
     puts colorize(message, :red)
@@ -68,29 +99,18 @@ class TmuxMonorepoManager
     "#{COLORS[color]}#{text}#{COLORS[:reset]}"
   end
 
+  #============================================================================
+  # MONOREPO DISCOVERY
+  #============================================================================
+
+  # Discovers all known monorepos in the environment
   def find_known_monorepos
     known_repos = []
 
-    # Check common monorepo locations
-    projects_dir = ENV['PROJECTS']
-    if projects_dir && Dir.exist?(projects_dir)
-      projects_expanded = File.expand_path(projects_dir)
+    # Check PROJECTS directory for monorepos
+    known_repos.concat(find_monorepos_in_projects_dir)
 
-      # Look for directories that might be monorepos
-      Dir.entries(projects_expanded).each do |entry|
-        next if entry.start_with?('.')
-
-        repo_path = File.join(projects_expanded, entry)
-        next unless Dir.exist?(repo_path)
-
-        # Check if it looks like a monorepo (has multiple project directories)
-        if looks_like_monorepo?(repo_path)
-          known_repos << repo_path
-        end
-      end
-    end
-
-    # Always include explicitly set MONOREPO_ROOT
+    # Include explicitly set MONOREPO_ROOT
     if ENV['MONOREPO_ROOT'] && Dir.exist?(ENV['MONOREPO_ROOT'])
       known_repos << File.expand_path(ENV['MONOREPO_ROOT'])
     end
@@ -102,88 +122,46 @@ class TmuxMonorepoManager
     known_repos.uniq
   end
 
-  def looks_like_monorepo?(dir_path)
-    # Check for common monorepo indicators
-    monorepo_indicators = %w[
-      microservices core lib libraries components packages apps services
-      infra infrastructure tools scripts
-    ]
+  # Scans the PROJECTS directory for potential monorepos
+  def find_monorepos_in_projects_dir
+    projects_dir = ENV['PROJECTS']
+    return [] unless projects_dir && Dir.exist?(projects_dir)
 
-    Dir.entries(dir_path).any? { |entry| monorepo_indicators.include?(entry.downcase) }
+    projects_expanded = File.expand_path(projects_dir)
+    Dir.entries(projects_expanded).map do |entry|
+      next if entry.start_with?('.')
+
+      repo_path = File.join(projects_expanded, entry)
+      next unless Dir.exist?(repo_path)
+
+      repo_path if looks_like_monorepo?(repo_path)
+    end.compact
   end
 
+  # Determines if a directory looks like a monorepo based on its contents
+  def looks_like_monorepo?(dir_path)
+    Dir.entries(dir_path).any? { |entry| MONOREPO_INDICATORS.include?(entry.downcase) }
+  rescue Errno::EACCES, Errno::ENOENT
+    false
+  end
+
+  # Walks up the directory tree to find a parent monorepo
   def find_parent_monorepo(start_path)
     current_path = File.expand_path(start_path)
 
     while current_path != '/'
-      if looks_like_monorepo?(current_path)
-        return current_path
-      end
+      return current_path if looks_like_monorepo?(current_path)
       current_path = File.dirname(current_path)
     end
 
     nil
   end
 
-  def create_all_sessions_command(root_dir)
-    # Create a command that outputs all sessions in our format
-    temp_file = File.join(Dir.tmpdir, "tmm_all_sessions_#{Process.pid}")
+  #============================================================================
+  # SESSION DATA RETRIEVAL
+  #============================================================================
 
-    # Generate the current session list and save to temp file
-    entries = generate_session_list(root_dir)
-    File.write(temp_file, entries.join("\n"))
-
-    "cat #{temp_file}"
-  end
-
-  def create_projects_only_command(root_dir)
-    # Create a command that outputs only discovered projects with their icons
-    "#{SESH_DISCOVER_SCRIPT} #{root_dir} 2>/dev/null | while IFS='|' read -r name path icon; do echo \"${icon:-🚀} $name\"; done"
-  end
-
-  def truncate_path_for_display(path, max_length)
-    # First, check if $PROJECTS env var is set and path contains it
-    projects_path = ENV['PROJECTS']
-    if projects_path && !projects_path.empty?
-      projects_expanded = File.expand_path(projects_path)
-      if path.start_with?(projects_expanded)
-        path = path.sub(projects_expanded, '$PROJECTS')
-        return path if path.length <= max_length
-
-        # If still too long, truncate within $PROJECTS
-        parts = path.split('/')
-        if parts.length > 3
-          '$PROJECTS/.../' + parts[-2..-1].join('/')
-        else
-          path
-        end
-      end
-    end
-
-    return path if path.length <= max_length
-
-    # Show the most relevant parts: ~/.../ + last parts
-    home_path = File.expand_path("~")
-    if path.start_with?(home_path)
-      relative_path = path.sub(home_path, "~")
-      return relative_path if relative_path.length <= max_length
-
-      parts = relative_path.split('/')
-      if parts.length > 3
-        "~/.../" + parts[-2..-1].join('/')
-      else
-        relative_path
-      end
-    else
-      parts = path.split('/')
-      if parts.length > 3
-        ".../" + parts[-2..-1].join('/')
-      else
-        path
-      end
-    end
-  end
-
+  # Gets existing tmux sessions from sesh
   def get_sesh_sessions
     output, status = Open3.capture2('sesh list -t 2>/dev/null')
     return [] unless status.success?
@@ -194,15 +172,78 @@ class TmuxMonorepoManager
           .reject(&:empty?)
   end
 
+  # Gets all monorepo projects with caching and deduplication
   def get_monorepo_projects(root_dir = @monorepo_root)
-    # Use cached results if available
     @cached_projects ||= discover_all_monorepo_projects
 
-    # Filter to include root_dir preference
+    deduplicate_projects(@cached_projects, root_dir)
+  end
+
+  # Fast method for getting projects from a single monorepo (used for direct connections)
+  def get_single_monorepo_projects(monorepo_path)
+    cached_projects = get_cached_monorepo_projects(monorepo_path)
+    return cached_projects if cached_projects
+
+    discover_and_cache_monorepo_projects(monorepo_path)
+  end
+
+  #============================================================================
+  # PROJECT DISCOVERY AND CACHING
+  #============================================================================
+
+  # Discovers projects from all known monorepos
+  def discover_all_monorepo_projects
+    all_projects = []
+
+    @known_monorepos.each do |monorepo_path|
+      next unless Dir.exist?(monorepo_path)
+
+      cached_projects = get_cached_monorepo_projects(monorepo_path)
+      if cached_projects
+        all_projects.concat(cached_projects)
+      else
+        projects = discover_and_cache_monorepo_projects(monorepo_path)
+        all_projects.concat(projects)
+      end
+    end
+
+    all_projects
+  end
+
+  # Discovers projects for a single monorepo and caches the results
+  def discover_and_cache_monorepo_projects(monorepo_path)
+    begin
+      output, status = Open3.capture2(SESH_DISCOVER_SCRIPT, monorepo_path)
+      return [] unless status.success?
+
+      projects = parse_discovery_output(output, monorepo_path)
+      cache_monorepo_projects(monorepo_path, projects)
+      projects
+    rescue => e
+      [] # Silently ignore errors for individual monorepos
+    end
+  end
+
+  # Parses the output from the discovery script
+  def parse_discovery_output(output, monorepo_path)
+    output.lines.map do |line|
+      parts = line.strip.split('|')
+      next unless parts.length >= 2
+
+      name, path = parts[0], parts[1]
+      icon = parts[2] || PROJECT_ICON
+      next unless name && path
+
+      { name: name, path: path, icon: icon, monorepo: monorepo_path }
+    end.compact
+  end
+
+  # Deduplicates projects, preferring those from the specified root_dir
+  def deduplicate_projects(projects, root_dir)
     root_dir_expanded = File.expand_path(root_dir)
     unique_projects = {}
 
-    @cached_projects.each do |project|
+    projects.each do |project|
       existing = unique_projects[project[:name]]
       if existing.nil? || project[:monorepo] == root_dir_expanded
         unique_projects[project[:name]] = project
@@ -212,93 +253,29 @@ class TmuxMonorepoManager
     unique_projects.values
   end
 
-  # Fast method for getting projects from a single monorepo (used for direct connections)
-  def get_single_monorepo_projects(monorepo_path)
-    cached_projects = get_cached_monorepo_projects(monorepo_path)
-    return cached_projects if cached_projects
+  #============================================================================
+  # CACHING SYSTEM
+  #============================================================================
 
-    # Only scan the single monorepo if not cached
-    begin
-      output, status = Open3.capture2(SESH_DISCOVER_SCRIPT, monorepo_path)
-      if status.success?
-        projects = output.lines.map do |line|
-          parts = line.strip.split('|')
-          next unless parts.length >= 2
-
-          name, path = parts[0], parts[1]
-          icon = parts[2] || '🚀'
-          next unless name && path
-
-          { name: name, path: path, icon: icon, monorepo: monorepo_path }
-        end.compact
-
-        cache_monorepo_projects(monorepo_path, projects)
-        return projects
-      end
-    rescue
-      # Silently ignore errors
-    end
-
-    []
-  end
-
-  def discover_all_monorepo_projects
-    all_projects = []
-
-    # Get projects from all known monorepos with caching
-    @known_monorepos.each do |monorepo_path|
-      next unless Dir.exist?(monorepo_path)
-
-      cached_projects = get_cached_monorepo_projects(monorepo_path)
-      if cached_projects
-        all_projects.concat(cached_projects)
-      else
-        # Discovery with timeout
-        begin
-          output, status = Open3.capture2(SESH_DISCOVER_SCRIPT, monorepo_path)
-          if status.success?
-            monorepo_projects = output.lines.map do |line|
-              parts = line.strip.split('|')
-              next unless parts.length >= 2
-
-              name, path = parts[0], parts[1]
-              icon = parts[2] || '🚀'
-              next unless name && path
-
-              { name: name, path: path, icon: icon, monorepo: monorepo_path }
-            end.compact
-
-            cache_monorepo_projects(monorepo_path, monorepo_projects)
-            all_projects.concat(monorepo_projects)
-          end
-        rescue => e
-          # Silently ignore errors for individual monorepos
-        end
-      end
-    end
-
-    all_projects
-  end
-
+  # Retrieves cached projects for a monorepo if valid
   def get_cached_monorepo_projects(monorepo_path)
-    cache_file = File.join(Dir.tmpdir, "tmm_cache_#{Digest::MD5.hexdigest(monorepo_path)}")
-
+    cache_file = cache_file_path(monorepo_path)
     return nil unless File.exist?(cache_file)
 
-    # Check if cache is still valid (5 minutes)
     cache_age = Time.now.to_i - File.mtime(cache_file).to_i
-    return nil if cache_age > 300
+    return nil if cache_age > CACHE_TTL_SECONDS
 
     begin
       data = JSON.parse(File.read(cache_file))
-      return data.map { |p| { name: p['name'], path: p['path'], icon: p['icon'], monorepo: monorepo_path } }
+      data.map { |p| { name: p['name'], path: p['path'], icon: p['icon'], monorepo: monorepo_path } }
     rescue
       nil
     end
   end
 
+  # Caches projects for a monorepo
   def cache_monorepo_projects(monorepo_path, projects)
-    cache_file = File.join(Dir.tmpdir, "tmm_cache_#{Digest::MD5.hexdigest(monorepo_path)}")
+    cache_file = cache_file_path(monorepo_path)
 
     begin
       data = projects.map { |p| { name: p[:name], path: p[:path], icon: p[:icon] } }
@@ -308,70 +285,78 @@ class TmuxMonorepoManager
     end
   end
 
-  def format_session_entry(name, path, type, max_name_width, custom_icon = nil)
-    icon = if custom_icon
-             custom_icon
-           else
-             case type
-             when 'existing' then '📁'
-             when 'project' then '🚀'
-             else '📂'
-             end
-           end
-
-    # Format: icon + name only (no visible path)
-    "#{icon} #{name}"
+  # Generates cache file path for a monorepo
+  def cache_file_path(monorepo_path)
+    File.join(Dir.tmpdir, "tmm_cache_#{Digest::MD5.hexdigest(monorepo_path)}")
   end
 
-  def truncate_path(path, max_length)
-    return path if path.length <= max_length
+  #============================================================================
+  # SESSION MANAGEMENT
+  #============================================================================
 
-    # Keep the most relevant parts of the path
-    parts = path.split('/')
-    if parts.length > 3
-      ".../" + parts[-3..-1].join('/')
-    else
-      path
-    end
-  end
-
+  # Generates the complete session list for display
   def generate_session_list(root_dir = @monorepo_root)
-    @session_data = {}  # Store session name -> data mapping
+    @session_data = {}
     all_sessions = []
 
-    # Get existing sesh sessions (tmux sessions only, no paths)
-    sesh_sessions = get_sesh_sessions
-    sesh_sessions.each do |line|
+    add_existing_sessions(all_sessions)
+    add_discovered_projects(all_sessions, root_dir)
+
+    format_session_entries(all_sessions)
+  end
+
+  def add_existing_sessions(all_sessions)
+    get_sesh_sessions.each do |line|
       next if line.empty?
 
-      # For tmux sessions, we only have the session name
       session_name = line.strip
-      @session_data[session_name] = { name: session_name, path: '', type: 'existing' }
-      all_sessions << { name: session_name, path: '', type: 'existing' }
-    end
+      session_data = { name: session_name, path: '', type: 'existing' }
 
-    # Get discovered monorepo projects
+      @session_data[session_name] = session_data
+      all_sessions << session_data
+    end
+  end
+
+  def add_discovered_projects(all_sessions, root_dir)
     monorepo_projects = get_monorepo_projects(root_dir)
-    existing_names = sesh_sessions.map(&:strip)
+    existing_names = @session_data.keys
 
     monorepo_projects.each do |project|
       next if existing_names.include?(project[:name])
 
-      @session_data[project[:name]] = { name: project[:name], path: project[:path], type: 'project', icon: project[:icon], monorepo: project[:monorepo] }
-      all_sessions << { name: project[:name], path: project[:path], type: 'project', icon: project[:icon], monorepo: project[:monorepo] }
-    end
+      session_data = {
+        name: project[:name],
+        path: project[:path],
+        type: 'project',
+        icon: project[:icon],
+        monorepo: project[:monorepo]
+      }
 
-    # Calculate max name width for consistent formatting
-    max_name_width = all_sessions.map { |s| s[:name].length }.max || 20
-    max_name_width = [max_name_width, 20].max  # Minimum width of 20
-
-    # Format entries with just icon and name
-    all_sessions.map do |session|
-      custom_icon = session[:icon] if session[:type] == 'project'
-      format_session_entry(session[:name], session[:path], session[:type], max_name_width, custom_icon)
+      @session_data[project[:name]] = session_data
+      all_sessions << session_data
     end
   end
 
+  def format_session_entries(all_sessions)
+    all_sessions.map do |session|
+      icon = session[:icon] || default_icon_for_type(session[:type])
+      "#{icon} #{session[:name]}"
+    end
+  end
+
+  def default_icon_for_type(type)
+    case type
+    when 'existing' then FOLDER_ICON
+    when 'project' then PROJECT_ICON
+    else ''
+    end
+  end
+
+  #============================================================================
+  # SESSION CONNECTION
+  #============================================================================
+
+  # Connects to a session by name and path
   def connect_to_session(session_name, session_path, session_type)
     info "Connecting to session: #{session_name}" if @verbose
 
@@ -379,7 +364,6 @@ class TmuxMonorepoManager
     when 'existing'
       system('sesh', 'connect', session_name)
     when 'project'
-      # Create the session directly with tmux, then connect with sesh
       create_project_session(session_name, session_path)
       system('sesh', 'connect', session_name)
     else
@@ -387,28 +371,39 @@ class TmuxMonorepoManager
     end
   end
 
+  # Creates a new tmux session for a project
   def create_project_session(session_name, session_path)
-    # Check if session already exists
+    return if session_exists?(session_name)
+
+    # Show temporary config in verbose mode
+    show_temp_config_if_verbose(session_name, session_path)
+
+    # Create and configure the session
+    system('tmux', 'new-session', '-d', '-s', session_name, '-c', session_path)
+    system('tmux', 'send-keys', '-t', session_name, 'sesh_current_up', 'Enter')
+  end
+
+  # Checks if a tmux session already exists
+  def session_exists?(session_name)
     existing_sessions, status = Open3.capture2('tmux', 'list-sessions', '-F', '#{session_name}')
-    return if status.success? && existing_sessions.lines.any? { |line| line.strip == session_name }
+    status.success? && existing_sessions.lines.any? { |line| line.strip == session_name }
+  end
 
-    # Create temporary sesh config for reference
+  # Shows temporary sesh config in verbose mode
+  def show_temp_config_if_verbose(session_name, session_path)
+    return unless @verbose
+
     temp_config = create_temp_sesh_config(session_name, session_path)
-    info "Created temporary config: #{temp_config.path}" if @verbose
-    info "Config contents:" if @verbose
-    info File.read(temp_config.path) if @verbose
-
     begin
-      # Create new session in detached mode
-      system('tmux', 'new-session', '-d', '-s', session_name, '-c', session_path)
-
-      # Run the startup command in the session
-      system('tmux', 'send-keys', '-t', session_name, 'sesh_current_up', 'Enter')
+      info "Created temporary config: #{temp_config.path}"
+      info "Config contents:"
+      info File.read(temp_config.path)
     ensure
       temp_config.unlink
     end
   end
 
+  # Creates a temporary sesh configuration file
   def create_temp_sesh_config(session_name, session_path)
     temp_config = Tempfile.new(['sesh_temp_', '.toml'])
     temp_config.write(<<~TOML)
@@ -421,186 +416,197 @@ class TmuxMonorepoManager
     temp_config
   end
 
+  #============================================================================
+  # INTERACTIVE INTERFACE
+  #============================================================================
+
+  # Main interactive session selector using fzf
   def interactive_selector(root_dir = @monorepo_root)
-    # Use a faster approach - show sesh results immediately and reload with full data
-    temp_file = Tempfile.new('tmm_sessions')
+    temp_file = create_initial_session_file
+
     begin
-      # Start with just sesh sessions for instant display
-      sesh_sessions = get_sesh_sessions
-      initial_entries = sesh_sessions.map { |line| "📁 #{line.strip}" }
+      monorepo_display = create_monorepo_display_text
+      fzf_command = build_fzf_command(monorepo_display, root_dir)
 
-      temp_file.write(initial_entries.join("\n"))
-      temp_file.close
-
-      # Create header with monorepo info
-      if @known_monorepos.length > 1
-        monorepo_names = @known_monorepos.map { |path| File.basename(path) }.join(", ")
-        monorepo_display = "📁 Multiple Monorepos: #{monorepo_names}"
-      elsif @known_monorepos.length == 1
-        monorepo_path = @known_monorepos.first
-        monorepo_display = "📁 #{File.basename(monorepo_path)} (#{truncate_path_for_display(monorepo_path, 40)})"
-      else
-        monorepo_display = if root_dir == Dir.pwd
-                           "Current Directory"
-                         else
-                           "📁 #{File.basename(root_dir)} (#{truncate_path_for_display(root_dir, 40)})"
-                         end
-      end
-
-      # Create a command that generates the full session list by calling tmm directly
-      full_command = "#{__FILE__} -r '#{root_dir}' list 2>/dev/null | grep -E '^  [🚀📁🏠]' | sed 's/^  //'"
-
-      # Create commands for different data sources
-      tmux_command = "sesh list -t"
-      config_command = "sesh list -c"
-      zoxide_command = "sesh list -z"
-      projects_command = create_projects_only_command(root_dir)
-
-      # Use fzf-tmux with better search scoring and keybindings
-      fzf_command = [
-        'fzf-tmux', '-p', '80%,70%',
-        '--border-label', " tmm - #{monorepo_display} ",
-        '--prompt', '⚡ ',
-        '--header', '  C-a all | C-t tmux | C-g configs | C-x zoxide | C-r projects',
-        '--bind', 'tab:down,btab:up',
-        '--bind', "ctrl-a:change-prompt(⚡ )+reload(#{full_command})",
-        '--bind', "ctrl-t:change-prompt(🪟 )+reload(#{tmux_command})",
-        '--bind', "ctrl-g:change-prompt(⚙️ )+reload(#{config_command})",
-        '--bind', "ctrl-x:change-prompt(📁 )+reload(#{zoxide_command})",
-        '--bind', "ctrl-r:change-prompt(🚀 )+reload(#{projects_command})",
-        '--preview', 'echo "📍 Selected: {}"',
-        '--preview-window', 'right:50%:wrap',
-        '--ansi',
-        '--tiebreak=begin,length',  # Prioritize matches at beginning and shorter strings
-        '--algo=v2'  # Use better matching algorithm
-      ]
-
-      selected_line, status = Open3.capture2(*fzf_command, stdin_data: File.read(temp_file.path))
-
-      unless status.success?
-        info "No session selected" if @verbose
-        return
-      end
-
-      selected_line.strip!
-      return if selected_line.empty?
-
-      # Parse selected entry - extract session name (after icon emoji)
-      session_name = selected_line.gsub(/^[🚀📁🏠] /, '').strip
-
-      # Find the session info from our stored data or search for it
-      session_info = @session_data[session_name] if @session_data
-      session_info ||= find_session_info(session_name, root_dir)
-
-      if session_info
-        connect_to_session(session_info[:name], session_info[:path], session_info[:type])
-      else
-        error "Session information not found for: #{session_name}"
-      end
-
+      selected_line = execute_fzf_selection(fzf_command, temp_file)
+      handle_session_selection(selected_line, root_dir) if selected_line
     ensure
-      temp_file.unlink
+      temp_file.unlink if temp_file
     end
   end
 
-  def create_preview_command(root_dir)
-    # Store session data in a temp file that the preview can read
-    session_data_file = File.join(Dir.tmpdir, "tmm_session_data_#{Process.pid}")
-    File.write(session_data_file, @session_data.to_json)
+  # Creates initial session file with existing sessions for fast display
+  def create_initial_session_file
+    temp_file = Tempfile.new('tmm_sessions')
+    sesh_sessions = get_sesh_sessions
+    initial_entries = sesh_sessions.map { |line| "#{FOLDER_ICON} #{line.strip}" }
 
-    # Create a bash preview command that reads from our session data
-    <<~PREVIEW
-      session_name=$(echo {} | sed 's/^[🚀📁] //')
-      ruby -r json -e "
-        def format_path_with_projects(path)
-          projects_path = ENV['PROJECTS']
-          if projects_path && !projects_path.empty?
-            projects_expanded = File.expand_path(projects_path)
-            if path.start_with?(projects_expanded)
-              return path.sub(projects_expanded, '\\$PROJECTS')
-            end
-          end
-          path
-        end
-
-        data = JSON.parse(File.read('#{session_data_file}'))
-        session_info = data['$session_name']
-
-        if session_info
-          path = session_info['path']
-          monorepo_path = session_info['monorepo'] || '#{root_dir}'
-          display_root = format_path_with_projects(monorepo_path)
-          display_path = path.empty? ? 'N/A (tmux session)' : format_path_with_projects(path)
-
-          puts '🏠 Monorepo: ' + display_root
-          puts '📍 Path: ' + display_path
-          puts ''
-
-          if path.empty?
-            puts '📺 Tmux Session'
-            puts 'This is an existing tmux session without a specific path'
-          elsif Dir.exist?(path)
-            puts '📂 Directory Contents:'
-            puts ''
-            Dir.entries(path).reject { |f| f.start_with?('.') }.sort.first(20).each { |f| puts f }
-            puts ''
-
-            pkg_file = File.join(path, 'package.json')
-            if File.exist?(pkg_file)
-              puts '📦 Package Info:'
-              begin
-                pkg = JSON.parse(File.read(pkg_file))
-                puts pkg['name'] || 'No name'
-                puts pkg['description'] || 'No description'
-              rescue
-                puts 'Error reading package.json'
-              end
-            elsif File.exist?(File.join(path, 'Dockerfile'))
-              puts '🐳 Dockerfile found'
-            elsif File.exist?(File.join(path, 'go.mod'))
-              puts '🐹 Go module:'
-              puts File.read(File.join(path, 'go.mod')).lines.first(3).join
-            elsif File.exist?(File.join(path, 'Cargo.toml'))
-              puts '🦀 Rust project:'
-              File.readlines(File.join(path, 'Cargo.toml')).grep(/^(name|version)/).first(2).each { |line| puts line.strip }
-            end
-          else
-            puts '❌ Directory not accessible or doesn\\'t exist'
-            puts 'Path: ' + path
-          end
-        else
-          puts '❌ Session information not found'
-        end
-      "
-    PREVIEW
+    temp_file.write(initial_entries.join("\n"))
+    temp_file.close
+    temp_file
   end
 
+  # Creates display text for monorepo information
+  def create_monorepo_display_text
+    case @known_monorepos.length
+    when 0
+      "Current Directory"
+    when 1
+      monorepo_path = @known_monorepos.first
+      "#{HOME_ICON} #{File.basename(monorepo_path)} (#{truncate_path_for_display(monorepo_path, 40)})"
+    else
+      monorepo_names = @known_monorepos.map { |path| File.basename(path) }.join(", ")
+      "#{HOME_ICON} Multiple Monorepos: #{monorepo_names}"
+    end
+  end
+
+  # Builds the fzf command with all options and keybindings
+  def build_fzf_command(monorepo_display, root_dir)
+    full_command = "#{__FILE__} -r '#{root_dir}' list 2>/dev/null | grep -E '^  [#{PROJECT_ICON}#{FOLDER_ICON}#{HOME_ICON}]' | sed 's/^  //'"
+
+    [
+      'fzf-tmux', '-p', '80%,70%',
+      '--border-label', " tmm - #{monorepo_display} ",
+      '--prompt', '⚡ ',
+      '--header', '  C-a all | C-t tmux | C-g configs | C-x zoxide | C-r projects',
+      '--bind', 'tab:down,btab:up',
+      '--bind', "ctrl-a:change-prompt(⚡ )+reload(#{full_command})",
+      '--bind', "ctrl-t:change-prompt(🪟 )+reload(sesh list -t)",
+      '--bind', "ctrl-g:change-prompt(⚙️ )+reload(sesh list -c)",
+      '--bind', "ctrl-x:change-prompt(#{FOLDER_ICON} )+reload(sesh list -z)",
+      '--bind', "ctrl-r:change-prompt(#{PROJECT_ICON} )+reload(#{create_projects_only_command(root_dir)})",
+      '--preview', 'echo "📍 Selected: {}"',
+      '--preview-window', 'right:50%:wrap',
+      '--ansi',
+      '--tiebreak=begin,length',
+      '--algo=v2'
+    ]
+  end
+
+  # Executes fzf selection and returns the selected line
+  def execute_fzf_selection(fzf_command, temp_file)
+    selected_line, status = Open3.capture2(*fzf_command, stdin_data: File.read(temp_file.path))
+
+    unless status.success?
+      info "No session selected" if @verbose
+      return nil
+    end
+
+    selected_line.strip!
+    selected_line.empty? ? nil : selected_line
+  end
+
+  # Handles the user's session selection
+  def handle_session_selection(selected_line, root_dir)
+    session_name = selected_line.gsub(/^[#{PROJECT_ICON}#{FOLDER_ICON}#{HOME_ICON}] /, '').strip
+
+    session_info = @session_data[session_name] if @session_data
+    session_info ||= find_session_info(session_name, root_dir)
+
+    if session_info
+      connect_to_session(session_info[:name], session_info[:path], session_info[:type])
+    else
+      error "Session information not found for: #{session_name}"
+    end
+  end
+
+  #============================================================================
+  # UTILITY METHODS
+  #============================================================================
+
+  # Creates command for projects-only display
+  def create_projects_only_command(root_dir)
+    "#{SESH_DISCOVER_SCRIPT} #{root_dir} 2>/dev/null | while IFS='|' read -r name path icon; do echo \"${icon:-#{PROJECT_ICON}} $name\"; done"
+  end
+
+  # Truncates path for display with smart $PROJECTS substitution
+  def truncate_path_for_display(path, max_length)
+    # Handle $PROJECTS substitution
+    projects_path = ENV['PROJECTS']
+    if projects_path && !projects_path.empty?
+      projects_expanded = File.expand_path(projects_path)
+      if path.start_with?(projects_expanded)
+        path = path.sub(projects_expanded, '$PROJECTS')
+        return path if path.length <= max_length
+
+        # If still too long, truncate within $PROJECTS
+        parts = path.split('/')
+        return parts.length > 3 ? '$PROJECTS/.../' + parts[-2..-1].join('/') : path
+      end
+    end
+
+    return path if path.length <= max_length
+
+    # Handle home directory truncation
+    home_path = File.expand_path("~")
+    if path.start_with?(home_path)
+      relative_path = path.sub(home_path, "~")
+      return relative_path if relative_path.length <= max_length
+
+      parts = relative_path.split('/')
+      return parts.length > 3 ? "~/.../" + parts[-2..-1].join('/') : relative_path
+    end
+
+    # Generic path truncation
+    parts = path.split('/')
+    parts.length > 3 ? ".../" + parts[-2..-1].join('/') : path
+  end
+
+  # Finds session information by name
   def find_session_info(session_name, root_dir)
     # Check existing sessions first
-    sesh_sessions = get_sesh_sessions
-    if sesh_sessions.include?(session_name)
-      return {
-        name: session_name,
-        path: '',
-        type: 'existing'
-      }
+    if get_sesh_sessions.include?(session_name)
+      return { name: session_name, path: '', type: 'existing' }
     end
 
     # Check discovered projects
-    monorepo_projects = get_monorepo_projects(root_dir)
-    project = monorepo_projects.find { |p| p[:name] == session_name }
-
-    if project
-      return {
-        name: project[:name],
-        path: project[:path],
-        type: 'project'
-      }
-    end
+    project = get_monorepo_projects(root_dir).find { |p| p[:name] == session_name }
+    return { name: project[:name], path: project[:path], type: 'project' } if project
 
     nil
   end
 
+  #============================================================================
+  # COMMAND IMPLEMENTATIONS
+  #============================================================================
+
+  # Connects to a session by name with fast discovery
+  def connect_by_name(session_name, root_dir = @monorepo_root)
+    # Check existing sessions first
+    existing_session = get_sesh_sessions.find { |line| line.split(' ')[0] == session_name }
+    if existing_session
+      connect_to_session(session_name, '', 'existing')
+      return
+    end
+
+    # Fast discovery: Check each known monorepo individually
+    @known_monorepos.each do |monorepo_path|
+      project = find_project_in_monorepo(session_name, monorepo_path)
+      if project
+        connect_to_session(session_name, project[:path], 'project')
+        return
+      end
+    end
+
+    # Also check specified root_dir if not in known monorepos
+    unless @known_monorepos.include?(File.expand_path(root_dir))
+      project = find_project_in_monorepo(session_name, root_dir)
+      if project
+        connect_to_session(session_name, project[:path], 'project')
+        return
+      end
+    end
+
+    error "Session not found: #{session_name}"
+  end
+
+  # Finds a specific project in a monorepo
+  def find_project_in_monorepo(session_name, monorepo_path)
+    projects = get_single_monorepo_projects(monorepo_path)
+    projects.find { |p| p[:name] == session_name }
+  end
+
+  # Lists all sessions and projects
   def list_sessions(root_dir = @monorepo_root, format = 'table')
     case format
     when 'json'
@@ -610,13 +616,11 @@ class TmuxMonorepoManager
     end
   end
 
+  # Outputs session list in JSON format
   def output_json_list(root_dir)
     existing_sessions = get_sesh_sessions.map do |line|
       parts = line.split(' ', 2)
-      {
-        name: parts[0],
-        path: parts[1]&.strip || ''
-      }
+      { name: parts[0], path: parts[1]&.strip || '' }
     end
 
     discovered_projects = get_monorepo_projects(root_dir)
@@ -629,88 +633,60 @@ class TmuxMonorepoManager
     puts JSON.pretty_generate(result)
   end
 
+  # Outputs session list in table format
   def output_table_list(root_dir)
-    if @known_monorepos.length > 1
-      monorepo_names = @known_monorepos.map { |path| File.basename(path) }.join(", ")
-      puts colorize("🏠 Monorepos: #{monorepo_names}", :blue)
-    elsif @known_monorepos.length == 1
-      display_root = @known_monorepos.first
-      projects_path = ENV['PROJECTS']
-      if projects_path && !projects_path.empty?
-        projects_expanded = File.expand_path(projects_path)
-        if display_root.start_with?(projects_expanded)
-          display_root = display_root.sub(projects_expanded, '$PROJECTS')
-        end
-      end
-      puts colorize("🏠 Monorepo: #{display_root}", :blue)
-    else
-      display_root = root_dir
-      projects_path = ENV['PROJECTS']
-      if projects_path && !projects_path.empty?
-        projects_expanded = File.expand_path(projects_path)
-        if root_dir.start_with?(projects_expanded)
-          display_root = root_dir.sub(projects_expanded, '$PROJECTS')
-        end
-      end
-      puts colorize("🏠 Directory: #{display_root}", :blue)
-    end
+    display_monorepo_header
     puts ""
 
     puts colorize("Existing Sessions:", :blue)
     get_sesh_sessions.each do |line|
-      puts "  📁 #{line.strip}" unless line.empty?
+      puts "  #{FOLDER_ICON} #{line.strip}" unless line.empty?
     end
 
     puts ""
     puts colorize("Discovered Projects:", :blue)
     get_monorepo_projects(root_dir).each do |project|
-      icon = project[:icon] || '🚀'
+      icon = project[:icon] || PROJECT_ICON
       monorepo_name = File.basename(project[:monorepo] || root_dir)
       puts "  #{icon} #{project[:name]} (#{monorepo_name})"
     end
   end
 
-  def connect_by_name(session_name, root_dir = @monorepo_root)
-    # Check existing sessions first
-    sesh_sessions = get_sesh_sessions
-    existing_session = sesh_sessions.find { |line| line.split(' ')[0] == session_name }
-
-    if existing_session
-      connect_to_session(session_name, '', 'existing')
-      return
+  # Displays monorepo header information
+  def display_monorepo_header
+    case @known_monorepos.length
+    when 0
+      puts colorize("#{HOME_ICON} Directory: #{format_path_with_projects(@monorepo_root)}", :blue)
+    when 1
+      display_root = format_path_with_projects(@known_monorepos.first)
+      puts colorize("#{HOME_ICON} Monorepo: #{display_root}", :blue)
+    else
+      monorepo_names = @known_monorepos.map { |path| File.basename(path) }.join(", ")
+      puts colorize("#{HOME_ICON} Monorepos: #{monorepo_names}", :blue)
     end
-
-    # Fast discovery: Check each known monorepo individually
-    @known_monorepos.each do |monorepo_path|
-      projects = get_single_monorepo_projects(monorepo_path)
-      project = projects.find { |p| p[:name] == session_name }
-
-      if project
-        connect_to_session(session_name, project[:path], 'project')
-        return
-      end
-    end
-
-    # Also check specified root_dir if it's not in known monorepos
-    unless @known_monorepos.include?(File.expand_path(root_dir))
-      projects = get_single_monorepo_projects(root_dir)
-      project = projects.find { |p| p[:name] == session_name }
-
-      if project
-        connect_to_session(session_name, project[:path], 'project')
-        return
-      end
-    end
-
-    error "Session not found: #{session_name}"
   end
 
+  # Formats path with $PROJECTS substitution
+  def format_path_with_projects(path)
+    projects_path = ENV['PROJECTS']
+    return path unless projects_path && !projects_path.empty?
+
+    projects_expanded = File.expand_path(projects_path)
+    path.start_with?(projects_expanded) ? path.sub(projects_expanded, '$PROJECTS') : path
+  end
+
+  # Discovers and outputs projects in simple format
   def discover_projects(root_dir = @monorepo_root)
     get_monorepo_projects(root_dir).each do |project|
       puts "#{project[:name]}|#{project[:path]}"
     end
   end
 
+  #============================================================================
+  # HELP AND MAIN EXECUTION
+  #============================================================================
+
+  # Shows help information
   def show_help
     puts <<~HELP
       Usage: #{$0} [OPTIONS] [COMMAND]
@@ -732,6 +708,7 @@ class TmuxMonorepoManager
 
       ENVIRONMENT VARIABLES:
           MONOREPO_ROOT       Default monorepo root directory
+          PROJECTS            Directory to scan for monorepos
 
       EXAMPLES:
           #{$0}                           # Interactive session selector
@@ -747,32 +724,29 @@ class TmuxMonorepoManager
     HELP
   end
 
+  # Main execution method
   def run(args)
+    options = parse_command_line_options(args)
+
+    @monorepo_root = options[:root_dir]
+    @verbose = options[:verbose] || false
+
+    execute_command(options)
+  end
+
+  private
+
+  # Parses command line options
+  def parse_command_line_options(args)
     options = {
       command: nil,
       root_dir: @monorepo_root,
       format: 'table',
-      session_name: nil
+      session_name: nil,
+      verbose: false
     }
 
-    parser = OptionParser.new do |opts|
-      opts.on('-h', '--help', 'Show help') do
-        show_help
-        exit 0
-      end
-
-      opts.on('-r', '--root DIR', 'Set monorepo root directory') do |root|
-        options[:root_dir] = root
-      end
-
-      opts.on('-f', '--format FORMAT', 'Output format (table, json)') do |format|
-        options[:format] = format
-      end
-
-      opts.on('-v', '--verbose', 'Show detailed connection and selection messages') do
-        options[:verbose] = true
-      end
-    end
+    parser = create_option_parser(options)
 
     begin
       parser.parse!(args)
@@ -780,31 +754,43 @@ class TmuxMonorepoManager
       error "Unknown option: #{e.message}"
     end
 
-    # Parse remaining arguments for commands
-    if args.any?
-      case args[0]
-      when 'list', 'discover', 'help'
-        options[:command] = args[0]
-      when 'connect'
-        if args[1]
-          options[:command] = 'connect'
-          options[:session_name] = args[1]
-        else
-          error "Session name required for connect command"
-        end
-      else
-        options[:command] = args[0]
-      end
-    end
-
-    # Set default command
+    parse_command_arguments(args, options)
     options[:command] ||= 'interactive'
 
-    # Update monorepo root and verbose flag
-    @monorepo_root = options[:root_dir]
-    @verbose = options[:verbose] || false
+    options
+  end
 
-    # Execute command
+  # Creates the option parser
+  def create_option_parser(options)
+    OptionParser.new do |opts|
+      opts.on('-h', '--help', 'Show help') { show_help; exit 0 }
+      opts.on('-r', '--root DIR', 'Set monorepo root directory') { |root| options[:root_dir] = root }
+      opts.on('-f', '--format FORMAT', 'Output format (table, json)') { |format| options[:format] = format }
+      opts.on('-v', '--verbose', 'Show detailed messages') { options[:verbose] = true }
+    end
+  end
+
+  # Parses command arguments
+  def parse_command_arguments(args, options)
+    return unless args.any?
+
+    case args[0]
+    when 'list', 'discover', 'help'
+      options[:command] = args[0]
+    when 'connect'
+      if args[1]
+        options[:command] = 'connect'
+        options[:session_name] = args[1]
+      else
+        error "Session name required for connect command"
+      end
+    else
+      options[:command] = args[0]
+    end
+  end
+
+  # Executes the specified command
+  def execute_command(options)
     case options[:command]
     when 'interactive'
       interactive_selector(@monorepo_root)
