@@ -99,6 +99,10 @@ class TmuxMonorepoManager
     "#{COLORS[color]}#{text}#{COLORS[:reset]}"
   end
 
+  def strip_ansi_codes(text)
+    text.gsub(/\x1b\[[0-9;]*m/, '')
+  end
+
   #============================================================================
   # MONOREPO DISCOVERY
   #============================================================================
@@ -167,7 +171,7 @@ class TmuxMonorepoManager
     return [] unless status.success?
 
     output.lines
-          .map(&:strip)
+          .map { |line| strip_ansi_codes(line).strip }
           .reject { |line| line.start_with?('zoxide:') }
           .reject(&:empty?)
   end
@@ -224,23 +228,24 @@ class TmuxMonorepoManager
     end
   end
 
-  # Parses the output from the discovery script
   def parse_discovery_output(output, monorepo_path)
     output.lines.map do |line|
-      parts = line.strip.split('|')
+      clean_line = strip_ansi_codes(line).strip
+      parts = clean_line.split('|')
       next unless parts.length >= 2
 
       name, path = parts[0], parts[1]
       next unless name && path
 
-      # Determine icon based on whether this is the monorepo root
+      name = strip_ansi_codes(name).strip
+      path = strip_ansi_codes(path).strip
+
       icon = is_monorepo_root?(path, monorepo_path) ? HOME_ICON : PROJECT_ICON
 
       { name: name, path: path, icon: icon, monorepo: monorepo_path }
     end.compact
   end
 
-  # Checks if a path is the monorepo root
   def is_monorepo_root?(path, monorepo_path)
     File.expand_path(path) == File.expand_path(monorepo_path)
   end
@@ -283,7 +288,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Caches projects for a monorepo
   def cache_monorepo_projects(monorepo_path, projects)
     cache_file = cache_file_path(monorepo_path)
 
@@ -291,7 +295,7 @@ class TmuxMonorepoManager
       data = projects.map { |p| { name: p[:name], path: p[:path] } }
       File.write(cache_file, JSON.generate(data))
     rescue
-      # Ignore cache write errors
+      # no-op: Ignore cache write errors
     end
   end
 
@@ -304,7 +308,6 @@ class TmuxMonorepoManager
   # SESSION MANAGEMENT
   #============================================================================
 
-  # Generates the complete session list for display
   def generate_session_list(root_dir = @monorepo_root)
     @session_data = {}
     all_sessions = []
@@ -319,7 +322,7 @@ class TmuxMonorepoManager
     get_sesh_sessions.each do |line|
       next if line.empty?
 
-      session_name = line.strip
+      session_name = strip_ansi_codes(line).strip
       session_data = { name: session_name, path: '', type: 'existing' }
 
       @session_data[session_name] = session_data
@@ -366,7 +369,6 @@ class TmuxMonorepoManager
   # SESSION CONNECTION
   #============================================================================
 
-  # Connects to a session by name and path
   def connect_to_session(session_name, session_path, session_type)
     info "Connecting to session: #{session_name}" if @verbose
 
@@ -381,25 +383,20 @@ class TmuxMonorepoManager
     end
   end
 
-  # Creates a new tmux session for a project
   def create_project_session(session_name, session_path)
     return if session_exists?(session_name)
 
-    # Show temporary config in verbose mode
     show_temp_config_if_verbose(session_name, session_path)
 
-    # Create and configure the session
     system('tmux', 'new-session', '-d', '-s', session_name, '-c', session_path)
     system('tmux', 'send-keys', '-t', session_name, 'sesh_current_up', 'Enter')
   end
 
-  # Checks if a tmux session already exists
   def session_exists?(session_name)
     existing_sessions, status = Open3.capture2('tmux', 'list-sessions', '-F', '#{session_name}')
     status.success? && existing_sessions.lines.any? { |line| line.strip == session_name }
   end
 
-  # Shows temporary sesh config in verbose mode
   def show_temp_config_if_verbose(session_name, session_path)
     return unless @verbose
 
@@ -413,7 +410,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Creates a temporary sesh configuration file
   def create_temp_sesh_config(session_name, session_path)
     temp_config = Tempfile.new(['sesh_temp_', '.toml'])
     temp_config.write(<<~TOML)
@@ -430,7 +426,6 @@ class TmuxMonorepoManager
   # INTERACTIVE INTERFACE
   #============================================================================
 
-  # Main interactive session selector using fzf
   def interactive_selector(root_dir = @monorepo_root)
     temp_file = create_initial_session_file
 
@@ -445,7 +440,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Creates initial session file with existing sessions for fast display
   def create_initial_session_file
     temp_file = Tempfile.new('tmm_sessions')
     sesh_sessions = get_sesh_sessions
@@ -456,7 +450,6 @@ class TmuxMonorepoManager
     temp_file
   end
 
-  # Creates display text for monorepo information
   def create_monorepo_display_text
     case @known_monorepos.length
     when 0
@@ -470,7 +463,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Builds the fzf command with all options and keybindings
   def build_fzf_command(monorepo_display, root_dir)
     full_command = "#{__FILE__} -r '#{root_dir}' list 2>/dev/null | grep -E '^  [#{PROJECT_ICON}#{FOLDER_ICON}#{HOME_ICON}]' | sed 's/^  //'"
 
@@ -493,7 +485,6 @@ class TmuxMonorepoManager
     ]
   end
 
-  # Executes fzf selection and returns the selected line
   def execute_fzf_selection(fzf_command, temp_file)
     selected_line, status = Open3.capture2(*fzf_command, stdin_data: File.read(temp_file.path))
 
@@ -506,9 +497,25 @@ class TmuxMonorepoManager
     selected_line.empty? ? nil : selected_line
   end
 
-  # Handles the user's session selection
   def handle_session_selection(selected_line, root_dir)
-    session_name = selected_line.gsub(/^[#{PROJECT_ICON}#{FOLDER_ICON}#{HOME_ICON}] /, '').strip.split(' ').first
+    clean_line = strip_ansi_codes(selected_line)
+    session_name = clean_line.gsub(/^[#{PROJECT_ICON}#{FOLDER_ICON}#{HOME_ICON}] /, '').strip.split(' ').first
+    
+    session_name = strip_ansi_codes(session_name)
+
+    # Check if this looks like a path (from zoxide) rather than a session name
+    if session_name.include?('/') || session_name.start_with?('~')
+      # This is a path from zoxide, create session from path
+      expanded_path = File.expand_path(session_name)
+      if Dir.exist?(expanded_path)
+        path_session_name = File.basename(expanded_path)
+        connect_to_session(path_session_name, expanded_path, 'project')
+        return
+      else
+        error "Directory not found: #{session_name}"
+        return
+      end
+    end
 
     session_info = @session_data[session_name] if @session_data
     session_info ||= find_session_info(session_name, root_dir)
@@ -524,14 +531,12 @@ class TmuxMonorepoManager
   # UTILITY METHODS
   #============================================================================
 
-  # Creates command for projects-only display
   def create_projects_only_command(root_dir)
     "#{SESH_DISCOVER_SCRIPT} #{root_dir} 2>/dev/null | while IFS='|' read -r name path; do echo \"#{PROJECT_ICON} $name\"; done"
   end
 
   # Truncates path for display with smart $PROJECTS substitution
   def truncate_path_for_display(path, max_length)
-    # Handle $PROJECTS substitution
     projects_path = ENV['PROJECTS']
     if projects_path && !projects_path.empty?
       projects_expanded = File.expand_path(projects_path)
@@ -562,7 +567,6 @@ class TmuxMonorepoManager
     parts.length > 3 ? ".../" + parts[-2..-1].join('/') : path
   end
 
-  # Finds session information by name
   def find_session_info(session_name, root_dir)
     # Check existing sessions first
     if get_sesh_sessions.include?(session_name)
@@ -580,7 +584,6 @@ class TmuxMonorepoManager
   # COMMAND IMPLEMENTATIONS
   #============================================================================
 
-  # Connects to a session by name with fast discovery
   def connect_by_name(session_name, root_dir = @monorepo_root)
     # Check existing sessions first
     existing_session = get_sesh_sessions.find { |line| line.split(' ')[0] == session_name }
@@ -610,13 +613,11 @@ class TmuxMonorepoManager
     error "Session not found: #{session_name}"
   end
 
-  # Finds a specific project in a monorepo
   def find_project_in_monorepo(session_name, monorepo_path)
     projects = get_single_monorepo_projects(monorepo_path)
     projects.find { |p| p[:name] == session_name }
   end
 
-  # Lists all sessions and projects
   def list_sessions(root_dir = @monorepo_root, format = 'table')
     case format
     when 'json'
@@ -626,7 +627,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Outputs session list in JSON format
   def output_json_list(root_dir)
     existing_sessions = get_sesh_sessions.map do |line|
       parts = line.split(' ', 2)
@@ -643,7 +643,6 @@ class TmuxMonorepoManager
     puts JSON.pretty_generate(result)
   end
 
-  # Outputs session list in table format
   def output_table_list(root_dir)
     display_monorepo_header
     puts ""
@@ -662,7 +661,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Displays monorepo header information
   def display_monorepo_header
     case @known_monorepos.length
     when 0
@@ -676,7 +674,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Formats path with $PROJECTS substitution
   def format_path_with_projects(path)
     projects_path = ENV['PROJECTS']
     return path unless projects_path && !projects_path.empty?
@@ -685,7 +682,6 @@ class TmuxMonorepoManager
     path.start_with?(projects_expanded) ? path.sub(projects_expanded, '$PROJECTS') : path
   end
 
-  # Discovers and outputs projects in simple format
   def discover_projects(root_dir = @monorepo_root)
     get_monorepo_projects(root_dir).each do |project|
       puts "#{project[:name]}|#{project[:path]}"
@@ -696,7 +692,6 @@ class TmuxMonorepoManager
   # HELP AND MAIN EXECUTION
   #============================================================================
 
-  # Shows help information
   def show_help
     puts <<~HELP
       Usage: #{$0} [OPTIONS] [COMMAND]
@@ -734,7 +729,7 @@ class TmuxMonorepoManager
     HELP
   end
 
-  # Main execution method
+  # Main
   def run(args)
     options = parse_command_line_options(args)
 
@@ -746,7 +741,6 @@ class TmuxMonorepoManager
 
   private
 
-  # Parses command line options
   def parse_command_line_options(args)
     options = {
       command: nil,
@@ -770,7 +764,6 @@ class TmuxMonorepoManager
     options
   end
 
-  # Creates the option parser
   def create_option_parser(options)
     OptionParser.new do |opts|
       opts.on('-h', '--help', 'Show help') { show_help; exit 0 }
@@ -780,7 +773,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Parses command arguments
   def parse_command_arguments(args, options)
     return unless args.any?
 
@@ -799,7 +791,6 @@ class TmuxMonorepoManager
     end
   end
 
-  # Executes the specified command
   def execute_command(options)
     case options[:command]
     when 'interactive'
@@ -818,7 +809,6 @@ class TmuxMonorepoManager
   end
 end
 
-# Run if executed directly
 if __FILE__ == $0
   manager = TmuxMonorepoManager.new
   manager.run(ARGV)
