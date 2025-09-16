@@ -1,9 +1,4 @@
 [[session]]
-name = "current_up"
-startup_command = "sesh_current_up"
-path = "~/com.github/current_up"
-
-[[session]]
 name = "dotf"
 path = "~/com.github/dotfiles"
 startup_command = "sesh_vim"
