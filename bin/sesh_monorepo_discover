@@ -130,9 +130,7 @@ class MonorepoDiscovery
 
     if project_directory?(current_dir)
       session_name = generate_session_name(current_dir, root_dir)
-      is_root = File.expand_path(current_dir) == File.expand_path(root_dir)
-      icon = is_root ? "🏠" : "🚀"
-      projects << { path: current_dir, name: session_name, icon: icon }
+      projects << { path: current_dir, name: session_name }
     end
 
     return projects unless Dir.exist?(current_dir)
@@ -179,8 +177,8 @@ class MonorepoDiscovery
         lines = File.readlines(cache_file)[1..-1] # Skip first line (root comment)
         return lines.map do |line|
           parts = line.strip.split('|')
-          next unless parts.length >= 3
-          { path: parts[0], name: parts[1], icon: parts[2] }
+          next unless parts.length >= 2
+          { path: parts[0], name: parts[1] }
         end.compact
       rescue
         # If cache reading fails, fall through to scanning
@@ -194,9 +192,7 @@ class MonorepoDiscovery
         File.open(cache_file, 'w') do |f|
           f.puts "# ROOT: #{root_dir}"
           projects.each do |project|
-            is_root = File.expand_path(project[:path]) == File.expand_path(root_dir)
-            icon = is_root ? "🏠" : "🚀"
-            f.puts "#{project[:path]}|#{project[:name]}|#{icon}"
+            f.puts "#{project[:path]}|#{project[:name]}"
           end
         end
       rescue => e
@@ -229,7 +225,7 @@ class MonorepoDiscovery
   end
 
   def output_list(projects)
-    projects.each { |project| puts "#{project[:name]}|#{project[:path]}|#{project[:icon] || '🚀'}" }
+    projects.each { |project| puts "#{project[:name]}|#{project[:path]}" }
   end
 end
 

@@ -231,11 +231,18 @@ class TmuxMonorepoManager
       next unless parts.length >= 2
 
       name, path = parts[0], parts[1]
-      icon = parts[2] || PROJECT_ICON
       next unless name && path
+
+      # Determine icon based on whether this is the monorepo root
+      icon = is_monorepo_root?(path, monorepo_path) ? HOME_ICON : PROJECT_ICON
 
       { name: name, path: path, icon: icon, monorepo: monorepo_path }
     end.compact
+  end
+
+  # Checks if a path is the monorepo root
+  def is_monorepo_root?(path, monorepo_path)
+    File.expand_path(path) == File.expand_path(monorepo_path)
   end
 
   # Deduplicates projects, preferring those from the specified root_dir
@@ -267,7 +274,10 @@ class TmuxMonorepoManager
 
     begin
       data = JSON.parse(File.read(cache_file))
-      data.map { |p| { name: p['name'], path: p['path'], icon: p['icon'], monorepo: monorepo_path } }
+      data.map do |p|
+        icon = is_monorepo_root?(p['path'], monorepo_path) ? HOME_ICON : PROJECT_ICON
+        { name: p['name'], path: p['path'], icon: icon, monorepo: monorepo_path }
+      end
     rescue
       nil
     end
@@ -278,7 +288,7 @@ class TmuxMonorepoManager
     cache_file = cache_file_path(monorepo_path)
 
     begin
-      data = projects.map { |p| { name: p[:name], path: p[:path], icon: p[:icon] } }
+      data = projects.map { |p| { name: p[:name], path: p[:path] } }
       File.write(cache_file, JSON.generate(data))
     rescue
       # Ignore cache write errors
@@ -516,7 +526,7 @@ class TmuxMonorepoManager
 
   # Creates command for projects-only display
   def create_projects_only_command(root_dir)
-    "#{SESH_DISCOVER_SCRIPT} #{root_dir} 2>/dev/null | while IFS='|' read -r name path icon; do echo \"${icon:-#{PROJECT_ICON}} $name\"; done"
+    "#{SESH_DISCOVER_SCRIPT} #{root_dir} 2>/dev/null | while IFS='|' read -r name path; do echo \"#{PROJECT_ICON} $name\"; done"
   end
 
   # Truncates path for display with smart $PROJECTS substitution
