@@ -6,6 +6,7 @@
 microservices = "service"
 libraries = "lib"
 components = "comp"
+scrapers = "scrap"
 
 # Directories to ignore during scanning
 [ignore]
