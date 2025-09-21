@@ -241,6 +241,7 @@ def show_help
         -c, --config FILE   Configuration file path
         --no-cache          Disable caching
         --clear-cache       Clear cache and exit
+        --print-cache       Print cache file path and exit
 
     DIRECTORY:
         Root directory to scan (default: current directory)
@@ -282,6 +283,12 @@ def main
     opts.on('--clear-cache', 'Clear cache and exit') do
       discovery = MonorepoDiscovery.new
       discovery.clear_cache
+      exit 0
+    end
+
+    opts.on('--print-cache', 'Print cache file path and exit') do
+      discovery = MonorepoDiscovery.new
+      puts discovery.cache_file_path(options[:root_dir])
       exit 0
     end
   end.parse!
