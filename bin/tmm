@@ -539,7 +539,7 @@ class TmuxMonorepoManager
   #============================================================================
 
   def create_projects_only_command(root_dir)
-    "#{SESH_DISCOVER_SCRIPT} #{root_dir} 2>/dev/null | while IFS='|' read -r name path; do echo \"#{PROJECT_ICON} $name\"; done"
+    "#{SESH_DISCOVER_SCRIPT} #{root_dir} 2>/dev/null | while IFS='|' read -r project_dir name path; do echo \"#{PROJECT_ICON} $name\"; done"
   end
 
   # Truncates path for display with smart $PROJECTS substitution
