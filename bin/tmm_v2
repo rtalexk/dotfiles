@@ -1,0 +1,84 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+# Tmux Monorepo Manager - Enhanced session manager for monorepo projects
+#
+# This tool provides an intelligent tmux session manager that automatically
+# discovers projects in monorepos and provides a fast, interactive interface
+# for switching between sessions and projects.
+#
+# Features:
+# - Automatic monorepo discovery
+# - Fast caching system for performance
+# - Interactive fzf-based session selector
+# - Multiple data source support (tmux, sesh configs, zoxide, discovered projects)
+# - Project-aware session creation with startup commands
+class TmuxMonorepoManager
+  # Icon constants
+  FOLDER_ICON = '󱉭'
+  PROJECT_ICON = '🚀'
+  HOME_ICON = '🏠'
+
+  def self.run(args:)
+    new(args: args).run
+  end
+
+  attr_reader :args
+
+  def initialize(args: ARGV)
+    @args = args
+  end
+
+  def run
+    OptionParser.new do |opts|
+      opts.on('-h', '--help', 'Show help') do
+        display_help
+        exit 0
+      end
+    end.parse!(args)
+  end
+
+  def display_help
+  command = File.basename($0)
+
+    puts <<~HELP
+      Usage: #{$0} [OPTIONS] [COMMAND]
+
+      Tmux Monorepo Manager - Enhanced session manager for monorepo projects
+
+      COMMANDS:
+          (no command)    Interactive session selector (default)
+          list            List all sessions and projects
+          connect NAME    Connect to specific session by name
+          discover        Discover projects in monorepo
+          help            Show this help message
+
+      OPTIONS:
+          -r, --root DIR      Set monorepo root directory (default: $PWD)
+          -f, --format FORMAT Output format for list: table, json (default: table)
+          -v, --verbose       Show detailed connection and selection messages
+          -h, --help          Show this help message
+
+      ENVIRONMENT VARIABLES:
+          MONOREPO_ROOT       Default monorepo root directory
+          PROJECTS            Directory to scan for monorepos
+
+      EXAMPLES:
+          #{command}                           # Interactive session selector
+          #{command} list                      # List all sessions and projects
+          #{command} connect web-partner       # Connect to specific session
+          #{command} -r /path/to/monorepo      # Use different monorepo root
+          #{command} list -f json              # List in JSON format
+
+      INTEGRATION:
+          Add to your shell aliases:
+              alias tmm='tmm'
+              alias tml='tmm list'
+    HELP
+  end
+end
+
+if __FILE__ == $0
+  TmuxMonorepoManager.run(args: ARGV)
+end
