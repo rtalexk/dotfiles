@@ -52,6 +52,18 @@ class TmuxMonorepoManager
     check_dependencies
   end
 
+  def env_projects
+    ENV['PROJECTS']
+  end
+
+  def env_projects_path
+    @env_projects_path ||= begin
+      return nil unless env_projects
+
+      File.expand_path(env_projects)
+    end
+  end
+
   #============================================================================
   # DEPENDENCY MANAGEMENT
   #============================================================================
@@ -128,14 +140,12 @@ class TmuxMonorepoManager
 
   # Scans the PROJECTS directory for potential monorepos
   def find_monorepos_in_projects_dir
-    projects_dir = ENV['PROJECTS']
-    return [] unless projects_dir && Dir.exist?(projects_dir)
+    return [] unless env_projects_path
 
-    projects_expanded = File.expand_path(projects_dir)
-    Dir.entries(projects_expanded).map do |entry|
+    Dir.entries(env_projects_path).map do |entry|
       next if entry.start_with?('.')
 
-      repo_path = File.join(projects_expanded, entry)
+      repo_path = File.join(env_projects_path, entry)
       next unless Dir.exist?(repo_path)
 
       repo_path if looks_like_monorepo?(repo_path)
@@ -170,10 +180,7 @@ class TmuxMonorepoManager
     output, status = Open3.capture2('sesh list -t 2>/dev/null')
     return [] unless status.success?
 
-    output.lines
-          .map { |line| strip_ansi_codes(line).strip }
-          .reject { |line| line.start_with?('zoxide:') }
-          .reject(&:empty?)
+    output.lines.reject(&:empty?)
   end
 
   # Gets all monorepo projects with caching and deduplication
