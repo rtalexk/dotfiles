@@ -256,6 +256,8 @@ class MonorepoDiscovery
 end
 
 def show_help
+  command = File.basename($0)
+
   puts <<~HELP
     Usage: #{$0} [OPTIONS] [DIRECTORY]
 
@@ -273,10 +275,10 @@ def show_help
         Root directory to scan (default: current directory)
 
     EXAMPLES:
-        #{$0}                                  # Scan current directory
-        #{$0} /path/to/monorepo               # Scan specific directory
-        #{$0} -f json                         # Output as JSON
-        #{$0} -f sesh >> ~/.config/sesh/sesh.toml  # Append to sesh config
+        #{command}                                  # Scan current directory
+        #{command} /path/to/monorepo               # Scan specific directory
+        #{command} -f json                         # Output as JSON
+        #{command} -f sesh >> ~/.config/sesh/sesh.toml  # Append to sesh config
   HELP
 end
 
