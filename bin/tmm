@@ -664,7 +664,7 @@ class TmuxMonorepoManager
     get_monorepo_projects(root_dir).each do |project|
       icon = project[:icon] || PROJECT_ICON
       monorepo_name = File.basename(project[:monorepo] || root_dir)
-      puts "  #{icon} #{project[:name]} (#{monorepo_name})"
+      puts "  #{icon} #{project[:name]}"
     end
   end
 
