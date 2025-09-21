@@ -204,10 +204,10 @@ class MonorepoDiscovery
         return lines.map do |line|
           parts = line.strip.split('|')
           next unless parts.length >= 2
-          { path: parts[0], name: parts[1] }
+          { base_dir: parts[0], name: parts[1], path: parts[2] }
         end.compact
       rescue
-        # If cache reading fails, fall through to scanning
+        # ignore error, fall through to scanning
       end
     end
 
@@ -218,7 +218,7 @@ class MonorepoDiscovery
         File.open(cache_file, 'w') do |f|
           f.puts "# ROOT: #{root_dir}"
           projects.each do |project|
-            f.puts "#{project[:path]}|#{project[:name]}"
+            f.puts "#{project[:base_dir]}|#{project[:name]}|#{project[:path]}"
           end
         end
       rescue => e
