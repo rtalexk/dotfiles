@@ -5,6 +5,7 @@ require 'json'
 require 'pathname'
 require 'fileutils'
 require 'digest'
+require 'set'
 
 # Monorepo project discovery script for sesh session management
 class MonorepoDiscovery
@@ -88,12 +89,23 @@ class MonorepoDiscovery
     config
   end
 
+  def config_ignore_patterns
+    @config_ignore_patterns ||= Set.new(@config[:ignore_patterns])
+  end
+
+  def config_project_files
+    @config_project_files ||= Set.new(@config[:project_files])
+  end
+
   def should_ignore?(dir_name)
-    @config[:ignore_patterns].include?(dir_name)
+    config_ignore_patterns.include?(dir_name)
   end
 
   def project_directory?(dir_path)
-    @config[:project_files].any? { |file| File.exist?(File.join(dir_path, file)) }
+    directory_files = Dir.entries(dir_path).select { |entry| File.file?(File.join(dir_path, entry)) }
+    directory_files = Set.new(directory_files)
+
+    (config_project_files & directory_files).any?
   end
 
   def generate_session_name(full_path, root_dir)
@@ -107,13 +119,26 @@ class MonorepoDiscovery
     rel_path = Pathname.new(normalized_full_path).relative_path_from(Pathname.new(normalized_root_dir)).to_s
     path_components = rel_path.split('/')
 
+    # If a max_depth is configured and the relative path is too deep, keep only the last N components.
     if @config[:max_depth] > 0 && path_components.length > @config[:max_depth]
       path_components = path_components.last(@config[:max_depth])
     end
 
     session_parts = []
-    path_components.each do |component|
+    path_components.each_with_index do |component, i|
       mapped_name = @config[:directory_mappings][component] || component
+
+      if i < path_components.length - 1
+        next_component = path_components[i + 1]
+        is_prefix = next_component.start_with?(component + @config[:separator])
+        is_exact = next_component == component
+        is_suffix = next_component.end_with?(component)
+
+        if is_prefix || is_exact || is_suffix
+          next # Skip this component if the next one already includes it
+        end
+      end
+
       session_parts << mapped_name
     end
 
@@ -121,6 +146,7 @@ class MonorepoDiscovery
     session_name.gsub(/[^a-zA-Z0-9_-]/, '_')
   end
 
+  # Recursively scan directories for projects
   def scan_projects(root_dir, current_dir = nil, depth = 0)
     current_dir ||= root_dir
     projects = []
