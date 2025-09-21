@@ -156,7 +156,7 @@ class MonorepoDiscovery
 
     if project_directory?(current_dir)
       session_name = generate_session_name(current_dir, root_dir)
-      projects << { path: current_dir, name: session_name }
+      projects << { path: current_dir, name: session_name, base_dir: File.basename(root_dir) }
     end
 
     return projects unless Dir.exist?(current_dir)
@@ -237,7 +237,7 @@ class MonorepoDiscovery
   end
 
   def output_json(projects)
-    puts JSON.pretty_generate(projects.map { |p| { path: p[:path], name: p[:name] } })
+    puts JSON.pretty_generate(projects.map { |p| { path: p[:path], name: p[:name], base_dir: p[:base_dir] } })
   end
 
   def output_sesh_config(projects)
@@ -251,7 +251,7 @@ class MonorepoDiscovery
   end
 
   def output_list(projects)
-    projects.each { |project| puts "#{project[:name]}|#{project[:path]}" }
+    projects.each { |project| puts "#{project[:base_dir]}|#{project[:name]}|#{project[:path]}" }
   end
 end
 
