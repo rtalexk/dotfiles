@@ -146,6 +146,9 @@ return {
 
         -- Markdown LSP
         marksman = {},
+        
+        -- ESLint LSP
+        eslint = {},
 
         lua_ls = {
           -- cmd = {...},
