@@ -76,6 +76,7 @@ brew install font-hack-nerd-font
 # brew install zsh-autosuggestions
 # brew install sesh
 # brew install jesseduffield/lazygit/lazygit
+# brew install --cask raycast
 
 # === END Mac specific packages
 #
