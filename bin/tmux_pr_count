@@ -3,6 +3,12 @@
 require 'digest/md5'
 require 'fileutils'
 require 'optparse'
+require 'json'
+
+LABEL_NA = "N/A"
+LABEL_ERR = "ERR!"
+LABEL_EMPTY = "0"
+LABEL_ALL_EMPTY = "0 |0|0"
 
 options = {}
 OptionParser.new do |opt|
@@ -11,6 +17,10 @@ end.parse!
 
 cwd = options[:cwd] || Dir.pwd
 Dir.chdir(cwd)
+
+def format_counters(assigned, open, all)
+  "#{assigned} |#{open}|#{all}"
+end
 
 def min_to_sec(min)
   min * 60
@@ -24,16 +34,43 @@ def wip_labels
   end
 end
 
+def current_github_user
+  @current_user ||= `gh auth status 2>&1 | grep 'Logged in to github.com account' | awk '{print $6}' | tr -d '()'`.strip
+end
+
+def get_repo_name
+  @repo_name ||= `gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null`.strip
+end
+
+def parse_gh_output(output)
+  return [] if output.strip.empty?
+
+  stripped = output.strip
+
+  return [] if stripped == '[]'
+
+  # If it's already a JSON array (like "[{...}]"), parse it directly
+  if stripped.start_with?('[') && stripped.end_with?(']')
+    return JSON.parse(stripped)
+  end
+
+  # Otherwise, parse line by line (each line is a JSON object)
+  stripped.split("\n").map { |line| JSON.parse(line) }
+end
+
 def pr_list_count(cwd = Dir.pwd)
-  cmd = "gh pr list --state open --json number,title,author,labels,isDraft,reviews --jq '.[] | select(.isDraft == false and .author.login != \"rtalexk\" and ([.labels[].name | select(#{wip_labels})] | length == 0) and ([.reviews[] | select(.author.login == \"rtalexk\" and .state == \"APPROVED\")] | length == 0)) | {number, title, author, labels}'"
+  user = current_github_user
+  repo = get_repo_name
+
+  return LABEL_NA if user.empty? || repo.empty?
 
   # Cache settings
   expiry = min_to_sec 10
   expire_date = Time.now.utc - expiry
 
-  # Generate cache file path
+  # Generate cache file path based on repo and user
   program = File.basename($PROGRAM_NAME)
-  hash = Digest::MD5.hexdigest("#{cwd};#{cmd}")
+  hash = Digest::MD5.hexdigest("#{repo};#{user}")
   cachedir = File.join(ENV['HOME'], '.cache', program)
   cache_file = File.join(cachedir, hash)
 
@@ -44,21 +81,74 @@ def pr_list_count(cwd = Dir.pwd)
     file_date = File.stat(cache_file).mtime
 
     if file_date < expire_date
-      update_cache(cmd, cache_file)
+      update_cache_enhanced(repo, user, cache_file)
     end
 
-    content = File.read(cache_file).strip
-    content.empty? ? 0 : content.lines.count
+    return parse_cache_file(cache_file)
   else
-    update_cache(cmd, cache_file)
-
-    # Assume 0 PRs if cache file does not exist, next run will have the correct count
-    0
+    update_cache_enhanced(repo, user, cache_file)
+    return LABEL_ALL_EMPTY
   end
 end
 
-def update_cache(cmd, cache_file)
-  Process.fork { system("#{cmd} > #{cache_file} 2>&1") }
+def update_cache_enhanced(repo, user, cache_file)
+  Process.fork do
+    begin
+      # Query 1: PRs assigned to me that I haven't approved (non-draft, non-WIP)
+      assigned_cmd = "gh pr list --state open --json number,title,author,labels,isDraft,reviews,assignees --jq '.[] | select(.isDraft == false and ([.labels[].name | select(#{wip_labels})] | length == 0) and ([.assignees[].login] | index(\"#{user}\")) != null and ([.reviews[] | select(.author.login == \"#{user}\" and .state == \"APPROVED\")] | length == 0))'"
+
+      # Query 2: Open available PRs (current logic)
+      open_cmd = "gh pr list --state open --json number,title,author,labels,isDraft,reviews --jq '.[] | select(.isDraft == false and .author.login != \"#{user}\" and ([.labels[].name | select(#{wip_labels})] | length == 0) and ([.reviews[] | select(.author.login == \"#{user}\" and .state == \"APPROVED\")] | length == 0))'"
+
+      # Query 3: All open PRs
+      all_cmd = "gh pr list --state open --json number,title,author"
+
+      assigned_prs = `#{assigned_cmd} 2>/dev/null`
+      open_prs = `#{open_cmd} 2>/dev/null`
+      all_prs = `#{all_cmd} 2>/dev/null`
+
+      # Parse JSON arrays from gh output
+      assigned_parsed = parse_gh_output(assigned_prs)
+      open_parsed = parse_gh_output(open_prs)
+      all_parsed = parse_gh_output(all_prs)
+
+      cache_data = {
+        repo: repo,
+        generated_at: Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        prs_assigned_pending: assigned_parsed,
+        prs_open_available: open_parsed,
+        prs_all: all_parsed
+      }
+
+      File.write(cache_file, JSON.generate(cache_data))
+    rescue => e
+      # Write empty cache on error
+      File.write(cache_file, JSON.generate({
+        repo: repo,
+        generated_at: Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        prs_assigned_pending: [],
+        prs_open_available: [],
+        prs_all: [],
+        error: e.message
+      }))
+    end
+  end
+end
+
+def parse_cache_file(cache_file)
+  begin
+    content = File.read(cache_file).strip
+    return LABEL_ALL_EMPTY if content.empty?
+
+    data = JSON.parse(content)
+    assigned_count = data['prs_assigned_pending']&.length || 0
+    open_count = data['prs_open_available']&.length || 0
+    all_count = data['prs_all']&.length || 0
+
+    format_counters(assigned_count, open_count, all_count)
+  rescue JSON::ParserError
+    LABEL_ERR
+  end
 end
 
 def has_remote?(cwd = Dir.pwd)
@@ -67,7 +157,13 @@ def has_remote?(cwd = Dir.pwd)
 end
 
 if system("is_git_repo") && has_remote?(cwd)
-  puts pr_list_count(cwd)
+  count = pr_list_count(cwd)
+  label = if count == LABEL_ALL_EMPTY
+    LABEL_EMPTY
+  else
+    count
+  end
+  puts label
 else
-  puts "NA"
+  puts LABEL_NA
 end
