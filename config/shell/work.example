@@ -4,3 +4,4 @@
 
 export GITHUB_WIP_LABELS="WIP,POC"
 export CURRENT_EMPLOYER=""
+export WORK_MAIN_PROJECT=""
