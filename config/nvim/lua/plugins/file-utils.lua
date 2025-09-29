@@ -24,7 +24,7 @@ return {
     end, { desc = 'Copy absolute filepath (without name)' })
 
     vim.api.nvim_create_user_command('FUCopyPath', function()
-      local relative_path = vim.fn.expand '%'
+      local relative_path = vim.fn.expand '%:.'
       vim.fn.setreg('+', relative_path)
       print('Copied relative filepath: ' .. relative_path)
     end, { desc = 'Copy relative filepath (with name)' })
@@ -36,4 +36,3 @@ return {
     end, { desc = 'Copy relative filepath (without name)' })
   end,
 }
-
