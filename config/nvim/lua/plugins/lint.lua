@@ -46,7 +46,6 @@ return {
       }
 
       lint.linters_by_ft = {
-        markdown = { 'markdownlint' },
         javascript = { 'eslint_project' },
         typescript = { 'eslint_project' },
         javascriptreact = { 'eslint_project' },
