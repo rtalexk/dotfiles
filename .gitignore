@@ -7,3 +7,6 @@ config/gh-dash/nuvo-os.yml
 .DS_Store
 
 alx/alx
+
+# Use sesh_monorepo_discover to generate base sesh config file
+config/sesh/sesh.toml
