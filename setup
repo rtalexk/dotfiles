@@ -127,16 +127,12 @@ brew install go
 success "Go installed"
 
 brew install jesseduffield/lazygit/lazygit
+go install github.com/arl/gitmux@latest
+gh extension install dlvhdr/gh-dash
 success "Git tools installed"
 
 brew install fnm pnpm
 success "Node packages installed"
-
-go install github.com/arl/gitmux@latest
-success "gitmux installed"
-
-gh extension install dlvhdr/gh-dash
-success "gh-dash extension installed"
 
 # Build and install custom alx CLI
 if [ -d "$PWD/alx" ]; then
