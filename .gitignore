@@ -1,5 +1,5 @@
 **/shell/work
-config/gh-dash/nuvo-os.yml
+git-tools/.config/gh-dash/nuvo-os.yml
 
 **/lazygit/state.yml
 .repro
@@ -9,4 +9,4 @@ config/gh-dash/nuvo-os.yml
 alx/alx
 
 # Use sesh_monorepo_discover to generate base sesh config file
-config/sesh/sesh.toml
+git-tools/.config/sesh/sesh.toml
