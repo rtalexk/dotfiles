@@ -23,6 +23,17 @@ return {
             -- Custom fileinfo - only filetype with icon
             local filetype = vim.bo.filetype
             local icon = ''
+
+            -- Filetype display rules: true = hide, string = replace
+            local filetype_rules = {
+              javascript = true,
+              typescript = true,
+              typescriptreact = true,
+              javascriptreact = true,
+              python = 'py',
+              markdown = 'md',
+            }
+
             if vim.g.have_nerd_font and filetype ~= '' then
               local ok, devicons = pcall(require, 'nvim-web-devicons')
               if ok then
@@ -32,7 +43,17 @@ return {
                 end
               end
             end
-            local fileinfo = icon .. filetype
+
+            local rule = filetype_rules[filetype]
+            local display_filetype
+            if rule == true and icon ~= '' then
+              display_filetype = ''
+            elseif type(rule) == 'string' then
+              display_filetype = ' ' .. rule
+            else
+              display_filetype = ' ' .. filetype
+            end
+            local fileinfo = icon .. display_filetype
             local location = statusline.section_location { trunc_width = 75 }
 
             -- Custom mode display (N, V, I only)
