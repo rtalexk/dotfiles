@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+sesh_monorepo_discover -f sesh --merge ~/.config/sesh/sesh_starter.toml >~/.config/sesh/sesh.toml
