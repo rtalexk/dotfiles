@@ -45,27 +45,14 @@ if [ ! -f "$PWD/shell/.config/shell/work" ]; then
     cp "$PWD/shell/.config/shell/work.example" "$PWD/shell/.config/shell/work"
 fi
 
-# Stow packages
-log "Stowing configurations..."
-
-# Stow all packages
-stow --restow --target="$HOME" shell
-success "Shell configs stowed"
-
-stow --restow --target="$HOME" tmux
-success "Tmux configs stowed"
-
-stow --restow --target="$HOME" nvim
-success "Neovim configs stowed"
-
-stow --restow --target="$HOME" terminal
-success "Terminal configs stowed"
-
-stow --restow --target="$HOME" git-tools
-success "Git tools configs stowed"
-
-# Install dependencies
+# Install dependencies first
 log "Installing external dependencies..."
+
+# Oh My Zsh (must be installed before stowing shell configs)
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    log "Installing Oh My Zsh..."
+    sh -c "$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
+fi
 
 # Tmux Package Manager
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
@@ -86,11 +73,24 @@ if [ ! -d "$HOME/.config/tmux/plugins/catppuccin/tmux" ]; then
     success "Catppuccin tmux theme installed"
 fi
 
-# Oh My Zsh
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    log "Installing Oh My Zsh..."
-    sh -c "$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
-fi
+# Stow packages
+log "Stowing configurations..."
+
+# Stow all packages
+stow --restow --target="$HOME" shell
+success "Shell configs stowed"
+
+stow --restow --target="$HOME" tmux
+success "Tmux configs stowed"
+
+stow --restow --target="$HOME" nvim
+success "Neovim configs stowed"
+
+stow --restow --target="$HOME" terminal
+success "Terminal configs stowed"
+
+stow --restow --target="$HOME" git-tools
+success "Git tools configs stowed"
 
 # Zsh autosuggestions
 if [ ! -d "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]; then
