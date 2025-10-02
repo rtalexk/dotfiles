@@ -31,6 +31,9 @@ require('lazy').setup('plugins', {
   change_detection = {
     notify = false,
   },
+  rocks = {
+    server = 'https://lumen-oss.github.io/rocks-binaries/',
+  },
 })
 
 -- See `:help modeline`
