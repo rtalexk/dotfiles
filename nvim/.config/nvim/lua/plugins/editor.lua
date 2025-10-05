@@ -31,7 +31,7 @@ return {
       -- See Configuration section for options
     },
     config = function()
-      vim.keymap.set('n', '<leader>co', '<cmd>CopilotChat<cr>', { desc = 'Open Copilot Chat' })
+      vim.keymap.set('n', '<leader>co', '<cmd>CopilotChatToggle<cr>', { desc = 'Open Copilot Chat' })
     end,
   },
 
