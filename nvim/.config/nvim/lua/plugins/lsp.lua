@@ -50,6 +50,9 @@ return {
       },
     },
     config = function(_, opts)
+      -- Track the current LSP hover window
+      local hover_win_id = nil
+
       -- Configure diagnostic floating windows
       opts.diagnostics.float = opts.diagnostics.float or {}
       opts.diagnostics.float.border = GlobalConfig.border
@@ -82,14 +85,33 @@ return {
         desc = 'Set floating window highlights after colorscheme change',
       })
 
-      -- Override the core LSP floating preview function to add borders
+      -- Override the core LSP floating preview function to add borders and track hover windows
       local orig_util_open_floating_preview = vim.lsp.util.open_floating_preview
       function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
         opts = opts or {}
         opts.border = opts.border or GlobalConfig.border
         opts.max_width = opts.max_width or 80
         opts.max_height = opts.max_height or 20
-        return orig_util_open_floating_preview(contents, syntax, opts, ...)
+        local bufnr, win_id = orig_util_open_floating_preview(contents, syntax, opts, ...)
+
+        -- Track this window if it's a hover window (check if called from hover)
+        local info = debug.getinfo(3, 'n')
+        if info and info.name == 'hover' then
+          hover_win_id = win_id
+
+          -- Set up autocmd to clean up hover_win_id when window is closed
+          vim.api.nvim_create_autocmd('WinClosed', {
+            pattern = tostring(win_id),
+            callback = function()
+              if hover_win_id == win_id then
+                hover_win_id = nil
+              end
+            end,
+            once = true,
+          })
+        end
+
+        return bufnr, win_id
       end
 
       vim.api.nvim_create_autocmd('LspAttach', {
@@ -109,7 +131,26 @@ return {
 
           -- Opens a popup that displays documentation about the word under your cursor
           --  See `:help K` for why this keymap.
-          map('K', vim.lsp.buf.hover, 'Hover Documentation')
+          local function toggle_hover()
+            -- State 1: No hover window exists -> Open hover
+            if not hover_win_id or not vim.api.nvim_win_is_valid(hover_win_id) then
+              hover_win_id = nil
+              vim.lsp.buf.hover()
+              return
+            end
+
+            -- State 2: Hover window exists but cursor not in it -> Focus hover window
+            local current_win = vim.api.nvim_get_current_win()
+            if current_win ~= hover_win_id then
+              vim.api.nvim_set_current_win(hover_win_id)
+              return
+            end
+
+            -- State 3: Cursor is in hover window -> Close hover window
+            vim.api.nvim_win_close(hover_win_id, false)
+            hover_win_id = nil
+          end
+          map('K', toggle_hover, 'Toggle Hover Documentation')
 
           -- WARN: This is not Goto Definition, this is Goto Declaration.
           --  For example, in C this would take you to the header.
@@ -134,6 +175,49 @@ return {
           end
         end,
       })
+
+      -- Global K keymap to handle hover windows from any buffer
+      vim.keymap.set('n', 'K', function()
+        local current_win = vim.api.nvim_get_current_win()
+
+        -- If we're in a tracked hover window, close it
+        if hover_win_id and vim.api.nvim_win_is_valid(hover_win_id) and current_win == hover_win_id then
+          vim.api.nvim_win_close(hover_win_id, false)
+          hover_win_id = nil
+          return
+        end
+
+        -- Otherwise, check if there's a buffer-local K mapping and use it
+        local buf_keymaps = vim.api.nvim_buf_get_keymap(0, 'n')
+        for _, map in ipairs(buf_keymaps) do
+          if map.lhs == 'K' and map.buffer == 1 then
+            -- Execute the buffer-local K mapping function
+            if map.callback then
+              map.callback()
+            else
+              vim.cmd(map.rhs or 'normal! K')
+            end
+            return
+          end
+        end
+
+        -- Check if we're in a floating window (likely a popup we don't control)
+        local win_config = vim.api.nvim_win_get_config(current_win)
+        if win_config.relative ~= '' then
+          -- We're in a floating window, try to close it or do nothing
+          if vim.bo.buftype == 'nofile' then
+            -- This is likely a popup, try closing with q first
+            local ok = pcall(vim.cmd, 'close')
+            if not ok then
+              -- If close doesn't work, do nothing rather than trigger man page
+              return
+            end
+          end
+        else
+          -- We're in a normal window, safe to use default K behavior
+          vim.cmd 'normal! K'
+        end
+      end, { desc = 'Smart hover toggle' })
 
       -- diagnostics signs
       if vim.fn.has 'nvim-0.10.0' == 0 then
