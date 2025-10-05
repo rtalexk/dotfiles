@@ -43,16 +43,6 @@ return {
           },
         },
         float = {
-          border = {
-            { '╭', 'FloatBorder' },
-            { '─', 'FloatBorder' },
-            { '╮', 'FloatBorder' },
-            { '│', 'FloatBorder' },
-            { '╯', 'FloatBorder' },
-            { '─', 'FloatBorder' },
-            { '╰', 'FloatBorder' },
-            { '│', 'FloatBorder' },
-          },
           source = 'always',
           header = '',
           prefix = '',
@@ -60,21 +50,9 @@ return {
       },
     },
     config = function(_, opts)
-      -- Configure LSP floating window borders
-      local border = 'rounded'
-
-      -- Add border to diagnostic floating windows (this will override the opts.diagnostics.float)
+      -- Configure diagnostic floating windows
       opts.diagnostics.float = opts.diagnostics.float or {}
-      opts.diagnostics.float.border = {
-        { '╭', 'FloatBorder' },
-        { '─', 'FloatBorder' },
-        { '╮', 'FloatBorder' },
-        { '│', 'FloatBorder' },
-        { '╯', 'FloatBorder' },
-        { '─', 'FloatBorder' },
-        { '╰', 'FloatBorder' },
-        { '│', 'FloatBorder' },
-      }
+      opts.diagnostics.float.border = GlobalConfig.border
 
       -- Function to set floating window highlights with Catppuccin colors
       local function set_float_highlights()
@@ -104,21 +82,11 @@ return {
         desc = 'Set floating window highlights after colorscheme change',
       })
 
-
       -- Override the core LSP floating preview function to add borders
       local orig_util_open_floating_preview = vim.lsp.util.open_floating_preview
       function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
         opts = opts or {}
-        opts.border = opts.border or {
-          { '╭', 'FloatBorder' },
-          { '─', 'FloatBorder' },
-          { '╮', 'FloatBorder' },
-          { '│', 'FloatBorder' },
-          { '╯', 'FloatBorder' },
-          { '─', 'FloatBorder' },
-          { '╰', 'FloatBorder' },
-          { '│', 'FloatBorder' },
-        }
+        opts.border = opts.border or GlobalConfig.border
         opts.max_width = opts.max_width or 80
         opts.max_height = opts.max_height or 20
         return orig_util_open_floating_preview(contents, syntax, opts, ...)
@@ -127,7 +95,6 @@ return {
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
-
           local map = function(keys, func, desc)
             vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end

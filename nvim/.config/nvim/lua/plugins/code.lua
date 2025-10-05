@@ -100,30 +100,8 @@ return {
 
       cmp.setup {
         window = {
-          completion = cmp.config.window.bordered({
-            border = {
-              { '╭', 'FloatBorder' },
-              { '─', 'FloatBorder' },
-              { '╮', 'FloatBorder' },
-              { '│', 'FloatBorder' },
-              { '╯', 'FloatBorder' },
-              { '─', 'FloatBorder' },
-              { '╰', 'FloatBorder' },
-              { '│', 'FloatBorder' },
-            },
-          }),
-          documentation = cmp.config.window.bordered({
-            border = {
-              { '╭', 'FloatBorder' },
-              { '─', 'FloatBorder' },
-              { '╮', 'FloatBorder' },
-              { '│', 'FloatBorder' },
-              { '╯', 'FloatBorder' },
-              { '─', 'FloatBorder' },
-              { '╰', 'FloatBorder' },
-              { '│', 'FloatBorder' },
-            },
-          }),
+          completion = cmp.config.window.bordered { border = GlobalConfig.border },
+          documentation = cmp.config.window.bordered { border = GlobalConfig.border },
         },
         formatting = {
           format = lspkind.cmp_format {
