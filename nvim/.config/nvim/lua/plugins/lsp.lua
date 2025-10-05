@@ -42,12 +42,92 @@ return {
             [vim.diagnostic.severity.WARN] = 'WarningMsg',
           },
         },
+        float = {
+          border = {
+            { '╭', 'FloatBorder' },
+            { '─', 'FloatBorder' },
+            { '╮', 'FloatBorder' },
+            { '│', 'FloatBorder' },
+            { '╯', 'FloatBorder' },
+            { '─', 'FloatBorder' },
+            { '╰', 'FloatBorder' },
+            { '│', 'FloatBorder' },
+          },
+          source = 'always',
+          header = '',
+          prefix = '',
+        },
       },
     },
     config = function(_, opts)
+      -- Configure LSP floating window borders
+      local border = 'rounded'
+
+      -- Add border to diagnostic floating windows (this will override the opts.diagnostics.float)
+      opts.diagnostics.float = opts.diagnostics.float or {}
+      opts.diagnostics.float.border = {
+        { '╭', 'FloatBorder' },
+        { '─', 'FloatBorder' },
+        { '╮', 'FloatBorder' },
+        { '│', 'FloatBorder' },
+        { '╯', 'FloatBorder' },
+        { '─', 'FloatBorder' },
+        { '╰', 'FloatBorder' },
+        { '│', 'FloatBorder' },
+      }
+
+      -- Function to set floating window highlights with Catppuccin colors
+      local function set_float_highlights()
+        vim.api.nvim_set_hl(0, 'FloatBorder', {
+          bg = 'NONE',
+          fg = '#89b4fa', -- Catppuccin blue
+          bold = true,
+        })
+        vim.api.nvim_set_hl(0, 'NormalFloat', {
+          bg = '#1e1e2e', -- Catppuccin base
+          fg = '#cdd6f4', -- Catppuccin text
+        })
+        vim.api.nvim_set_hl(0, 'Pmenu', { bg = '#1e1e2e', fg = '#cdd6f4' })
+        vim.api.nvim_set_hl(0, 'PmenuSel', { bg = '#45475a', fg = '#cdd6f4' })
+      end
+
+      -- Set highlights immediately and after colorscheme changes
+      set_float_highlights()
+
+      -- Also set highlights after a delay to ensure they override theme settings
+      vim.defer_fn(set_float_highlights, 100)
+
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        callback = function()
+          vim.defer_fn(set_float_highlights, 50)
+        end,
+        desc = 'Set floating window highlights after colorscheme change',
+      })
+
+
+      -- Override the core LSP floating preview function to add borders
+      local orig_util_open_floating_preview = vim.lsp.util.open_floating_preview
+      function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
+        opts = opts or {}
+        opts.border = opts.border or {
+          { '╭', 'FloatBorder' },
+          { '─', 'FloatBorder' },
+          { '╮', 'FloatBorder' },
+          { '│', 'FloatBorder' },
+          { '╯', 'FloatBorder' },
+          { '─', 'FloatBorder' },
+          { '╰', 'FloatBorder' },
+          { '│', 'FloatBorder' },
+        }
+        opts.max_width = opts.max_width or 80
+        opts.max_height = opts.max_height or 20
+        return orig_util_open_floating_preview(contents, syntax, opts, ...)
+      end
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
+
           local map = function(keys, func, desc)
             vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
@@ -146,7 +226,7 @@ return {
 
         -- Markdown LSP
         marksman = {},
-        
+
         -- ESLint LSP
         eslint = {},
 

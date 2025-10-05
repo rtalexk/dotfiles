@@ -99,6 +99,32 @@ return {
       luasnip.config.setup {}
 
       cmp.setup {
+        window = {
+          completion = cmp.config.window.bordered({
+            border = {
+              { '╭', 'FloatBorder' },
+              { '─', 'FloatBorder' },
+              { '╮', 'FloatBorder' },
+              { '│', 'FloatBorder' },
+              { '╯', 'FloatBorder' },
+              { '─', 'FloatBorder' },
+              { '╰', 'FloatBorder' },
+              { '│', 'FloatBorder' },
+            },
+          }),
+          documentation = cmp.config.window.bordered({
+            border = {
+              { '╭', 'FloatBorder' },
+              { '─', 'FloatBorder' },
+              { '╮', 'FloatBorder' },
+              { '│', 'FloatBorder' },
+              { '╯', 'FloatBorder' },
+              { '─', 'FloatBorder' },
+              { '╰', 'FloatBorder' },
+              { '│', 'FloatBorder' },
+            },
+          }),
+        },
         formatting = {
           format = lspkind.cmp_format {
             mode = 'symbol_text',
