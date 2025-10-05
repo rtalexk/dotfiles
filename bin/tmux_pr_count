@@ -35,7 +35,7 @@ def wip_labels
 end
 
 def current_github_user
-  @current_user ||= `gh auth status 2>&1 | grep 'Logged in to github.com account' | awk '{print $6}' | tr -d '()'`.strip
+  @current_user ||= `gh auth status 2>&1 | grep 'Logged in to github.com account' | awk '{print $7}' | tr -d '()'`.strip
 end
 
 def get_repo_name
