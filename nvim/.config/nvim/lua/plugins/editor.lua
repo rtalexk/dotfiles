@@ -1,4 +1,5 @@
 -- Comment
+-- Copilot Chat
 -- Early Retirement
 -- Todo Comments
 -- GitSigns
@@ -18,6 +19,20 @@ return {
   { -- "gc" to comment visual regions/lines
     'numToStr/Comment.nvim',
     opts = {},
+  },
+
+  {
+    'CopilotC-Nvim/CopilotChat.nvim',
+    dependencies = {
+      { 'nvim-lua/plenary.nvim', branch = 'master' },
+    },
+    build = 'make tiktoken',
+    opts = {
+      -- See Configuration section for options
+    },
+    config = function()
+      vim.keymap.set('n', '<leader>co', '<cmd>CopilotChat<cr>', { desc = 'Open Copilot Chat' })
+    end,
   },
 
   -- {
