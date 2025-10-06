@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 
-result=$(git_pick_branch)
+# Checkout a branch selected via fzf
+
+result=$(git_pick_branch "$@")
 
 if [[ $? -eq 0 && -n "$result" ]]; then
-  git checkout "$result"
+  if [[ "$result" == origin/* ]]; then
+    local_branch="${result#origin/}"
+    git checkout -B "$local_branch" "$result"
+  else
+    git checkout "$result"
+  fi
 else
   echo "$result"
 fi

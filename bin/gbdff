@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Force delete a branch selected via fzf
+
 result=$(git_pick_branch)
 
 if [[ $? -eq 0 && -n "$result" ]]; then
@@ -7,4 +9,3 @@ if [[ $? -eq 0 && -n "$result" ]]; then
 else
   echo "$result"
 fi
-
