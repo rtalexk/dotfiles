@@ -1,4 +1,8 @@
 [[session]]
+name = "Comando"
+path = "~/"
+
+[[session]]
 name = "dotf"
 path = "~/com.github/dotfiles"
 startup_command = "sesh_vim"
