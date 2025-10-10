@@ -18,3 +18,11 @@ customCommands:
             key: "n"
     command: "lazygit_edit_cmd -w {{.Form.WinChoise}} {{.SelectedFile.Name}}"
     output: terminal
+keybinding:
+  universal:
+    jumpToBlock:
+      - "<disabled>"
+      - "1"
+      - "2"
+      - "3"
+      - "4"
