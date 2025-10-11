@@ -3,7 +3,19 @@ return {
   name = 'file-utils',
   dir = vim.fn.stdpath 'config',
   config = function()
-    -- File utility commands for copying various file path components
+    local function copy_with_line_info(path, label, opts)
+      local result = path
+      if opts.args == 'line' then
+        if opts.range == 2 then
+          result = result .. ':' .. opts.line1 .. '-' .. opts.line2
+        else
+          local line = vim.fn.line '.'
+          result = result .. ':' .. line
+        end
+      end
+      vim.fn.setreg('+', result)
+      print('Copied ' .. label .. ': ' .. result)
+    end
 
     vim.api.nvim_create_user_command('FUCopyAbsoluteDir', function()
       local filedir = vim.fn.expand '%:p:h'
@@ -11,11 +23,10 @@ return {
       print('Copied absolute directory: ' .. filedir)
     end, { desc = 'Copy absolute filepath (without name)' })
 
-    vim.api.nvim_create_user_command('FUCopyAbsolutePath', function()
+    vim.api.nvim_create_user_command('FUCopyAbsolutePath', function(opts)
       local filepath = vim.fn.expand '%:p'
-      vim.fn.setreg('+', filepath)
-      print('Copied absolute filepath: ' .. filepath)
-    end, { desc = 'Copy absolute filepath (with name)' })
+      copy_with_line_info(filepath, 'absolute filepath', opts)
+    end, { nargs = '?', range = true, desc = 'Copy absolute filepath (with name)' })
 
     vim.api.nvim_create_user_command('FUCopyDir', function()
       local relative_path = vim.fn.expand '%:.'
@@ -24,16 +35,14 @@ return {
       print('Copied relative directory: ' .. relative_dir)
     end, { desc = 'Copy relative filepath (without name)' })
 
-    vim.api.nvim_create_user_command('FUCopyName', function()
+    vim.api.nvim_create_user_command('FUCopyName', function(opts)
       local filename = vim.fn.expand '%:t'
-      vim.fn.setreg('+', filename)
-      print('Copied filename: ' .. filename)
-    end, { desc = 'Copy file name (without path)' })
+      copy_with_line_info(filename, 'filename', opts)
+    end, { nargs = '?', range = true, desc = 'Copy file name (without path)' })
 
-    vim.api.nvim_create_user_command('FUCopyPath', function()
+    vim.api.nvim_create_user_command('FUCopyPath', function(opts)
       local relative_path = vim.fn.expand '%:.'
-      vim.fn.setreg('+', relative_path)
-      print('Copied relative filepath: ' .. relative_path)
-    end, { desc = 'Copy relative filepath (with name)' })
+      copy_with_line_info(relative_path, 'relative filepath', opts)
+    end, { nargs = '?', range = true, desc = 'Copy relative filepath (with name)' })
   end,
 }
