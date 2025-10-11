@@ -412,9 +412,9 @@ return {
       end, { desc = 'By grep' })
 
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Diagnostics' })
-      vim.keymap.set('n', '<leader>sR', builtin.resume, { desc = 'Resume' })
+      vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = 'Resume' })
 
-      vim.keymap.set('n', '<leader>sr', function()
+      vim.keymap.set('n', '<leader>sR', function()
         builtin.oldfiles {
           cwd_only = true,
           tiebreak = function(curr_entry, existing_entry)
