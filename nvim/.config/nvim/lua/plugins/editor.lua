@@ -307,6 +307,23 @@ return {
     end,
   },
 
+  {
+    'karb94/neoscroll.nvim',
+    event = 'VeryLazy',
+    opts = {
+      mappings = {
+        '<C-u>',
+        '<C-d>',
+        '<C-y>',
+        '<C-e>',
+        'zt',
+        'zz',
+        'zb',
+      },
+      duration_multiplier = 0.6,
+    },
+  },
+
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VeryLazy',
