@@ -9,6 +9,7 @@
 -- mini.pairs
 -- Mkdir
 -- Neoclip
+-- Neoscroll
 -- Telescope
 -- Vim Illuminate
 -- Vim Sleuth
@@ -320,7 +321,7 @@ return {
         'zz',
         'zb',
       },
-      duration_multiplier = 0.6,
+      duration_multiplier = 0.4,
     },
   },
 
