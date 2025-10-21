@@ -241,6 +241,14 @@ return {
           end
       end
 
+      vim.keymap.set('n', '<leader>uv', function()
+        if vim.diagnostic.config().virtual_text then
+          vim.diagnostic.config { virtual_text = false }
+        else
+          vim.diagnostic.config { virtual_text = opts.diagnostics.virtual_text }
+        end
+      end, { desc = 'Toggle diagnostic Virtual Text' })
+
       vim.diagnostic.config(vim.deepcopy(opts.diagnostics))
 
       -- LSP servers and clients are able to communicate to each other what features they support.
