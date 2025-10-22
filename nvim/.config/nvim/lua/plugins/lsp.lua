@@ -35,12 +35,6 @@ return {
             [vim.diagnostic.severity.HINT] = ' ',
             [vim.diagnostic.severity.INFO] = ' ',
           },
-          linehl = {
-            [vim.diagnostic.severity.ERROR] = 'ErrorMsg',
-          },
-          numhl = {
-            [vim.diagnostic.severity.WARN] = 'WarningMsg',
-          },
         },
         float = {
           source = 'always',
@@ -70,6 +64,25 @@ return {
         })
         vim.api.nvim_set_hl(0, 'Pmenu', { bg = '#1e1e2e', fg = '#cdd6f4' })
         vim.api.nvim_set_hl(0, 'PmenuSel', { bg = '#45475a', fg = '#cdd6f4' })
+
+        -- Override diagnostic underline highlights to preserve syntax colors
+        -- Keep underline/undercurl but remove text color changes
+        vim.api.nvim_set_hl(0, 'DiagnosticUnderlineError', {
+          sp = '#f38ba8', -- Catppuccin red for underline
+          undercurl = true,
+        })
+        vim.api.nvim_set_hl(0, 'DiagnosticUnderlineWarn', {
+          sp = '#fab387', -- Catppuccin peach for underline
+          undercurl = true,
+        })
+        vim.api.nvim_set_hl(0, 'DiagnosticUnderlineInfo', {
+          sp = '#89b4fa', -- Catppuccin blue for underline
+          undercurl = true,
+        })
+        vim.api.nvim_set_hl(0, 'DiagnosticUnderlineHint', {
+          sp = '#94e2d5', -- Catppuccin teal for underline
+          undercurl = true,
+        })
       end
 
       -- Set highlights immediately and after colorscheme changes
