@@ -83,6 +83,10 @@ return {
       },
       highlight = {
         after = '',
+        pattern = [[.*<((KEYWORDS)%(\(.{-1,}\))?):]],
+      },
+      search = {
+        pattern = [[\b(KEYWORDS)(\(\w*\))*:]],
       },
     },
   },
