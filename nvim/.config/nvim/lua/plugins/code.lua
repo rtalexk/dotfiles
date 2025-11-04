@@ -257,6 +257,36 @@ return {
     opts = {
       use_default_keymaps = false,
     },
+    langs = {
+      javascript = {
+        jsx_opening_element = {
+          both = {
+            -- Keep the default omit settings
+            omit = { 'identifier', 'nested_identifier', 'member_expression' },
+          },
+          split = {
+            -- Enable recursive splitting to handle nested attributes
+            recursive = false,
+            -- Control indentation for the closing bracket
+            last_indent = 'inner', -- or 'normal'
+          },
+          join = {
+            space_separator = true,
+          },
+        },
+        jsx_self_closing_element = {
+          both = {
+            omit = { 'member_expression', 'identifier', 'nested_identifier', '>' },
+            no_format_with = {},
+          },
+          split = {
+            -- Customize which elements to omit during split
+            omit = { 'identifier', 'nested_identifier', '/', '>', '/>' },
+            last_indent = 'inner',
+          },
+        },
+      },
+    },
   },
   {
     'pmizio/typescript-tools.nvim',
