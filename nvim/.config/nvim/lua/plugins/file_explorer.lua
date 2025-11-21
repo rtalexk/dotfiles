@@ -14,8 +14,8 @@ return {
           require('oil').close()
 
           -- Only close the window if it's an Oil buffer in a split (not floating) and there are multiple windows
-          if buftype == 'oil' and not is_floating and vim.fn.winnr('$') > 1 then
-            vim.cmd('close')
+          if buftype == 'oil' and not is_floating and vim.fn.winnr '$' > 1 then
+            vim.cmd 'close'
           end
         end,
       },
@@ -28,13 +28,33 @@ return {
           local buf = vim.api.nvim_win_get_buf(winid)
           local file_path = vim.api.nvim_buf_get_name(buf)
 
-          local relative_path = file_path:sub(#cwd - 1)
+          file_path = file_path:gsub('^oil://', '')
+
+          local relative_path
+          if vim.startswith(file_path, cwd) then
+            relative_path = file_path:sub(#cwd + 2)
+            relative_path = relative_path:gsub('/$', '')
+          else
+            relative_path = file_path
+          end
+
+          local root_name = vim.fn.fnamemodify(cwd, ':t')
+
           local parts = vim.split(relative_path, '/', { plain = true })
 
-          local reversed = {}
-          for i = #parts, 1, -1 do
-            table.insert(reversed, parts[i])
+          local filtered_parts = {}
+          for _, part in ipairs(parts) do
+            if part ~= '' and part ~= root_name then
+              table.insert(filtered_parts, part)
+            end
           end
+
+          local reversed = {}
+          for i = #filtered_parts, 1, -1 do
+            table.insert(reversed, filtered_parts[i])
+          end
+
+          table.insert(reversed, root_name)
 
           return ' ' .. table.concat(reversed, '/') .. ' '
         end,
