@@ -17,8 +17,9 @@ import (
   "github.com/spf13/cobra"
 )
 
-var Name string
 var Inbox bool
+var Name string
+var Once bool
 
 // noteCmd represents the note command
 var noteCmd = &cobra.Command{
@@ -54,20 +55,22 @@ var noteCmd = &cobra.Command{
       Name   string
       Title  string
       FileId string
+      Once   bool
     }{
       Date:   date,
       Name:   Name,
       Title:  title,
       FileId: fileId,
+      Once:   Once,
     }
 
     templateStr := `---
 Created At: {{ .Date }}
-Filename: {{ .Name }}
+{{ if .Once }}Filename: {{ .Date }}-{{ .Name }}{{ else }}Filename: {{ .Name }}{{ end }}
 Resource: 
 ---
 
-# {{ .Title }}
+{{ if .Once }}# {{ .Date }} {{ .Title }}{{ else }}# {{ .Title }}{{ end }}
 
 
 
@@ -89,8 +92,17 @@ Links:
       os.Exit(1)
     }
 
-    filePath := fmt.Sprintf("%s/%s/%s.md", brainDir, noteDir, Name)
-    absoluteFilePath := fmt.Sprintf("%s/%s.md", noteDir, Name)
+    filePath := ""
+    absoluteFilePath := ""
+
+    if Once {
+      filePath = fmt.Sprintf("%s/%s/%s-%s.md", brainDir, noteDir, date, Name)
+      absoluteFilePath = fmt.Sprintf("%s/%s-%s.md", noteDir, date, Name)
+    } else {
+      filePath = fmt.Sprintf("%s/%s/%s.md", brainDir, noteDir, Name)
+      absoluteFilePath = fmt.Sprintf("%s/%s.md", noteDir, Name)
+    }
+
 
     if _, err := utils.CreateFile(filePath, contentBuffer); err != nil {
       // If the file already exists, let's continue with the execution
@@ -120,4 +132,5 @@ func init() {
   noteCmd.AddCommand(note.RefCmd)
   noteCmd.Flags().StringVarP(&Name, "name", "n", "", "(required) Name of the note, i.e: 'this-is-a-note'")
   noteCmd.Flags().BoolVarP(&Inbox, "inbox", "i", false, "[optional] Place note at Inbox")
+  noteCmd.Flags().BoolVarP(&Once, "once", "o", false, "[optional] One-off note")
 }
