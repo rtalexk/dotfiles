@@ -88,6 +88,8 @@ function M.select_inside_tag_attributes()
 
   -- Move to end
   vim.fn.setpos('.', { 0, range.end_row + 1, range.end_col, 0 })
+
+  return range
 end
 
 function M.select_around_tag_attributes()
