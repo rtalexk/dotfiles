@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Copy the current git branch to the clipboard.
+
+if ! is_git_repo; then
+    echo "Not in a Git repo" >&2
+    exit 1
+fi
+
+git rev-parse --abbrev-ref HEAD | pbcopy
+
