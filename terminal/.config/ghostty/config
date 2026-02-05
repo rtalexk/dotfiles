@@ -1,4 +1,3 @@
-
 # Option behaves as Alt, allow Zellij to switch panes
 macos-option-as-alt = left
 keybind = alt+left=unbind
