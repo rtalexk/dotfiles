@@ -6,7 +6,7 @@ else
 	dir="$1"
 fi
 
-if is_git_repo; then
+if is_git_repo "$dir"; then
 	output=$(gitmux -cfg "$XDG_CONFIG_HOME/gitmux/gitmux.conf" "$dir")
 else
 	output=""
