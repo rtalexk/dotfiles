@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-git rev-parse --is-inside-work-tree &>/dev/null
+# Usage: is_git_repo [dir]
+# Checks if the current or given directory is inside a git work tree (including worktrees).
+git ${1:+-C "$1"} rev-parse --is-inside-work-tree &>/dev/null
