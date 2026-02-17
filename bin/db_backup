@@ -7,8 +7,11 @@ DUMP_DIR="db"
 
 while getopts "n:" opt; do
   case $opt in
-    n) DB_NAME="$OPTARG" ;;
-    *) echo "Usage: $0 -n <database_name>"; exit 1 ;;
+  n) DB_NAME="$OPTARG" ;;
+  *)
+    echo "Usage: $0 -n <database_name>"
+    exit 1
+    ;;
   esac
 done
 
@@ -24,4 +27,3 @@ DUMP_FILE="$DUMP_DIR/${DB_NAME}_${TIMESTAMP}.dump"
 pg_dump -Fc -d "$DB_NAME" -f "$DUMP_FILE"
 
 echo "Database dump created: $DUMP_FILE"
-
