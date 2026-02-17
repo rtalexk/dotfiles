@@ -8,3 +8,5 @@ alias gsta='git stash push --include-untracked'
 
 alias gbD='git branch --delete --force'
 alias ggpushF='git push origin "$(git_current_branch)" --no-verify'
+
+alias git-bare='git --git-dir=.bare --work-tree=.'
