@@ -3,12 +3,12 @@
 set -euo pipefail
 
 if [[ "$(uname)" == "Darwin" ]]; then
-	defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources |
-		grep "KeyboardLayout Name" |
-		cut -f 2 -d "=" |
-		tr -d ' ;."' |
-		cut -c1-2 |
-		tr '[:lower:]' '[:upper:]'
+  defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources |
+    grep "KeyboardLayout Name" |
+    cut -f 2 -d "=" |
+    tr -d ' ;."' |
+    cut -c1-2 |
+    tr '[:lower:]' '[:upper:]'
 else
-	echo "󰖭 "
+  echo "󰖭 "
 fi

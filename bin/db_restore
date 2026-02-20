@@ -8,9 +8,12 @@ VERBOSE=""
 
 while getopts "n:v" opt; do
   case $opt in
-    n) DB_NAME="$OPTARG" ;;
-    v) VERBOSE="--verbose" ;;
-    *) echo "Usage: $0 -n <database_name>"; exit 1 ;;
+  n) DB_NAME="$OPTARG" ;;
+  v) VERBOSE="--verbose" ;;
+  *)
+    echo "Usage: $0 -n <database_name>"
+    exit 1
+    ;;
   esac
 done
 
@@ -29,4 +32,3 @@ fi
 pg_restore $VERBOSE --clean --schema=public --no-acl --if-exists --no-owner -h localhost -U $(whoami) -d "$DB_NAME" "$LATEST_DUMP"
 
 echo "Database restored from: $LATEST_DUMP"
-

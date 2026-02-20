@@ -1,46 +1,46 @@
 #!/usr/bin/env bash
 
 if ! is_git_repo; then
-	echo "Not in a Git repo"
-	exit 1
+  echo "Not in a Git repo"
+  exit 1
 fi
 
 mode="local"
 
 while getopts "ra" opt; do
-	case $opt in
-	r)
-		mode="remote"
-		;;
-	a)
-		mode="all"
-		;;
-	*)
-		echo "Usage: $0 [-r] [-a]"
-		echo "  -r: list remote branches"
-		echo "  -a: list all branches (local and remote)"
-		exit 1
-		;;
-	esac
+  case $opt in
+  r)
+    mode="remote"
+    ;;
+  a)
+    mode="all"
+    ;;
+  *)
+    echo "Usage: $0 [-r] [-a]"
+    echo "  -r: list remote branches"
+    echo "  -a: list all branches (local and remote)"
+    exit 1
+    ;;
+  esac
 done
 
 case $mode in
 remote)
-	branch_cmd="git branch -r"
-	;;
+  branch_cmd="git branch -r"
+  ;;
 all)
-	branch_cmd="git branch -a"
-	;;
+  branch_cmd="git branch -a"
+  ;;
 *)
-	branch_cmd="git branch"
-	;;
+  branch_cmd="git branch"
+  ;;
 esac
 
 branch_count=$(eval "$branch_cmd" | wc -l | tr -d ' ')
 
 if [[ "$branch_count" == "1" ]]; then
-	echo "Only one branch and currently selected"
-	exit 1
+  echo "Only one branch and currently selected"
+  exit 1
 fi
 
 branch=$(eval "$branch_cmd" | grep -v '^*' | sed 's/*//g' | sed 's/[[:space:]]//g' | sed 's/^remotes\///' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)

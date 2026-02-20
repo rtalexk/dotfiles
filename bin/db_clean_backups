@@ -8,12 +8,18 @@ COMMIT=false
 
 while getopts "n:-:" opt; do
   case $opt in
-    n) DB_NAME="$OPTARG" ;;
-    -) case "$OPTARG" in
-         commit) COMMIT=true ;;
-         *) echo "Usage: $0 -n <database_name> [--commit]"; exit 1 ;;
-       esac ;;
-    *) echo "Usage: $0 -n <database_name> [--commit]"; exit 1 ;;
+  n) DB_NAME="$OPTARG" ;;
+  -) case "$OPTARG" in
+    commit) COMMIT=true ;;
+    *)
+      echo "Usage: $0 -n <database_name> [--commit]"
+      exit 1
+      ;;
+    esac ;;
+  *)
+    echo "Usage: $0 -n <database_name> [--commit]"
+    exit 1
+    ;;
   esac
 done
 
@@ -47,4 +53,3 @@ if [ "$COMMIT" = true ]; then
 else
   echo "Run with --commit to actually delete the files."
 fi
-
