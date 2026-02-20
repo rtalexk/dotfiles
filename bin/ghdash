@@ -10,17 +10,17 @@ CFG_PATH="$XDG_CONFIG_HOME/gh-dash"
 GIT_ROOT=$(git -C $PWD rev-parse --show-toplevel 2>/dev/null) && echo $GIT_ROOT >/dev/null
 
 if [[ $? -ne 0 ]]; then # not in a git repo
-	if [ -e "$CFG_PATH/config.yml" ]; then
-		gh dash --config "$CFG_PATH/config.yml"
-	else
-		gh dash
-	fi
+  if [ -e "$CFG_PATH/config.yml" ]; then
+    gh dash --config "$CFG_PATH/config.yml"
+  else
+    gh dash
+  fi
 else # in a git repo
-	repo_name=$(basename $GIT_ROOT)
+  repo_name=$(basename $GIT_ROOT)
 
-	if [ -e "$CFG_PATH/$repo_name.yml" ]; then
-		gh dash --config "$CFG_PATH/$repo_name.yml"
-	else
-		gh dash
-	fi
+  if [ -e "$CFG_PATH/$repo_name.yml" ]; then
+    gh dash --config "$CFG_PATH/$repo_name.yml"
+  else
+    gh dash
+  fi
 fi

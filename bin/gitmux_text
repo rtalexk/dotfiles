@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
 if [ -z "$1" ]; then
-	dir="$(pwd)"
+  dir="$(pwd)"
 else
-	dir="$1"
+  dir="$1"
 fi
 
 if is_git_repo "$dir"; then
-	output=$(gitmux -cfg "$XDG_CONFIG_HOME/gitmux/gitmux.conf" "$dir")
+  output=$(gitmux -cfg "$XDG_CONFIG_HOME/gitmux/gitmux.conf" "$dir")
 elif git --git-dir="$dir/.bare" rev-parse --git-dir &>/dev/null 2>&1; then
-	# Bare worktree parent directory — no active branch, show a static indicator
-	output="#[fg=white,bold]_bare_#[none]"
+  # Bare worktree parent directory — no active branch, show a static indicator
+  output="#[fg=white,bold]_bare_#[none]"
 else
-	output=""
+  output=""
 fi
 
 echo "$output"

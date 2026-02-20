@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
 while getopts c: flag; do
-	case "${flag}" in
-	c) commit=${OPTARG} ;;
-	esac
+  case "${flag}" in
+  c) commit=${OPTARG} ;;
+  esac
 done
 
 version=$(rvm ls | grep -v "^=" | awk '$1!="#"' | awk -F ' ' ';{print $1}' | grep -v "^$" | fzf)
 
 if [[ -n "$version" && "$commit" == "true" ]]; then
-	echo "removed $version"
-	# rvm remove "$version"
+  echo "removed $version"
+  # rvm remove "$version"
 else
-	echo "$version whould be removed. To commit the operation you must provide the -c true flag"
+  echo "$version whould be removed. To commit the operation you must provide the -c true flag"
 fi

@@ -4,9 +4,9 @@
 # Usage: lazygit_edit_cmd -w [current|reuse|new] [file_name]
 
 while getopts w: flag; do
-	case "${flag}" in
-	w) win_opt=${OPTARG} ;;
-	esac
+  case "${flag}" in
+  w) win_opt=${OPTARG} ;;
+  esac
 done
 
 shift $((OPTIND - 1))
@@ -14,39 +14,39 @@ shift $((OPTIND - 1))
 file_name="$1"
 
 if [ -z "$win_opt" ]; then
-	win_opt='reuse'
+  win_opt='reuse'
 fi
 
 if [ "$win_opt" != 'current' ] && [ "$win_opt" != 'reuse' ] && [ "$win_opt" != 'new' ]; then
-	echo "Invalid option '$win_opt' for -w flag. Must be one of 'current', 'reuse' or 'new'."
-	exit 1
+  echo "Invalid option '$win_opt' for -w flag. Must be one of 'current', 'reuse' or 'new'."
+  exit 1
 fi
 
 if [ "$win_opt" == 'current' ]; then
-	nvim $1
-	exit 0
+  nvim $1
+  exit 0
 fi
 
 if [ "$win_opt" == 'new' ]; then
-	tmux new-window nvim $1
-	exit 0
+  tmux new-window nvim $1
+  exit 0
 fi
 
 # reuse NeoVim instance (search for window)
 
 is_nvim_running() {
-	local window_id=$1
-	tmux list-panes -t "$window_id" -F "#{pane_current_command}" | grep -q "nvim"
+  local window_id=$1
+  tmux list-panes -t "$window_id" -F "#{pane_current_command}" | grep -q "nvim"
 }
 
 windows=$(tmux list-windows -F "#{window_id}")
 
 for window in $windows; do
-	if is_nvim_running "$window"; then
-		tmux select-window -t "$window"
-		tmux send-keys Escape ":e $1" Enter
-		exit 0
-	fi
+  if is_nvim_running "$window"; then
+    tmux select-window -t "$window"
+    tmux send-keys Escape ":e $1" Enter
+    exit 0
+  fi
 done
 
 # Fallback to current window
