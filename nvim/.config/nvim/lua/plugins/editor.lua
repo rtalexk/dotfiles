@@ -101,6 +101,13 @@ return {
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
+      preview_config = {
+        border = GlobalConfig.border,
+        style = 'minimal',
+        relative = 'cursor',
+        row = 0,
+        col = 1,
+      },
       on_attach = function(buffer)
         local gs = package.loaded.gitsigns
 
