@@ -124,3 +124,115 @@ func runCmd(dir string, name string, args ...string) error {
   cmd.Dir = dir
   return cmd.Run()
 }
+
+func TestLoadProject_AllFieldsExplicit(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`
+alias = "myapp"
+startup_command = "sesh_dev"
+copy_files = [".env", "config/master.key"]
+`), 0644)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.Alias != "myapp" {
+    t.Errorf("alias: got %q", p.Config.Alias)
+  }
+  if p.Config.StartupCommand != "sesh_dev" {
+    t.Errorf("startup_command: got %q", p.Config.StartupCommand)
+  }
+  if len(p.Config.CopyFiles) != 2 {
+    t.Errorf("copy_files len: got %d", len(p.Config.CopyFiles))
+  }
+}
+
+func TestLoadProject_NoAlias_FallsBackToDirName(t *testing.T) {
+  tmp := t.TempDir()
+  // no project.toml
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.Alias != filepath.Base(tmp) {
+    t.Errorf("expected dir name %q, got %q", filepath.Base(tmp), p.Config.Alias)
+  }
+}
+
+func TestLoadProject_StartupCommand_SetupSh(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "setup.sh"), []byte("#!/bin/bash"), 0755)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.StartupCommand != "./setup.sh" {
+    t.Errorf("expected ./setup.sh, got %q", p.Config.StartupCommand)
+  }
+}
+
+func TestLoadProject_StartupCommand_Setup(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "setup"), []byte("#!/bin/bash"), 0755)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.StartupCommand != "./setup" {
+    t.Errorf("expected ./setup, got %q", p.Config.StartupCommand)
+  }
+}
+
+func TestLoadProject_StartupCommand_SetupRb(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "setup.rb"), []byte("# ruby"), 0644)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.StartupCommand != "./setup.rb" {
+    t.Errorf("expected ./setup.rb, got %q", p.Config.StartupCommand)
+  }
+}
+
+func TestLoadProject_StartupCommand_Precedence(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`startup_command = "sesh_dev"`), 0644)
+  os.WriteFile(filepath.Join(tmp, "setup.sh"), []byte(""), 0755)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.StartupCommand != "sesh_dev" {
+    t.Errorf("expected sesh_dev, got %q", p.Config.StartupCommand)
+  }
+}
+
+func TestLoadProject_NoStartupCommand(t *testing.T) {
+  tmp := t.TempDir()
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.StartupCommand != "" {
+    t.Errorf("expected empty startup_command, got %q", p.Config.StartupCommand)
+  }
+}
+
+func TestSessionName(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`alias = "up"`), 0644)
+  p, _ := utils.LoadProject(tmp)
+
+  got := p.SessionName("feature-1")
+  if got != "up-feature-1" {
+    t.Errorf("expected up-feature-1, got %q", got)
+  }
+}
