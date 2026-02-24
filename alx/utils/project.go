@@ -1,7 +1,9 @@
 package utils
 
 import (
+  "errors"
   "fmt"
+  "io/fs"
   "os"
   "os/exec"
   "path/filepath"
@@ -24,7 +26,11 @@ type Project struct {
 func LoadProject(root string) (*Project, error) {
   var cfg ProjectConfig
   tomlPath := filepath.Join(root, "project.toml")
-  if _, err := os.Stat(tomlPath); err == nil {
+  if _, err := os.Stat(tomlPath); err != nil {
+    if !errors.Is(err, fs.ErrNotExist) {
+      return nil, fmt.Errorf("failed to stat project.toml: %w", err)
+    }
+  } else {
     if _, err := toml.DecodeFile(tomlPath, &cfg); err != nil {
       return nil, fmt.Errorf("failed to parse project.toml: %w", err)
     }

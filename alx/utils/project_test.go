@@ -146,6 +146,15 @@ copy_files = [".env", "config/master.key"]
   if len(p.Config.CopyFiles) != 2 {
     t.Errorf("copy_files len: got %d", len(p.Config.CopyFiles))
   }
+  if p.Config.CopyFiles[0] != ".env" {
+    t.Errorf("copy_files[0]: got %q", p.Config.CopyFiles[0])
+  }
+  if p.Config.CopyFiles[1] != "config/master.key" {
+    t.Errorf("copy_files[1]: got %q", p.Config.CopyFiles[1])
+  }
+  if p.Root != tmp {
+    t.Errorf("Root: expected %q, got %q", tmp, p.Root)
+  }
 }
 
 func TestLoadProject_NoAlias_FallsBackToDirName(t *testing.T) {
