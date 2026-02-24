@@ -67,6 +67,9 @@ func runRemove(cmd *cobra.Command, args []string) error {
     }
   }
 
+  // Switch to previous tmux session before killing the current one
+  exec.Command("tmux", "switch-client", "-l").Run()
+
   // Kill tmux session (detach-on-destroy off keeps us in tmux)
   exec.Command("tmux", "kill-session", "-t", sessionName).Run()
 
@@ -107,6 +110,15 @@ func pickWorktree(bareDir, root string) (string, error) {
     return "", fmt.Errorf("failed to list worktrees: %w", err)
   }
 
+  defaultBranch := "main"
+  if refOut, err := exec.Command("git", "-C", bareDir, "symbolic-ref", "refs/remotes/origin/HEAD").Output(); err == nil {
+    ref := strings.TrimSpace(string(refOut))
+    parts := strings.Split(ref, "/")
+    if len(parts) > 0 {
+      defaultBranch = parts[len(parts)-1]
+    }
+  }
+
   var names []string
   scanner := bufio.NewScanner(strings.NewReader(string(out)))
   for scanner.Scan() {
@@ -116,6 +128,14 @@ func pickWorktree(bareDir, root string) (string, error) {
     }
     fields := strings.Fields(line)
     if len(fields) == 0 {
+      continue
+    }
+    lastField := fields[len(fields)-1]
+    if strings.HasPrefix(lastField, "(HEAD") {
+      continue
+    }
+    branch := strings.Trim(lastField, "[]")
+    if branch == defaultBranch {
       continue
     }
     rel, err := filepath.Rel(root, fields[0])
@@ -159,6 +179,9 @@ func worktreeBranch(bareDir, worktreePath string) (string, error) {
       }
     }
     if wtPath == worktreePath {
+      if branchRef == "" {
+        return "", fmt.Errorf("worktree %s is in detached HEAD state", worktreePath)
+      }
       // branchRef = "refs/heads/feature-1"
       parts := strings.SplitN(branchRef, "/", 3)
       if len(parts) == 3 {
@@ -171,9 +194,6 @@ func worktreeBranch(bareDir, worktreePath string) (string, error) {
   return "", fmt.Errorf("could not find branch for worktree path %s", worktreePath)
 }
 
-// checkMerged returns (forceDelete bool, error).
-// If the branch is already merged: returns (false, nil).
-// If not merged: prompts the user; returns (true, nil) if confirmed, (false, err) if aborted.
 func checkMerged(bareDir, branch string) (bool, error) {
   defaultBranch := "main"
   if out, err := exec.Command("git", "-C", bareDir, "symbolic-ref", "refs/remotes/origin/HEAD").Output(); err == nil {
@@ -198,7 +218,7 @@ func checkMerged(bareDir, branch string) (bool, error) {
   // Not merged — prompt
   fmt.Printf("error: The branch '%s' is not fully merged.\n", branch)
   fmt.Printf("If you are sure you want to delete it, re-run with --force.\n")
-  fmt.Printf("Delete branch '%s' anyway? [y/N] ", branch)
+  fmt.Printf("Delete branch '%s'? [y/N] ", branch)
 
   var response string
   fmt.Scanln(&response)
