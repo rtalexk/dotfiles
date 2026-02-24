@@ -15,9 +15,10 @@ import (
 var supportedStartupFiles = []string{"setup.rb", "setup.sh", "setup"}
 
 type ProjectConfig struct {
-  Alias          string   `toml:"alias"`
-  StartupCommand string   `toml:"startup_command"`
-  CopyFiles      []string `toml:"copy_files"`
+  Alias          string                 `toml:"alias"`
+  StartupCommand string                 `toml:"startup_command"`
+  CopyFiles      []string               `toml:"copy_files"`
+  Sesh           map[string]interface{} `toml:"sesh"`
 }
 
 type Project struct {

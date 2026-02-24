@@ -66,6 +66,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
     Name:           sessionName,
     Path:           worktreeDir,
     StartupCommand: project.Config.StartupCommand,
+    Extra:          project.Config.Sesh,
   }); err != nil {
     return fmt.Errorf("failed to update sesh config: %w", err)
   }
