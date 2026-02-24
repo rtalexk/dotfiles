@@ -1,16 +1,20 @@
 package utils
 
 import (
+  "bytes"
   "fmt"
   "os"
   "path/filepath"
   "strings"
+
+  "github.com/BurntSushi/toml"
 )
 
 type SeshSession struct {
   Name           string
   Path           string
   StartupCommand string
+  Extra          map[string]interface{}
 }
 
 func SeshConfigPath() string {
@@ -32,6 +36,13 @@ func AppendSeshSession(configPath string, session SeshSession) error {
   entry := fmt.Sprintf("\n[[session]]\nname = %q\npath = %q\n", session.Name, session.Path)
   if session.StartupCommand != "" {
     entry += fmt.Sprintf("startup_command = %q\n", session.StartupCommand)
+  }
+  if len(session.Extra) > 0 {
+    var buf bytes.Buffer
+    if err := toml.NewEncoder(&buf).Encode(session.Extra); err != nil {
+      return fmt.Errorf("failed to encode sesh extra fields: %w", err)
+    }
+    entry += buf.String()
   }
   _, err = f.WriteString(entry)
   return err
