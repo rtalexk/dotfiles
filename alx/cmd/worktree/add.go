@@ -7,22 +7,27 @@ import (
   "os"
   "os/exec"
   "path/filepath"
+  "strings"
 
   "github.com/spf13/cobra"
 )
 
 var AddCmd = &cobra.Command{
-  Use:   "add <branch> [path]",
+  Use:   "add <path> [branch]",
   Short: "Create a new worktree and tmux session",
   Args:  cobra.RangeArgs(1, 2),
   RunE:  runAdd,
 }
 
 func runAdd(cmd *cobra.Command, args []string) error {
-  branch := args[0]
-  path := branch
+  path := args[0]
+  branch := path
   if len(args) == 2 {
-    path = args[1]
+    branch = args[1]
+  }
+
+  if strings.Contains(path, "..") {
+    return fmt.Errorf("path must not contain '..': %s", path)
   }
 
   root, err := utils.FindProjectRoot()
