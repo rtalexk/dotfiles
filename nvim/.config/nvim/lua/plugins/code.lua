@@ -33,9 +33,15 @@ return {
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
         }
       end,
+      formatters = {
+        shfmt = {
+          prepend_args = { '-i', '2' },
+        },
+      },
       formatters_by_ft = {
         lua = { 'stylua' },
         sh = { 'shfmt' },
+        bash = { 'shfmt' },
         markdown = { 'prettier' },
         javascript = { 'prettier' },
         javascriptreact = { 'prettier' },
