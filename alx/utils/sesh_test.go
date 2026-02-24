@@ -86,7 +86,9 @@ func TestRemoveSeshSession_RemovesMatchingBlock(t *testing.T) {
 func TestRemoveSeshSession_PreservesOtherBlocks(t *testing.T) {
   f := tmpSesh(t, sampleSesh)
 
-  utils.RemoveSeshSession(f, "dotf")
+  if err := utils.RemoveSeshSession(f, "dotf"); err != nil {
+    t.Fatal(err)
+  }
 
   data, _ := os.ReadFile(f)
   content := string(data)
