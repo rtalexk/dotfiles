@@ -28,6 +28,9 @@ func FindProjectRoot() (string, error) {
     if err != nil {
       return "", err
     }
+    if _, err := os.Stat(filepath.Join(real, ".bare")); err != nil {
+      return "", fmt.Errorf("not inside a bare worktree project")
+    }
     return real, nil
   }
 
