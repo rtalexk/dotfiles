@@ -12,6 +12,8 @@ import (
   "github.com/BurntSushi/toml"
 )
 
+var supportedStartupFiles = []string{"setup.rb", "setup.sh", "setup"}
+
 type ProjectConfig struct {
   Alias          string   `toml:"alias"`
   StartupCommand string   `toml:"startup_command"`
@@ -41,7 +43,7 @@ func LoadProject(root string) (*Project, error) {
   }
 
   if cfg.StartupCommand == "" {
-    for _, name := range []string{"setup.sh", "setup", "setup.rb"} {
+    for _, name := range supportedStartupFiles {
       if _, err := os.Stat(filepath.Join(root, name)); err == nil {
         cfg.StartupCommand = "./" + name
         break
