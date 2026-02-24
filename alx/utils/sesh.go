@@ -23,7 +23,7 @@ func SeshConfigPath() string {
 }
 
 func AppendSeshSession(configPath string, session SeshSession) error {
-  f, err := os.OpenFile(configPath, os.O_APPEND|os.O_WRONLY, 0644)
+  f, err := os.OpenFile(configPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
   if err != nil {
     return err
   }
@@ -77,6 +77,10 @@ func RemoveSeshSession(configPath, name string) error {
     if !matched {
       kept = append(kept, block)
     }
+  }
+
+  if len(kept) == len(blocks) {
+    return nil
   }
 
   var parts []string
