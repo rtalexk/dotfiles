@@ -6,7 +6,49 @@ import (
   "os/exec"
   "path/filepath"
   "strings"
+
+  "github.com/BurntSushi/toml"
 )
+
+type ProjectConfig struct {
+  Alias          string   `toml:"alias"`
+  StartupCommand string   `toml:"startup_command"`
+  CopyFiles      []string `toml:"copy_files"`
+}
+
+type Project struct {
+  Root   string
+  Config ProjectConfig
+}
+
+func LoadProject(root string) (*Project, error) {
+  var cfg ProjectConfig
+  tomlPath := filepath.Join(root, "project.toml")
+  if _, err := os.Stat(tomlPath); err == nil {
+    if _, err := toml.DecodeFile(tomlPath, &cfg); err != nil {
+      return nil, fmt.Errorf("failed to parse project.toml: %w", err)
+    }
+  }
+
+  if cfg.Alias == "" {
+    cfg.Alias = filepath.Base(root)
+  }
+
+  if cfg.StartupCommand == "" {
+    for _, name := range []string{"setup.sh", "setup", "setup.rb"} {
+      if _, err := os.Stat(filepath.Join(root, name)); err == nil {
+        cfg.StartupCommand = "./" + name
+        break
+      }
+    }
+  }
+
+  return &Project{Root: root, Config: cfg}, nil
+}
+
+func (p *Project) SessionName(path string) string {
+  return p.Config.Alias + "-" + path
+}
 
 // FindProjectRoot locates the bare-clone project root from the current
 // working directory. Works from any depth: project root, worktree root,
