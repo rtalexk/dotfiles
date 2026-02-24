@@ -70,7 +70,10 @@ func runAdd(cmd *cobra.Command, args []string) error {
   seshCmd.Stdin = os.Stdin
   seshCmd.Stdout = os.Stdout
   seshCmd.Stderr = os.Stderr
-  return seshCmd.Run()
+  if err := seshCmd.Run(); err != nil {
+    return fmt.Errorf("worktree and sesh entry created; failed to connect session %q: %w", sessionName, err)
+  }
+  return nil
 }
 
 func copyFile(src, dst string) error {
@@ -88,8 +91,10 @@ func copyFile(src, dst string) error {
   if err != nil {
     return err
   }
-  defer out.Close()
 
-  _, err = io.Copy(out, in)
-  return err
+  if _, err = io.Copy(out, in); err != nil {
+    out.Close()
+    return err
+  }
+  return out.Close()
 }
