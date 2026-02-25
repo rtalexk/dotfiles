@@ -22,19 +22,19 @@ return {
     opts = {},
   },
 
-  {
-    'CopilotC-Nvim/CopilotChat.nvim',
-    dependencies = {
-      { 'nvim-lua/plenary.nvim', branch = 'master' },
-    },
-    build = 'make tiktoken',
-    opts = {
-      -- See Configuration section for options
-    },
-    config = function()
-      vim.keymap.set('n', '<leader>co', '<cmd>CopilotChatToggle<cr>', { desc = 'Open Copilot Chat' })
-    end,
-  },
+  -- {
+  --   'CopilotC-Nvim/CopilotChat.nvim',
+  --   dependencies = {
+  --     { 'nvim-lua/plenary.nvim', branch = 'master' },
+  --   },
+  --   build = 'make tiktoken',
+  --   opts = {
+  --     -- See Configuration section for options
+  --   },
+  --   config = function()
+  --     vim.keymap.set('n', '<leader>co', '<cmd>CopilotChatToggle<cr>', { desc = 'Open Copilot Chat' })
+  --   end,
+  -- },
 
   {
     'hat0uma/csvview.nvim',

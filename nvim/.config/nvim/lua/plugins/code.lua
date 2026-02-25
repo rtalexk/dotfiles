@@ -55,9 +55,9 @@ return {
     },
   },
 
-  {
-    'github/copilot.vim',
-  },
+  -- {
+  --   'github/copilot.vim',
+  -- },
 
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
