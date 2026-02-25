@@ -44,7 +44,8 @@ func runAdd(cmd *cobra.Command, args []string) error {
   worktreeDir := filepath.Join(root, path)
 
   // Create branch + worktree
-  gitCmd := exec.Command("git", "-C", bareDir, "worktree", "add", worktreeDir, "-b", branch)
+  gitArgs := resolveWorktreeAddArgs(bareDir, branch, worktreeDir)
+  gitCmd := exec.Command("git", append([]string{"-C", bareDir}, gitArgs...)...)
   gitCmd.Stdout = os.Stdout
   gitCmd.Stderr = os.Stderr
   if err := gitCmd.Run(); err != nil {
@@ -80,6 +81,16 @@ func runAdd(cmd *cobra.Command, args []string) error {
     return fmt.Errorf("worktree and sesh entry created; failed to connect session %q: %w", sessionName, err)
   }
   return nil
+}
+
+func resolveWorktreeAddArgs(bareDir, branch, worktreeDir string) []string {
+  if exec.Command("git", "-C", bareDir, "rev-parse", "--verify", "refs/heads/"+branch).Run() == nil {
+    return []string{"worktree", "add", worktreeDir, branch}
+  }
+  if exec.Command("git", "-C", bareDir, "rev-parse", "--verify", "refs/remotes/origin/"+branch).Run() == nil {
+    return []string{"worktree", "add", "--track", "-b", branch, worktreeDir, "origin/" + branch}
+  }
+  return []string{"worktree", "add", worktreeDir, "-b", branch}
 }
 
 func copyFile(src, dst string) error {
