@@ -16,4 +16,5 @@ func init() {
   rootCmd.AddCommand(worktreeCmd)
   worktreeCmd.AddCommand(worktree.AddCmd)
   worktreeCmd.AddCommand(worktree.RemoveCmd)
+  worktreeCmd.AddCommand(worktree.ListCmd)
 }
