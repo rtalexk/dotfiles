@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
 	"text/template"
 
 	"github.com/spf13/cobra"
@@ -50,7 +51,8 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 
 	if listFlagFormat != "" {
-		tmpl, err := template.New("row").Parse(listFlagFormat + "\n")
+		expanded := strings.NewReplacer(`\t`, "\t", `\n`, "\n").Replace(listFlagFormat)
+		tmpl, err := template.New("row").Parse(expanded + "\n")
 		if err != nil {
 			return fmt.Errorf("invalid format template: %w", err)
 		}
@@ -62,18 +64,27 @@ func runList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	multiCol := listFlagRoot || listFlagBranch || listFlagSession
+	if multiCol {
+		tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		for _, wt := range worktrees {
+			parts := []string{wt.Path}
+			if listFlagRoot {
+				parts = append(parts, wt.Root)
+			}
+			if listFlagBranch {
+				parts = append(parts, wt.Branch)
+			}
+			if listFlagSession {
+				parts = append(parts, wt.Session)
+			}
+			fmt.Fprintln(tw, strings.Join(parts, "\t"))
+		}
+		return tw.Flush()
+	}
+
 	for _, wt := range worktrees {
-		parts := []string{wt.Path}
-		if listFlagRoot {
-			parts = append(parts, wt.Root)
-		}
-		if listFlagBranch {
-			parts = append(parts, wt.Branch)
-		}
-		if listFlagSession {
-			parts = append(parts, wt.Session)
-		}
-		fmt.Println(strings.Join(parts, "\t"))
+		fmt.Println(wt.Path)
 	}
 	return nil
 }
