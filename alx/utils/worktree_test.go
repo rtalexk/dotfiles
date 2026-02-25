@@ -1,7 +1,6 @@
 package utils_test
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -183,7 +182,7 @@ func TestListWorktrees_RootAbsoluteWhenProjectsUnset(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	os.Unsetenv("PROJECTS")
+	t.Setenv("PROJECTS", "")
 
 	project := &utils.Project{Root: root, Config: utils.ProjectConfig{Alias: "myapp"}}
 	worktrees, err := utils.ListWorktrees(bare, root, project)
