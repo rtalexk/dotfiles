@@ -467,7 +467,9 @@ return {
       end, { desc = 'By grep' })
 
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Diagnostics' })
-      vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = 'Resume' })
+      vim.keymap.set('n', '<leader>sr', function()
+        builtin.resume { initial_mode = 'normal' }
+      end, { desc = 'Resume' })
 
       vim.keymap.set('n', '<leader>sR', function()
         builtin.oldfiles {
