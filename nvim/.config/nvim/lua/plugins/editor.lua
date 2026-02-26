@@ -463,9 +463,7 @@ return {
       end, { desc = 'Current word' })
 
       vim.keymap.set('n', '<leader>sg', function()
-        builtin.live_grep {
-          initial_mode = 'insert',
-        }
+        require('telescope').extensions.live_grep_args.live_grep_args { noremap = true, initial_mode = 'insert' }
       end, { desc = 'By grep' })
 
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Diagnostics' })
