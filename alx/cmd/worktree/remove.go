@@ -67,8 +67,12 @@ func runRemove(cmd *cobra.Command, args []string) error {
     }
   }
 
-  // Switch to previous tmux session before killing the current one
-  exec.Command("tmux", "switch-client", "-l").Run()
+  // Only switch away if we're currently inside the session being removed
+  if cur, err := exec.Command("tmux", "display-message", "-p", "#S").Output(); err == nil {
+    if strings.TrimSpace(string(cur)) == sessionName {
+      exec.Command("tmux", "switch-client", "-l").Run()
+    }
+  }
 
   // Kill tmux session (detach-on-destroy off keeps us in tmux)
   exec.Command("tmux", "kill-session", "-t", sessionName).Run()
@@ -78,8 +82,8 @@ func runRemove(cmd *cobra.Command, args []string) error {
     fmt.Fprintf(os.Stderr, "warning: failed to update sesh config: %v\n", err)
   }
 
-  // Remove worktree
-  rmCmd := exec.Command("git", "-C", bareDir, "worktree", "remove", path)
+  // Remove worktree (use absolute path so git can locate it regardless of cwd)
+  rmCmd := exec.Command("git", "-C", bareDir, "worktree", "remove", filepath.Join(root, path))
   rmCmd.Stdout = os.Stdout
   rmCmd.Stderr = os.Stderr
   if err := rmCmd.Run(); err != nil {
