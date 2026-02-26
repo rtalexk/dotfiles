@@ -23,6 +23,7 @@ return {
         'icon',
       },
       float = {
+        border = 'rounded',
         get_win_title = function(winid)
           local cwd = vim.fn.getcwd()
           local buf = vim.api.nvim_win_get_buf(winid)
