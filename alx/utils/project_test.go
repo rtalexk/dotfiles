@@ -129,7 +129,7 @@ func TestLoadProject_AllFieldsExplicit(t *testing.T) {
   tmp := t.TempDir()
   os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`
 alias = "myapp"
-startup_command = "sesh_dev"
+on_create = "sesh_dev"
 copy_files = [".env", "config/master.key"]
 `), 0644)
 
@@ -140,8 +140,8 @@ copy_files = [".env", "config/master.key"]
   if p.Config.Alias != "myapp" {
     t.Errorf("alias: got %q", p.Config.Alias)
   }
-  if p.Config.StartupCommand != "sesh_dev" {
-    t.Errorf("startup_command: got %q", p.Config.StartupCommand)
+  if p.Config.OnCreate != "sesh_dev" {
+    t.Errorf("startup_command: got %q", p.Config.OnCreate)
   }
   if len(p.Config.CopyFiles) != 2 {
     t.Errorf("copy_files len: got %d", len(p.Config.CopyFiles))
@@ -178,8 +178,8 @@ func TestLoadProject_StartupCommand_SetupSh(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.StartupCommand != "./setup.sh" {
-    t.Errorf("expected ./setup.sh, got %q", p.Config.StartupCommand)
+  if p.Config.OnCreate != "./setup.sh" {
+    t.Errorf("expected ./setup.sh, got %q", p.Config.OnCreate)
   }
 }
 
@@ -191,8 +191,8 @@ func TestLoadProject_StartupCommand_Setup(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.StartupCommand != "./setup" {
-    t.Errorf("expected ./setup, got %q", p.Config.StartupCommand)
+  if p.Config.OnCreate != "./setup" {
+    t.Errorf("expected ./setup, got %q", p.Config.OnCreate)
   }
 }
 
@@ -204,22 +204,22 @@ func TestLoadProject_StartupCommand_SetupRb(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.StartupCommand != "./setup.rb" {
-    t.Errorf("expected ./setup.rb, got %q", p.Config.StartupCommand)
+  if p.Config.OnCreate != "./setup.rb" {
+    t.Errorf("expected ./setup.rb, got %q", p.Config.OnCreate)
   }
 }
 
 func TestLoadProject_StartupCommand_Precedence(t *testing.T) {
   tmp := t.TempDir()
-  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`startup_command = "sesh_dev"`), 0644)
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`on_create = "sesh_dev"`), 0644)
   os.WriteFile(filepath.Join(tmp, "setup.sh"), []byte(""), 0755)
 
   p, err := utils.LoadProject(tmp)
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.StartupCommand != "sesh_dev" {
-    t.Errorf("expected sesh_dev, got %q", p.Config.StartupCommand)
+  if p.Config.OnCreate != "sesh_dev" {
+    t.Errorf("expected sesh_dev, got %q", p.Config.OnCreate)
   }
 }
 
@@ -230,8 +230,8 @@ func TestLoadProject_NoStartupCommand(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.StartupCommand != "" {
-    t.Errorf("expected empty startup_command, got %q", p.Config.StartupCommand)
+  if p.Config.OnCreate != "" {
+    t.Errorf("expected empty startup_command, got %q", p.Config.OnCreate)
   }
 }
 
