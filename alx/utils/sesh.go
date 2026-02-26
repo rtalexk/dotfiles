@@ -48,6 +48,26 @@ func AppendSeshSession(configPath string, session SeshSession) error {
   return err
 }
 
+type SeshWindowDef struct {
+  Name           string `toml:"name"`
+  StartupCommand string `toml:"startup_command"`
+}
+
+// LoadSeshWindowDefs returns a map of window name → definition from [[window]] entries.
+func LoadSeshWindowDefs(configPath string) (map[string]SeshWindowDef, error) {
+  var cfg struct {
+    Window []SeshWindowDef `toml:"window"`
+  }
+  if _, err := toml.DecodeFile(configPath, &cfg); err != nil {
+    return nil, err
+  }
+  defs := make(map[string]SeshWindowDef, len(cfg.Window))
+  for _, w := range cfg.Window {
+    defs[w.Name] = w
+  }
+  return defs, nil
+}
+
 // RemoveSeshSession removes the [[session]] block with the given name.
 // Uses line-based manipulation to preserve the file's existing formatting.
 func RemoveSeshSession(configPath, name string) error {
