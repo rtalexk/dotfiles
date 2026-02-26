@@ -5,7 +5,6 @@ import (
   "bytes"
   "fmt"
   "os"
-  "os/exec"
   "strings"
   "text/template"
   "time"
@@ -86,17 +85,7 @@ Links:
       }
     }
 
-    if withinEditor := utils.FileCreatedFromEditor(); !withinEditor {
-      utils.ExecCmdOrExit(editor, "-c", "cd "+brainDir, "-c", "e "+absoluteFilePath, "-c", "normal 3j")
-    } else {
-      // Couldn't find a way to instruct the editor to open the file, so as a workaround
-      // I'll just copy the file path to the clipboard and manually open the file
-      cmd := exec.Command("pbcopy")
-      cmd.Stdin = strings.NewReader(absoluteFilePath)
-      cmd.Run()
-
-      println(absoluteFilePath)
-    }
+    utils.OpenNoteInEditorOrExit(editor, brainDir, absoluteFilePath)
   },
 }
 

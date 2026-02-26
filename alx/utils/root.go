@@ -178,3 +178,16 @@ func FileCreatedFromEditor() bool {
 
   return false
 }
+
+func OpenNoteInEditorOrExit(editor, brainDir, relativeFilePath string) {
+  if FileCreatedFromEditor() {
+    nvimServer := os.Getenv("NVIM_SERVER")
+    cmd := exec.Command("nvim", "--server", nvimServer, "--remote", relativeFilePath)
+    if err := cmd.Start(); err != nil {
+      println(err.Error())
+      os.Exit(1)
+    }
+  } else {
+    ExecCmdOrExit(editor, "-c", "cd "+brainDir, "-c", "e "+relativeFilePath, "-c", "normal 3j")
+  }
+}
