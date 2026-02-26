@@ -15,10 +15,10 @@ import (
 var supportedStartupFiles = []string{"setup.rb", "setup.sh", "setup"}
 
 type ProjectConfig struct {
-  Alias          string                 `toml:"alias"`
-  StartupCommand string                 `toml:"startup_command"`
-  CopyFiles      []string               `toml:"copy_files"`
-  Sesh           map[string]interface{} `toml:"sesh"`
+  Alias     string                 `toml:"alias"`
+  OnCreate  string                 `toml:"on_create"`
+  CopyFiles []string               `toml:"copy_files"`
+  Sesh      map[string]interface{} `toml:"sesh"`
 }
 
 type Project struct {
@@ -43,10 +43,10 @@ func LoadProject(root string) (*Project, error) {
     cfg.Alias = filepath.Base(root)
   }
 
-  if cfg.StartupCommand == "" {
+  if cfg.OnCreate == "" {
     for _, name := range supportedStartupFiles {
       if _, err := os.Stat(filepath.Join(root, name)); err == nil {
-        cfg.StartupCommand = "./" + name
+        cfg.OnCreate = "./" + name
         break
       }
     }

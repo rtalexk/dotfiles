@@ -42,8 +42,9 @@ func init() {
 const projectTOMLTemplate = `# alias defaults to the project root directory name
 # alias = "myapp"
 
-# startup_command defaults to setup.rb / setup.sh / setup if present
-# startup_command = "sesh_dev"
+# on_create runs once when the worktree is first created (not forwarded to sesh)
+# on_create defaults to setup.rb / setup.sh / setup if present
+# on_create = "npm install"
 
 # copy_files = [".env", "config/master.key"]
 
@@ -88,8 +89,8 @@ func runProjectShow(cmd *cobra.Command, args []string) error {
 	cfg := project.Config
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("alias = %q\n", cfg.Alias))
-	if cfg.StartupCommand != "" {
-		sb.WriteString(fmt.Sprintf("startup_command = %q\n", cfg.StartupCommand))
+	if cfg.OnCreate != "" {
+		sb.WriteString(fmt.Sprintf("on_create = %q\n", cfg.OnCreate))
 	}
 	if len(cfg.CopyFiles) > 0 {
 		quoted := make([]string, len(cfg.CopyFiles))

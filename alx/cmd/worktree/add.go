@@ -64,10 +64,9 @@ func runAdd(cmd *cobra.Command, args []string) error {
   // Add sesh entry
   sessionName := project.SessionName(path)
   if err := utils.AppendSeshSession(utils.SeshConfigPath(), utils.SeshSession{
-    Name:           sessionName,
-    Path:           worktreeDir,
-    StartupCommand: project.Config.StartupCommand,
-    Extra:          project.Config.Sesh,
+    Name:  sessionName,
+    Path:  worktreeDir,
+    Extra: project.Config.Sesh,
   }); err != nil {
     return fmt.Errorf("failed to update sesh config: %w", err)
   }
@@ -99,14 +98,14 @@ func runAdd(cmd *cobra.Command, args []string) error {
     }
     // Run project startup command in a dedicated window so it doesn't block
     // the configured windows (it may take a while, e.g. npm install)
-    if project.Config.StartupCommand != "" {
+    if project.Config.OnCreate != "" {
       exec.Command("tmux", "new-window", "-t", sessionName, "-c", worktreeDir).Run()
-      exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.StartupCommand, "Enter").Run()
+      exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.OnCreate, "Enter").Run()
     }
     // Return focus to the first configured window
     exec.Command("tmux", "select-window", "-t", sessionName+":0").Run()
-  } else if project.Config.StartupCommand != "" {
-    exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.StartupCommand, "Enter").Run()
+  } else if project.Config.OnCreate != "" {
+    exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.OnCreate, "Enter").Run()
   }
 
   // Switch to / attach the session
