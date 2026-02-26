@@ -509,7 +509,21 @@ return {
       vim.keymap.set('n', '<leader>gC', builtin.git_commits, { desc = 'Project commits' })
       vim.keymap.set('n', '<leader>gc', builtin.git_bcommits, { desc = 'Buffer commits' })
       vim.keymap.set('n', '<leader>gb', builtin.git_branches, { desc = 'Branches' })
-      vim.keymap.set('n', '<leader>gs', builtin.git_status, { desc = 'Status' })
+      -- Bare repo + worktree setup: the parent dir is not a git repo, so we must resolve
+      -- the worktree toplevel explicitly. Without cwd, Telescope falls through to try_worktrees
+      -- and errors. expand_dir=false avoids -uall which causes a plenary oneshot channel
+      -- race condition when there are many untracked files.
+      vim.keymap.set('n', '<leader>gs', function()
+        local toplevel = vim.fn.systemlist 'git rev-parse --show-toplevel 2>/dev/null'
+        if not toplevel[1] then
+          vim.notify('Not inside a git worktree', vim.log.levels.WARN)
+          return
+        end
+        builtin.git_status {
+          cwd = toplevel[1],
+          expand_dir = false,
+        }
+      end, { desc = 'Status' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
