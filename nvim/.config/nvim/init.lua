@@ -1,5 +1,6 @@
--- Env Var used by my CLI
+-- Env vars used by my CLI
 vim.env.WITHIN_EDITOR = '1'
+vim.env.NVIM_SERVER = vim.v.servername
 
 P = function(v)
   print(vim.inspect(v))
@@ -48,9 +49,6 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup('plugins', {
   change_detection = {
     notify = false,
-  },
-  rocks = {
-    server = 'https://lumen-oss.github.io/rocks-binaries/',
   },
 })
 
