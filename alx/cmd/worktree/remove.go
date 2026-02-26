@@ -105,6 +105,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
   // Remove directory if still present (git worktree remove may have cleaned it)
   os.RemoveAll(filepath.Join(root, path))
 
+  fmt.Printf("removed worktree '%s', branch '%s', session '%s'\n", path, branch, sessionName)
   return nil
 }
 
