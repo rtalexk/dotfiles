@@ -43,5 +43,5 @@ if [[ "$branch_count" == "1" ]]; then
   exit 1
 fi
 
-branch=$(eval "$branch_cmd" | grep -v '^*' | sed 's/*//g' | sed 's/[[:space:]]//g' | sed 's/^remotes\///' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)
+branch=$(eval "$branch_cmd" | grep -v '^*' | sed 's/[*+]//g' | sed 's/[[:space:]]//g' | sed 's/^remotes\///' | fzf +m --preview="git log --oneline --graph --decorate --color=always '{}'" --preview-window=up:50%)
 echo "$branch"
