@@ -23,7 +23,7 @@ var RemoveCmd = &cobra.Command{
 }
 
 func init() {
-  RemoveCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Force delete even if branch is unmerged")
+  RemoveCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Force delete even if branch is unmerged or worktree has untracked/modified files")
 }
 
 func runRemove(cmd *cobra.Command, args []string) error {
@@ -58,12 +58,35 @@ func runRemove(cmd *cobra.Command, args []string) error {
 
   sessionName := project.SessionName(path)
 
-  // Merge check
   forceDelete := forceFlag
   if !forceFlag {
-    forceDelete, err = checkMerged(bareDir, branch)
+    merged, err := isMerged(bareDir, branch)
     if err != nil {
       return err
+    }
+    dirtyFiles, err := getDirtyFiles(filepath.Join(root, path))
+    if err != nil {
+      return err
+    }
+
+    needsForce := !merged || len(dirtyFiles) > 0
+    if needsForce {
+      if !merged {
+        fmt.Printf("Branch '%s' is not fully merged.\n", branch)
+      }
+      if len(dirtyFiles) > 0 {
+        fmt.Printf("The worktree contains modified or untracked files:\n")
+        for _, f := range dirtyFiles {
+          fmt.Printf("  %s\n", f)
+        }
+      }
+      fmt.Printf("Delete branch '%s' and remove worktree? [y/N] ", branch)
+      var response string
+      fmt.Scanln(&response)
+      if strings.ToLower(strings.TrimSpace(response)) != "y" {
+        return fmt.Errorf("aborted")
+      }
+      forceDelete = true
     }
   }
 
@@ -83,7 +106,12 @@ func runRemove(cmd *cobra.Command, args []string) error {
   }
 
   // Remove worktree (use absolute path so git can locate it regardless of cwd)
-  rmCmd := exec.Command("git", "-C", bareDir, "worktree", "remove", filepath.Join(root, path))
+  wtRemoveArgs := []string{"-C", bareDir, "worktree", "remove"}
+  if forceDelete {
+    wtRemoveArgs = append(wtRemoveArgs, "--force")
+  }
+  wtRemoveArgs = append(wtRemoveArgs, filepath.Join(root, path))
+  rmCmd := exec.Command("git", wtRemoveArgs...)
   rmCmd.Stdout = os.Stdout
   rmCmd.Stderr = os.Stderr
   if err := rmCmd.Run(); err != nil {
@@ -199,7 +227,7 @@ func worktreeBranch(bareDir, worktreePath string) (string, error) {
   return "", fmt.Errorf("could not find branch for worktree path %s", worktreePath)
 }
 
-func checkMerged(bareDir, branch string) (bool, error) {
+func isMerged(bareDir, branch string) (bool, error) {
   defaultBranch := "main"
   if out, err := exec.Command("git", "-C", bareDir, "symbolic-ref", "refs/remotes/origin/HEAD").Output(); err == nil {
     ref := strings.TrimSpace(string(out))
@@ -216,20 +244,23 @@ func checkMerged(bareDir, branch string) (bool, error) {
 
   for _, line := range strings.Split(string(out), "\n") {
     if strings.TrimSpace(strings.TrimPrefix(line, "* ")) == branch {
-      return false, nil
+      return true, nil
     }
   }
 
-  // Not merged — prompt
-  fmt.Printf("error: The branch '%s' is not fully merged.\n", branch)
-  fmt.Printf("If you are sure you want to delete it, re-run with --force.\n")
-  fmt.Printf("Delete branch '%s'? [y/N] ", branch)
+  return false, nil
+}
 
-  var response string
-  fmt.Scanln(&response)
-  if strings.ToLower(strings.TrimSpace(response)) == "y" {
-    return true, nil
+func getDirtyFiles(worktreePath string) ([]string, error) {
+  out, err := exec.Command("git", "-C", worktreePath, "status", "--porcelain").Output()
+  if err != nil {
+    return nil, fmt.Errorf("failed to check worktree status: %w", err)
   }
-
-  return false, fmt.Errorf("aborted")
+  var files []string
+  for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+    if line != "" {
+      files = append(files, line)
+    }
+  }
+  return files, nil
 }
