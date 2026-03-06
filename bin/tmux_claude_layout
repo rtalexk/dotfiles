@@ -3,10 +3,11 @@
 
 require 'open3'
 
-THRESHOLD     = 200
-NVIM_WINDOW   = "󰅩"
-CLAUDE_WINDOW = ""
-CLAUDE_CMD    = "fnm use default; claude"
+THRESHOLD            = 200
+MAX_CLAUDE_PANE_COLS = 90
+NVIM_WINDOW          = "󰅩"
+CLAUDE_WINDOW        = ""
+CLAUDE_CMD           = "fnm use default; claude"
 
 # Run a tmux command and return its stdout.
 def tmux(*args)
@@ -66,6 +67,10 @@ def find_nvim_window(session)
   nil
 end
 
+def claude_pane_size
+  [[client_width * 40 / 100, MAX_CLAUDE_PANE_COLS].min, 1].max
+end
+
 def tag_claude_pane(pane_id)
   tmux!("set-option", "-p", "-t", pane_id, "@main_claude", "1")
 end
@@ -79,7 +84,7 @@ end
 def open_claude_in_nvim(nvim_window_id)
   current_path = tmux("display-message", "-p", '#{pane_current_path}')
   pane_id = tmux(
-    "split-window", "-h", "-l", "40%",
+    "split-window", "-h", "-l", claude_pane_size.to_s,
     "-t", nvim_window_id,
     "-c", current_path,
     "-P", "-F", '#{pane_id}',
@@ -132,8 +137,10 @@ def resize_mode
   focused_pane = tmux("display-message", "-p", '#{pane_id}')
 
   if width >= THRESHOLD && standalone && nvim_window
-    tmux!("join-pane", "-h", "-s", claude[:pane_id], "-t", nvim_window, "-l", "40%")
+    tmux!("join-pane", "-h", "-s", claude[:pane_id], "-t", nvim_window, "-l", claude_pane_size.to_s)
     focus_pane(focused_pane)
+  elsif width >= THRESHOLD && !standalone
+    tmux!("resize-pane", "-t", claude[:pane_id], "-x", claude_pane_size.to_s)
   elsif width < THRESHOLD && !standalone
     tmux!("break-pane", "-s", claude[:pane_id], "-n", CLAUDE_WINDOW)
     focus_pane(focused_pane)
