@@ -1,0 +1,149 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'open3'
+
+THRESHOLD     = 200
+NVIM_WINDOW   = "󰅩"
+CLAUDE_WINDOW = ""
+CLAUDE_CMD    = "fnm use default; claude"
+
+# Run a tmux command and return its stdout.
+def tmux(*args)
+  out, _status = Open3.capture2("tmux", *args)
+  out.strip
+end
+
+# Run a tmux command for side effects (does not capture output).
+def tmux!(*args)
+  system("tmux", *args)
+end
+
+def current_session
+  tmux("display-message", "-p", '#S')
+end
+
+def client_width
+  tmux("display-message", "-p", '#{client_width}').to_i
+end
+
+def find_claude_pane(session)
+  lines = tmux(
+    "list-panes", "-s", "-t", session,
+    "-F", '#{@main_claude}:#{pane_id}:#{window_name}'
+  ).lines
+  lines.each do |line|
+    flag, pane_id, window_name = line.strip.split(":", 3)
+    return { pane_id: pane_id, window_name: window_name } if flag == "1"
+  end
+  adopt_untagged_claude_pane(session)
+end
+
+def adopt_untagged_claude_pane(session)
+  lines = tmux(
+    "list-windows", "-t", session,
+    "-F", '#{window_name}:#{window_id}'
+  ).lines
+  lines.each do |line|
+    name, window_id = line.strip.split(":", 2)
+    next unless name == CLAUDE_WINDOW
+    pane_id = tmux("display-message", "-p", "-t", window_id, '#{pane_id}')
+    tag_claude_pane(pane_id)
+    return { pane_id: pane_id, window_name: name }
+  end
+  nil
+end
+
+def find_nvim_window(session)
+  lines = tmux(
+    "list-windows", "-t", session,
+    "-F", '#{window_name}:#{window_id}'
+  ).lines
+  lines.each do |line|
+    name, window_id = line.strip.split(":", 2)
+    return window_id if name == NVIM_WINDOW
+  end
+  nil
+end
+
+def tag_claude_pane(pane_id)
+  tmux!("set-option", "-p", "-t", pane_id, "@main_claude", "1")
+end
+
+def focus_pane(pane_id)
+  window_id = tmux("display-message", "-p", "-t", pane_id, '#{window_id}')
+  tmux!("select-window", "-t", window_id)
+  tmux!("select-pane", "-t", pane_id)
+end
+
+def open_claude_in_nvim(nvim_window_id)
+  current_path = tmux("display-message", "-p", '#{pane_current_path}')
+  pane_id = tmux(
+    "split-window", "-h", "-l", "40%",
+    "-t", nvim_window_id,
+    "-c", current_path,
+    "-P", "-F", '#{pane_id}',
+    "sh", "-c", CLAUDE_CMD
+  )
+  tag_claude_pane(pane_id)
+  focus_pane(pane_id)
+end
+
+def open_claude_standalone
+  current_path = tmux("display-message", "-p", '#{pane_current_path}')
+  pane_id = tmux(
+    "new-window",
+    "-n", CLAUDE_WINDOW,
+    "-c", current_path,
+    "-P", "-F", '#{pane_id}',
+    "sh", "-c", CLAUDE_CMD
+  )
+  tag_claude_pane(pane_id)
+end
+
+def open_mode
+  session = current_session
+  claude = find_claude_pane(session)
+
+  if claude
+    focus_pane(claude[:pane_id])
+    return
+  end
+
+  width = client_width
+  nvim_window = find_nvim_window(session)
+
+  if width >= THRESHOLD && nvim_window
+    open_claude_in_nvim(nvim_window)
+  else
+    open_claude_standalone
+  end
+end
+
+def resize_mode
+  session = current_session
+  claude  = find_claude_pane(session)
+  return unless claude
+
+  width       = client_width
+  standalone  = claude[:window_name] == CLAUDE_WINDOW
+  nvim_window = find_nvim_window(session)
+
+  focused_pane = tmux("display-message", "-p", '#{pane_id}')
+
+  if width >= THRESHOLD && standalone && nvim_window
+    tmux!("join-pane", "-h", "-s", claude[:pane_id], "-t", nvim_window, "-l", "40%")
+    focus_pane(focused_pane)
+  elsif width < THRESHOLD && !standalone
+    tmux!("break-pane", "-s", claude[:pane_id], "-n", CLAUDE_WINDOW)
+    focus_pane(focused_pane)
+  end
+end
+
+case ARGV[0]
+when "open"   then open_mode
+when "resize" then resize_mode
+else
+  warn "Usage: tmux_claude_layout <open|resize>"
+  exit 1
+end
