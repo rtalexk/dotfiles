@@ -1,4 +1,4 @@
-# vim ft=bash
+#!/usr/bin/env bash
 
 # Oh My Posh specific config
 

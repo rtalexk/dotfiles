@@ -1,27 +1,27 @@
-# vim ft=bash
+#!/bin/bash
 
 export TERM="tmux-256color"
 export EDITOR="nvim"
 
 export PROJECTS="$HOME/com.github"
-export DOTFILES="$PROJECTS/dotfiles"
+export DOTFILES="$PROJECTS/dotfiles/main"
 export ICLOUD="$HOME/Library/Mobile\ Documents/com~apple~CloudDocs"
 export BRAIN="$HOME/Documents/Notes"
 
 # Custom aliases
 if [ -n "$(find "$XDG_CONFIG_HOME/shell/aliases/" -maxdepth 1 -type f -not \( -name '.' -o -name '..' \))" ]; then
   for file in "$XDG_CONFIG_HOME/shell/aliases/"*; do
-		if [ -f "$file" ]; then
-			source "$file"
-		fi
-	done
+    if [ -f "$file" ]; then
+      source "$file"
+    fi
+  done
 fi
 
 export PATH="$HOME/.local/bin:$DOTFILES/bin:$PATH"
 
 # Work specific shell configuration
 if [ -f "$XDG_CONFIG_HOME/shell/work" ]; then
-    source "$XDG_CONFIG_HOME/shell/work"
+  source "$XDG_CONFIG_HOME/shell/work"
 fi
 
 # Golang

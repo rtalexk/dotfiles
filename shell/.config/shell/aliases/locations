@@ -1,4 +1,4 @@
-# vim set ft=bash
+#!/usr/bin/env bash
 
 alias dotf="cd $DOTFILES"
 alias projects="cd $PROJECTS"
