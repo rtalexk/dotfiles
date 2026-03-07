@@ -70,4 +70,4 @@ theme:
       showSeparator: true
 
 pager:
-  diff: ""
+  diff: "delta --side-by-side"
