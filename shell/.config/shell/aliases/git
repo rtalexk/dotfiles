@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Git aliases
 alias difon="git diff --name-only origin/main"
 alias difo="git diff origin/main"
