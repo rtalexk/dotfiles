@@ -382,7 +382,7 @@ local function create_new_todo()
   local indent = line:match '^(%s*)'
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
 
-  vim.api.nvim_put({ indent .. '- [ ] ' }, 'l', true, true)
+  vim.api.nvim_put({ indent .. '- [ ] Enter TODO here...' }, 'l', true, true)
   vim.api.nvim_win_set_cursor(0, { cursor_pos[1] + 1, #indent + 6 })
   vim.cmd 'write'
 end
