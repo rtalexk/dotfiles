@@ -21,8 +21,8 @@ return {
         -- order to try remotes
         default_remote = { 'upstream', 'origin' },
 
-        -- default merge method which should be used when calling `Octo pr merge`, could be `commit`, `rebase` or `squash`
-        default_merge_method = 'commit',
+        -- default merge method which should be used when calling `Octo pr merge`, could be `merge`, `rebase` or `squash`
+        default_merge_method = 'merge',
 
         -- SSH aliases. e.g. `ssh_aliases = {["github.com-work"] = "github.com"}`
         ssh_aliases = {},
