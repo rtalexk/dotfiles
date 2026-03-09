@@ -14,6 +14,8 @@ import (
 
 var forceFlag bool
 
+var errCancelled = fmt.Errorf("cancelled")
+
 var RemoveCmd = &cobra.Command{
   Use:     "remove [path]",
   Aliases: []string{"rm"},
@@ -41,11 +43,14 @@ func runRemove(cmd *cobra.Command, args []string) error {
 
   // Resolve path
   var path string
-  if len(args) == 1 {
+  if len(args) == 1 && args[0] != "" {
     path = args[0]
   } else {
     path, err = pickWorktree(bareDir, root)
     if err != nil {
+      if err == errCancelled {
+        return nil
+      }
       return err
     }
   }
@@ -106,16 +111,30 @@ func runRemove(cmd *cobra.Command, args []string) error {
   }
 
   // Remove worktree (use absolute path so git can locate it regardless of cwd)
+  absPath := filepath.Join(root, path)
   wtRemoveArgs := []string{"-C", bareDir, "worktree", "remove"}
   if forceDelete {
     wtRemoveArgs = append(wtRemoveArgs, "--force")
   }
-  wtRemoveArgs = append(wtRemoveArgs, filepath.Join(root, path))
+  wtRemoveArgs = append(wtRemoveArgs, absPath)
   rmCmd := exec.Command("git", wtRemoveArgs...)
   rmCmd.Stdout = os.Stdout
   rmCmd.Stderr = os.Stderr
   if err := rmCmd.Run(); err != nil {
-    return fmt.Errorf("git worktree remove failed: %w", err)
+    if !forceDelete {
+      return fmt.Errorf("git worktree remove failed: %w", err)
+    }
+    // git worktree remove --force fails when the directory contains non-git files
+    // (e.g. node_modules). Fall back to manual removal + prune.
+    if removeErr := os.RemoveAll(absPath); removeErr != nil {
+      return fmt.Errorf("failed to remove worktree directory: %w", removeErr)
+    }
+    pruneCmd := exec.Command("git", "-C", bareDir, "worktree", "prune")
+    pruneCmd.Stdout = os.Stdout
+    pruneCmd.Stderr = os.Stderr
+    if pruneErr := pruneCmd.Run(); pruneErr != nil {
+      return fmt.Errorf("git worktree prune failed: %w", pruneErr)
+    }
   }
 
   // Delete branch
@@ -131,7 +150,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
   }
 
   // Remove directory if still present (git worktree remove may have cleaned it)
-  os.RemoveAll(filepath.Join(root, path))
+  os.RemoveAll(absPath)
 
   fmt.Printf("removed worktree '%s', branch '%s', session '%s'\n", path, branch, sessionName)
   return nil
@@ -187,7 +206,7 @@ func pickWorktree(bareDir, root string) (string, error) {
   fzf.Stderr = os.Stderr
   chosen, err := fzf.Output()
   if err != nil {
-    return "", fmt.Errorf("fzf selection cancelled")
+    return "", errCancelled
   }
 
   return strings.TrimSpace(string(chosen)), nil
