@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+
+cmd = ARGV[0].to_s.downcase.split("/").last
+
+icon = case cmd
+when "nvim", "vim", "vi"              then "󰘦"   # Neovim
+when "lazygit", "git"                 then ""   # Git
+when "gh", "gh-dash"                  then ""   # GitHub
+when "ruby", "irb", "pry"             then ""   # Ruby gem
+when "node", "npm", "npx", "bun"      then ""   # Node.js
+when "python", "python3", "ipython"   then ""   # Python
+when "go", "air"                      then ""   # Go gopher
+when "rust", "cargo"                  then ""   # Rust
+when "docker"                         then ""   # Docker
+when "kubectl", "k9s"                 then "󱃾"   # Kubernetes
+when "htop", "btop", "top"            then "󰨇"   # Activity monitor
+when "ssh"                            then "󰣀"   # Remote
+when "psql", "mysql", "sqlite3"       then ""   # Database
+when "fzf"                            then ""   # Search
+when "bash", "zsh", "fish", "sh"      then ""   # Shell
+when "man"                            then ""   # Book
+else                                       ""   # Default shell
+end
+
+puts icon
