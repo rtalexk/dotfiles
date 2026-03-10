@@ -36,3 +36,16 @@ source <(fzf --zsh)
 if command -v rbenv >/dev/null 2>&1; then
   eval "$(rbenv init - --no-rehash zsh)"
 fi
+
+# Drive tmux window renaming from shell hooks instead of tmux's #() format
+# strings, which run asynchronously and can leak output to new panes.
+if [ -n "$TMUX" ]; then
+  _tmux_rename_preexec() {
+    tmux rename-window "$(tmux_window_name "${1%% *}")" 2>/dev/null
+  }
+  _tmux_rename_precmd() {
+    tmux rename-window "$(tmux_window_name zsh)" 2>/dev/null
+  }
+  add-zsh-hook preexec _tmux_rename_preexec
+  add-zsh-hook precmd _tmux_rename_precmd
+fi
