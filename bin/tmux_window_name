@@ -2,24 +2,28 @@
 
 cmd = ARGV[0].to_s.downcase.split("/").last
 
+# INFO: Claude, Lazygit, Nvim & GH Dash icons must be unique.
 icon = case cmd
-when "nvim", "vim", "vi"              then "󰘦"   # Neovim
-when "lazygit", "git"                 then ""   # Git
-when "gh", "gh-dash"                  then ""   # GitHub
-when "ruby", "irb", "pry"             then ""   # Ruby gem
-when "node", "npm", "npx", "bun"      then ""   # Node.js
-when "python", "python3", "ipython"   then ""   # Python
-when "go", "air"                      then ""   # Go gopher
-when "rust", "cargo"                  then ""   # Rust
-when "docker"                         then ""   # Docker
-when "kubectl", "k9s"                 then "󱃾"   # Kubernetes
-when "htop", "btop", "top"            then "󰨇"   # Activity monitor
-when "ssh"                            then "󰣀"   # Remote
-when "psql", "mysql", "sqlite3"       then ""   # Database
-when "fzf"                            then ""   # Search
-when "bash", "zsh", "fish", "sh"      then ""   # Shell
-when "man"                            then ""   # Book
-else                                       ""   # Default shell
+when "nvim"                           then "󰘦"
+when "lazygit"                        then ""
+when "gh-dash"                        then ""
+when "gh"                             then ""
+when "vim", "vi"                      then "󰅩"
+when "git"                            then ""
+when "ruby", "irb", "pry"             then ""
+when "node", "npm", "npx", "bun"      then ""
+when "python", "python3", "ipython"   then ""
+when "go", "air"                      then ""
+when "rust", "cargo"                  then ""
+when "docker"                         then ""
+when "kubectl", "k9s"                 then "󱃾"
+when "htop", "btop", "top"            then "󰨇"
+when "ssh"                            then "󰣀"
+when "psql", "mysql", "sqlite3"       then ""
+when "fzf"                            then ""
+when "bash", "zsh", "fish", "sh"      then ""
+when "man"                            then ""
+else                                       ""
 end
 
 puts icon
