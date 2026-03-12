@@ -5,7 +5,7 @@ require 'open3'
 
 THRESHOLD            = 200
 MAX_CLAUDE_PANE_COLS = 90
-NVIM_WINDOW          = "󰅩"
+NVIM_WINDOW          = "󰘦"
 CLAUDE_WINDOW        = ""
 CLAUDE_CMD           = "fnm use default; claude"
 
