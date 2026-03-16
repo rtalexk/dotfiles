@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+root_name=$(alx worktree root 2>/dev/null) || exit 0
+
+[[ -z "$root_name" ]] && exit 0
+
+# Get worktree session names (alias-prefixed paths), e.g. "up-main", "up-feat"
+worktree_sessions=$(alx worktree list --alias 2>/dev/null) || exit 0
+
+while IFS= read -r line; do
+  name="${line##* }"
+  if [[ "$name" == "$root_name" ]] || printf '%s\n' "$worktree_sessions" | grep -qxF "$name"; then
+    printf '%s\n' "$line"
+  fi
+done < <(sesh list --tmux --icons)
