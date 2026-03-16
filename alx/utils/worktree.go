@@ -5,14 +5,19 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type WorktreeInfo struct {
-	Path    string
-	Root    string
-	Branch  string
-	Session string
+	Path          string
+	Root          string
+	Branch        string
+	Session       string
+	CreatedAt     time.Time
+	LastCommitAt  time.Time
+	LastCommitMsg string
 }
 
 func ListWorktrees(bareDir, projectRoot string, project *Project) ([]WorktreeInfo, error) {
@@ -78,11 +83,31 @@ func parseWorktreeBlock(block, projectRoot, root string, project *Project) (Work
 		branch = "HEAD"
 	}
 
+	var createdAt time.Time
+	if fi, err := os.Stat(wtPath); err == nil {
+		createdAt = statCreatedAt(fi)
+	}
+
+	var lastCommitAt time.Time
+	var lastCommitMsg string
+	if out, err := exec.Command("git", "-C", wtPath, "log", "-1", "--format=%ct|%s").Output(); err == nil {
+		parts := strings.SplitN(strings.TrimSpace(string(out)), "|", 2)
+		if len(parts) == 2 {
+			if sec, err := strconv.ParseInt(parts[0], 10, 64); err == nil {
+				lastCommitAt = time.Unix(sec, 0)
+			}
+			lastCommitMsg = parts[1]
+		}
+	}
+
 	return WorktreeInfo{
-		Path:    rel,
-		Root:    root,
-		Branch:  branch,
-		Session: project.SessionName(rel),
+		Path:          rel,
+		Root:          root,
+		Branch:        branch,
+		Session:       project.SessionName(rel),
+		CreatedAt:     createdAt,
+		LastCommitAt:  lastCommitAt,
+		LastCommitMsg: lastCommitMsg,
 	}, false
 }
 
