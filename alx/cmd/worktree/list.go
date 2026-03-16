@@ -16,6 +16,7 @@ var (
 	listFlagRoot    bool
 	listFlagBranch  bool
 	listFlagSession bool
+	listFlagAlias   bool
 	listFlagFormat  string
 )
 
@@ -30,6 +31,7 @@ func init() {
 	ListCmd.Flags().BoolVarP(&listFlagRoot, "root", "r", false, "Include project root column (relative to $PROJECTS)")
 	ListCmd.Flags().BoolVarP(&listFlagBranch, "branch", "b", false, "Include branch column")
 	ListCmd.Flags().BoolVarP(&listFlagSession, "session", "s", false, "Include session name column")
+	ListCmd.Flags().BoolVarP(&listFlagAlias, "alias", "a", false, "Display worktree paths with alias prefix (e.g. up-main)")
 	ListCmd.Flags().StringVar(&listFlagFormat, "format", "", `Go template (fields: Path, Root, Branch, Session); e.g. "{{.Path}}\t{{.Branch}}"`)
 }
 
@@ -68,7 +70,11 @@ func runList(cmd *cobra.Command, args []string) error {
 	if multiCol {
 		tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		for _, wt := range worktrees {
-			parts := []string{wt.Path}
+			displayPath := wt.Path
+			if listFlagAlias {
+				displayPath = wt.Session
+			}
+			parts := []string{displayPath}
 			if listFlagRoot {
 				parts = append(parts, wt.Root)
 			}
@@ -84,7 +90,11 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, wt := range worktrees {
-		fmt.Println(wt.Path)
+		displayPath := wt.Path
+		if listFlagAlias {
+			displayPath = wt.Session
+		}
+		fmt.Println(displayPath)
 	}
 	return nil
 }
