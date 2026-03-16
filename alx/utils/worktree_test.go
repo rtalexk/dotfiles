@@ -196,3 +196,57 @@ func TestListWorktrees_RootAbsoluteWhenProjectsUnset(t *testing.T) {
 		}
 	}
 }
+
+func TestListWorktrees_CreatedAt(t *testing.T) {
+	root, bare := setupBareProject(t)
+	mainWT := filepath.Join(root, "main")
+	if err := runCmd(bare, "git", "worktree", "add", mainWT); err != nil {
+		t.Fatal(err)
+	}
+
+	project := &utils.Project{Root: root, Config: utils.ProjectConfig{Alias: "myapp"}}
+	worktrees, err := utils.ListWorktrees(bare, root, project)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, wt := range worktrees {
+		if wt.CreatedAt.IsZero() {
+			t.Errorf("expected CreatedAt to be set for worktree %q", wt.Path)
+		}
+	}
+}
+
+func TestListWorktrees_LastCommit(t *testing.T) {
+	root, bare := setupBareProject(t)
+	mainWT := filepath.Join(root, "main")
+	if err := runCmd(bare, "git", "worktree", "add", mainWT); err != nil {
+		t.Fatal(err)
+	}
+	if err := runCmd(mainWT, "git", "-c", "user.email=t@t.com", "-c", "user.name=T",
+		"commit", "--allow-empty", "-m", "test: hello world"); err != nil {
+		t.Fatal(err)
+	}
+
+	project := &utils.Project{Root: root, Config: utils.ProjectConfig{Alias: "myapp"}}
+	worktrees, err := utils.ListWorktrees(bare, root, project)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	found := false
+	for _, wt := range worktrees {
+		if wt.Path == "main" {
+			found = true
+			if wt.LastCommitAt.IsZero() {
+				t.Error("expected LastCommitAt to be set")
+			}
+			if wt.LastCommitMsg != "test: hello world" {
+				t.Errorf("expected LastCommitMsg %q, got %q", "test: hello world", wt.LastCommitMsg)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected 'main' worktree in list")
+	}
+}
