@@ -8,6 +8,8 @@ MAX_CLAUDE_PANE_COLS = 90
 NVIM_WINDOW          = "󰘦"
 CLAUDE_WINDOW        = ""
 CLAUDE_CMD           = "fnm use default; claude"
+DEBOUNCE_FILE        = "/tmp/tmux_claude_resize.pid"
+DEBOUNCE_DELAY       = 0.3
 
 # Run a tmux command and return its stdout.
 def tmux(*args)
@@ -24,7 +26,9 @@ def current_session
   tmux("display-message", "-p", '#S')
 end
 
-def client_width
+def client_width(override = nil)
+  return override if override
+
   tmux("display-message", "-p", '#{client_width}').to_i
 end
 
@@ -125,12 +129,12 @@ def open_mode
   end
 end
 
-def resize_mode
+def resize_mode(width_override = nil)
   session = current_session
   claude  = find_claude_pane(session)
   return unless claude
 
-  width       = client_width
+  width       = client_width(width_override)
   standalone  = claude[:window_name] == CLAUDE_WINDOW
   nvim_window = find_nvim_window(session)
 
@@ -147,9 +151,24 @@ def resize_mode
   end
 end
 
+def debounced_resize(width_override = nil)
+  if File.exist?(DEBOUNCE_FILE)
+    old_pid = File.read(DEBOUNCE_FILE).strip.to_i
+    Process.kill("TERM", old_pid) rescue nil
+    File.delete(DEBOUNCE_FILE) rescue nil
+  end
+
+  pid = fork do
+    sleep DEBOUNCE_DELAY
+    resize_mode(width_override)
+  end
+  Process.detach(pid)
+  File.write(DEBOUNCE_FILE, pid.to_s)
+end
+
 case ARGV[0]
 when "open"   then open_mode
-when "resize" then resize_mode
+when "resize" then debounced_resize(ARGV[1]&.to_i)
 else
   warn "Usage: tmux_claude_layout <open|resize>"
   exit 1
