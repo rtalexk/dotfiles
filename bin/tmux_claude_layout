@@ -8,8 +8,8 @@ MAX_CLAUDE_PANE_COLS = 90
 NVIM_WINDOW          = "󰘦"
 CLAUDE_WINDOW        = ""
 CLAUDE_CMD           = "fnm use default; claude"
-DEBOUNCE_FILE        = "/tmp/tmux_claude_resize.pid"
-DEBOUNCE_DELAY       = 0.5
+COOLDOWN_FILE        = "/tmp/tmux_claude_resize.cooldown"
+COOLDOWN_SECS        = 1.0
 
 # Run a tmux command and return its stdout.
 def tmux(*args)
@@ -26,9 +26,7 @@ def current_session
   tmux("display-message", "-p", '#S')
 end
 
-def client_width(override = nil)
-  return override if override
-
+def client_width
   tmux("display-message", "-p", '#{client_width}').to_i
 end
 
@@ -129,46 +127,41 @@ def open_mode
   end
 end
 
-def resize_mode(width_override = nil)
+def resize_mode
   session = current_session
   claude  = find_claude_pane(session)
   return unless claude
 
-  width       = client_width(width_override)
+  width       = client_width
   standalone  = claude[:window_name] == CLAUDE_WINDOW
   nvim_window = find_nvim_window(session)
 
   focused_pane = tmux("display-message", "-p", '#{pane_id}')
 
   if width >= THRESHOLD && standalone && nvim_window
+    File.write(COOLDOWN_FILE, Time.now.to_f.to_s)
     tmux!("join-pane", "-h", "-s", claude[:pane_id], "-t", nvim_window, "-l", claude_pane_size.to_s)
     focus_pane(focused_pane)
   elsif width >= THRESHOLD && !standalone
     tmux!("resize-pane", "-t", claude[:pane_id], "-x", claude_pane_size.to_s)
   elsif width < THRESHOLD && !standalone
+    File.write(COOLDOWN_FILE, Time.now.to_f.to_s)
     tmux!("break-pane", "-s", claude[:pane_id], "-n", CLAUDE_WINDOW)
     focus_pane(focused_pane)
   end
 end
 
-def debounced_resize(width_override = nil)
-  if File.exist?(DEBOUNCE_FILE)
-    old_pid = File.read(DEBOUNCE_FILE).strip.to_i
-    Process.kill("TERM", old_pid) rescue nil
-    File.delete(DEBOUNCE_FILE) rescue nil
+def cooldown_resize
+  if File.exist?(COOLDOWN_FILE)
+    return if Time.now.to_f - File.read(COOLDOWN_FILE).to_f < COOLDOWN_SECS
   end
 
-  pid = fork do
-    sleep DEBOUNCE_DELAY
-    resize_mode(width_override)
-  end
-  Process.detach(pid)
-  File.write(DEBOUNCE_FILE, pid.to_s)
+  resize_mode
 end
 
 case ARGV[0]
 when "open"   then open_mode
-when "resize" then debounced_resize(ARGV[1]&.to_i)
+when "resize" then cooldown_resize
 else
   warn "Usage: tmux_claude_layout <open|resize>"
   exit 1
