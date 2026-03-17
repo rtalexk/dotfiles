@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"alx/utils"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -70,19 +71,9 @@ func runList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	const bold = "\033[1m"
-	const reset = "\033[0m"
-
-	e := string(tabwriter.Escape)
-	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
-	headers := []string{"Name", "Tmux", "Branch", "Path", "Age", "Upd", "Message"}
-	for i, h := range headers {
-		if i > 0 {
-			fmt.Fprint(tw, "\t")
-		}
-		fmt.Fprintf(tw, "%s%s%s%s%s", e, bold, e, h, e+reset+e)
-	}
-	fmt.Fprintln(tw)
+	var buf bytes.Buffer
+	tw := tabwriter.NewWriter(&buf, 0, 0, 2, ' ', 0)
+	fmt.Fprintf(tw, "Name\tTmux\tBranch\tPath\tAge\tUpd\tMessage\n")
 	for _, wt := range worktrees {
 		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			wtName(wt, project, listFlagAlias),
@@ -94,7 +85,15 @@ func runList(cmd *cobra.Command, args []string) error {
 			truncate(wt.LastCommitMsg, 40),
 		)
 	}
-	return tw.Flush()
+	tw.Flush()
+
+	out := buf.String()
+	if idx := strings.IndexByte(out, '\n'); idx >= 0 {
+		fmt.Fprintf(os.Stdout, "\033[1m%s\033[0m\n%s", out[:idx], out[idx+1:])
+	} else {
+		fmt.Fprint(os.Stdout, out)
+	}
+	return nil
 }
 
 func wtName(wt utils.WorktreeInfo, project *utils.Project, withAlias bool) string {
