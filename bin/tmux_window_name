@@ -5,7 +5,7 @@ cmd = ARGV[0].to_s.downcase.split("/").last
 # INFO: Claude, Lazygit, Nvim & GH Dash icons must be unique.
 icon = case cmd
 when "nvim"                           then "󰘦"
-when "lazygit"                        then ""
+when "lazygit"                        then ""
 when "gh-dash"                        then ""
 when "gh"                             then ""
 when "vim", "vi"                      then "󰅩"
