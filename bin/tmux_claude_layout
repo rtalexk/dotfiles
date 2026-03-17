@@ -9,7 +9,7 @@ NVIM_WINDOW          = "󰘦"
 CLAUDE_WINDOW        = ""
 CLAUDE_CMD           = "fnm use default; claude"
 DEBOUNCE_FILE        = "/tmp/tmux_claude_resize.pid"
-DEBOUNCE_DELAY       = 0.3
+DEBOUNCE_DELAY       = 0.5
 
 # Run a tmux command and return its stdout.
 def tmux(*args)
