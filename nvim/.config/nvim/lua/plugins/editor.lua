@@ -423,12 +423,22 @@ return {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
           },
+          live_grep_args = {
+            auto_quoting = false,
+            mappings = {
+              i = {
+                ['<C-k>'] = require('telescope-live-grep-args.actions').quote_prompt(),
+                ['<C-i>'] = require('telescope-live-grep-args.actions').quote_prompt { postfix = ' --iglob ' },
+              },
+            },
+          },
         },
       }
 
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension, 'live_grep_args')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -463,7 +473,7 @@ return {
       end, { desc = 'Current word' })
 
       vim.keymap.set('n', '<leader>sg', function()
-        require('telescope').extensions.live_grep_args.live_grep_args { noremap = true, initial_mode = 'insert' }
+        require('telescope').extensions.live_grep_args.live_grep_args { initial_mode = 'insert' }
       end, { desc = 'By grep' })
 
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Diagnostics' })
