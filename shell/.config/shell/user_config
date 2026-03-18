@@ -44,6 +44,14 @@ if [ -n "$TMUX" ]; then
     tmux rename-window "$(tmux_window_name "${1%% *}")" 2>/dev/null
   }
   _tmux_rename_precmd() {
+    while IFS=' ' read -r pane_id pane_cmd; do
+      [[ "$pane_id" == "$TMUX_PANE" ]] && continue
+      local icon
+      icon="$(tmux_window_name "$pane_cmd")"
+
+      # Do not rename the window if there's another Pane that already did it
+      [[ "$icon" != "" ]] && return
+    done < <(tmux list-panes -F '#{pane_id} #{pane_current_command}' 2>/dev/null)
     tmux rename-window "$(tmux_window_name zsh)" 2>/dev/null
   }
   add-zsh-hook preexec _tmux_rename_preexec
