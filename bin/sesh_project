@@ -8,23 +8,30 @@ root_name=$(alx worktree root 2>/dev/null) || exit 0
 # Get all session names belonging to this project's worktrees, e.g. "up-main", "up-feat"
 worktree_sessions=$(alx worktree list --name-only --alias 2>/dev/null) || exit 0
 
-# Collect live tmux sessions that belong to this project (printed first, highest priority)
+# Build a set of project session names for O(1) lookup
+declare -A project_set
+project_set["$root_name"]=1
+while IFS= read -r s; do
+  [[ -n "$s" ]] && project_set["$s"]=1
+done <<< "$worktree_sessions"
+
+# Collect live tmux sessions belonging to this project (printed first, highest priority)
+declare -A seen
 tmux_output=""
 while IFS= read -r line; do
   name="${line##* }"
-  if [[ "$name" == "$root_name" ]] || printf '%s\n' "$worktree_sessions" | grep -qxF "$name"; then
+  if [[ -n "${project_set[$name]}" ]]; then
     tmux_output+="$line"$'\n'
+    seen["$name"]=1
   fi
 done < <(sesh list --tmux --icons)
 
 printf '%s' "$tmux_output"
 
-# Append config-defined sessions for this project that have no live tmux session yet
+# Append config-defined project sessions with no live tmux session
 while IFS= read -r line; do
   name="${line##* }"
-  if [[ "$name" == "$root_name" ]] || printf '%s\n' "$worktree_sessions" | grep -qxF "$name"; then
-    if ! printf '%s' "$tmux_output" | grep -qF "$name"; then
-      printf '%s\n' "$line"
-    fi
+  if [[ -n "${project_set[$name]}" ]] && [[ -z "${seen[$name]}" ]]; then
+    printf '%s\n' "$line"
   fi
 done < <(sesh list --config --icons)
