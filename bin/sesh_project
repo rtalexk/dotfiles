@@ -1,15 +1,30 @@
 #!/usr/bin/env bash
 
+# Resolve the root session name for the current git worktree project
 root_name=$(alx worktree root 2>/dev/null) || exit 0
 
 [[ -z "$root_name" ]] && exit 0
 
-# Get worktree session names (alias-prefixed paths), e.g. "up-main", "up-feat"
+# Get all session names belonging to this project's worktrees, e.g. "up-main", "up-feat"
 worktree_sessions=$(alx worktree list --name-only --alias 2>/dev/null) || exit 0
 
+# Collect live tmux sessions that belong to this project (printed first, highest priority)
+tmux_output=""
 while IFS= read -r line; do
   name="${line##* }"
   if [[ "$name" == "$root_name" ]] || printf '%s\n' "$worktree_sessions" | grep -qxF "$name"; then
-    printf '%s\n' "$line"
+    tmux_output+="$line"$'\n'
   fi
 done < <(sesh list --tmux --icons)
+
+printf '%s' "$tmux_output"
+
+# Append config-defined sessions for this project that have no live tmux session yet
+while IFS= read -r line; do
+  name="${line##* }"
+  if [[ "$name" == "$root_name" ]] || printf '%s\n' "$worktree_sessions" | grep -qxF "$name"; then
+    if ! printf '%s' "$tmux_output" | grep -qF "$name"; then
+      printf '%s\n' "$line"
+    fi
+  fi
+done < <(sesh list --config --icons)
