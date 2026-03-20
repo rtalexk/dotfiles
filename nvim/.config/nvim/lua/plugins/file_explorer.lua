@@ -22,6 +22,14 @@ return {
       columns = {
         'icon',
       },
+      confirmation = {
+        border = 'rounded',
+        min_width = { 30, 0.2 },
+        max_width = { 60, 0.5 },
+        win_options = {
+          wrap = true,
+        },
+      },
       float = {
         border = 'rounded',
         get_win_title = function(winid)
