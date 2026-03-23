@@ -140,20 +140,62 @@ copy_files = [".env", "config/master.key"]
   if p.Config.Alias != "myapp" {
     t.Errorf("alias: got %q", p.Config.Alias)
   }
-  if p.Config.OnCreate != "sesh_dev" {
-    t.Errorf("startup_command: got %q", p.Config.OnCreate)
+  if p.Config.OnCreate.Command() != "sesh_dev" {
+    t.Errorf("startup_command: got %q", p.Config.OnCreate.Command())
   }
   if len(p.Config.CopyFiles) != 2 {
     t.Errorf("copy_files len: got %d", len(p.Config.CopyFiles))
   }
-  if p.Config.CopyFiles[0] != ".env" {
-    t.Errorf("copy_files[0]: got %q", p.Config.CopyFiles[0])
+  if p.Config.CopyFiles[0].From != ".env" || p.Config.CopyFiles[0].To != ".env" {
+    t.Errorf("copy_files[0]: got from=%q to=%q", p.Config.CopyFiles[0].From, p.Config.CopyFiles[0].To)
   }
-  if p.Config.CopyFiles[1] != "config/master.key" {
-    t.Errorf("copy_files[1]: got %q", p.Config.CopyFiles[1])
+  if p.Config.CopyFiles[1].From != "config/master.key" || p.Config.CopyFiles[1].To != "config/master.key" {
+    t.Errorf("copy_files[1]: got from=%q to=%q", p.Config.CopyFiles[1].From, p.Config.CopyFiles[1].To)
   }
   if p.Root != tmp {
     t.Errorf("Root: expected %q, got %q", tmp, p.Root)
+  }
+}
+
+func TestLoadProject_OnCreate_Multiple(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`
+on_create = ["bundle install", "bin/setup", "bin/rails db:migrate"]
+`), 0644)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  want := "bundle install && bin/setup && bin/rails db:migrate"
+  if p.Config.OnCreate.Command() != want {
+    t.Errorf("got %q, want %q", p.Config.OnCreate.Command(), want)
+  }
+}
+
+func TestLoadProject_CopyFiles_FromTo(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`
+[[copy_files]]
+from = "master.key"
+to = "config/master.key"
+
+[[copy_files]]
+from = ".env"
+`), 0644)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if len(p.Config.CopyFiles) != 2 {
+    t.Fatalf("copy_files len: got %d", len(p.Config.CopyFiles))
+  }
+  if p.Config.CopyFiles[0].From != "master.key" || p.Config.CopyFiles[0].To != "config/master.key" {
+    t.Errorf("copy_files[0]: got from=%q to=%q", p.Config.CopyFiles[0].From, p.Config.CopyFiles[0].To)
+  }
+  if p.Config.CopyFiles[1].From != ".env" || p.Config.CopyFiles[1].To != ".env" {
+    t.Errorf("copy_files[1]: got from=%q to=%q", p.Config.CopyFiles[1].From, p.Config.CopyFiles[1].To)
   }
 }
 
@@ -178,8 +220,8 @@ func TestLoadProject_StartupCommand_SetupSh(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.OnCreate != "./setup.sh" {
-    t.Errorf("expected ./setup.sh, got %q", p.Config.OnCreate)
+  if p.Config.OnCreate.Command() != "./setup.sh" {
+    t.Errorf("expected ./setup.sh, got %q", p.Config.OnCreate.Command())
   }
 }
 
@@ -191,8 +233,8 @@ func TestLoadProject_StartupCommand_Setup(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.OnCreate != "./setup" {
-    t.Errorf("expected ./setup, got %q", p.Config.OnCreate)
+  if p.Config.OnCreate.Command() != "./setup" {
+    t.Errorf("expected ./setup, got %q", p.Config.OnCreate.Command())
   }
 }
 
@@ -204,8 +246,8 @@ func TestLoadProject_StartupCommand_SetupRb(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.OnCreate != "./setup.rb" {
-    t.Errorf("expected ./setup.rb, got %q", p.Config.OnCreate)
+  if p.Config.OnCreate.Command() != "./setup.rb" {
+    t.Errorf("expected ./setup.rb, got %q", p.Config.OnCreate.Command())
   }
 }
 
@@ -218,8 +260,8 @@ func TestLoadProject_StartupCommand_Precedence(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.OnCreate != "sesh_dev" {
-    t.Errorf("expected sesh_dev, got %q", p.Config.OnCreate)
+  if p.Config.OnCreate.Command() != "sesh_dev" {
+    t.Errorf("expected sesh_dev, got %q", p.Config.OnCreate.Command())
   }
 }
 
@@ -230,8 +272,8 @@ func TestLoadProject_NoStartupCommand(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if p.Config.OnCreate != "" {
-    t.Errorf("expected empty startup_command, got %q", p.Config.OnCreate)
+  if len(p.Config.OnCreate) != 0 {
+    t.Errorf("expected empty startup_command, got %q", p.Config.OnCreate.Command())
   }
 }
 

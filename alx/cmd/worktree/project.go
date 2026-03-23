@@ -44,7 +44,8 @@ const projectTOMLTemplate = `# alias defaults to the project root directory name
 
 # on_create runs once when the worktree is first created (not forwarded to sesh)
 # on_create defaults to setup.rb / setup.sh / setup if present
-# on_create = "npm install"
+# on_create = "bin/setup"
+# on_create = ["bundle install", "bin/setup", "bin/rails db:migrate"]
 
 # copy_files = [".env", "config/master.key"]
 
@@ -89,15 +90,38 @@ func runProjectShow(cmd *cobra.Command, args []string) error {
 	cfg := project.Config
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("alias = %q\n", cfg.Alias))
-	if cfg.OnCreate != "" {
-		sb.WriteString(fmt.Sprintf("on_create = %q\n", cfg.OnCreate))
+	if len(cfg.OnCreate) == 1 {
+		sb.WriteString(fmt.Sprintf("on_create = %q\n", cfg.OnCreate[0]))
+	} else if len(cfg.OnCreate) > 1 {
+		quoted := make([]string, len(cfg.OnCreate))
+		for i, c := range cfg.OnCreate {
+			quoted[i] = fmt.Sprintf("%q", c)
+		}
+		sb.WriteString(fmt.Sprintf("on_create = [%s]\n", strings.Join(quoted, ", ")))
 	}
 	if len(cfg.CopyFiles) > 0 {
-		quoted := make([]string, len(cfg.CopyFiles))
-		for i, f := range cfg.CopyFiles {
-			quoted[i] = fmt.Sprintf("%q", f)
+		allSame := true
+		for _, f := range cfg.CopyFiles {
+			if f.From != f.To {
+				allSame = false
+				break
+			}
 		}
-		sb.WriteString(fmt.Sprintf("copy_files = [%s]\n", strings.Join(quoted, ", ")))
+		if allSame {
+			quoted := make([]string, len(cfg.CopyFiles))
+			for i, f := range cfg.CopyFiles {
+				quoted[i] = fmt.Sprintf("%q", f.From)
+			}
+			sb.WriteString(fmt.Sprintf("copy_files = [%s]\n", strings.Join(quoted, ", ")))
+		} else {
+			for _, f := range cfg.CopyFiles {
+				sb.WriteString("\n[[copy_files]]\n")
+				sb.WriteString(fmt.Sprintf("from = %q\n", f.From))
+				if f.To != f.From {
+					sb.WriteString(fmt.Sprintf("to = %q\n", f.To))
+				}
+			}
+		}
 	}
 	fmt.Print(sb.String())
 	return nil

@@ -54,10 +54,10 @@ func runAdd(cmd *cobra.Command, args []string) error {
 
   // Copy files
   for _, f := range project.Config.CopyFiles {
-    src := filepath.Join(root, f)
-    dst := filepath.Join(worktreeDir, f)
+    src := filepath.Join(root, f.From)
+    dst := filepath.Join(worktreeDir, f.To)
     if err := copyFile(src, dst); err != nil {
-      fmt.Fprintf(os.Stderr, "warning: could not copy %s: %v\n", f, err)
+      fmt.Fprintf(os.Stderr, "warning: could not copy %s: %v\n", f.From, err)
     }
   }
 
@@ -98,14 +98,14 @@ func runAdd(cmd *cobra.Command, args []string) error {
     }
     // Run project startup command in a dedicated window so it doesn't block
     // the configured windows (it may take a while, e.g. npm install)
-    if project.Config.OnCreate != "" {
+    if len(project.Config.OnCreate) > 0 {
       exec.Command("tmux", "new-window", "-t", sessionName, "-c", worktreeDir).Run()
-      exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.OnCreate, "Enter").Run()
+      exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.OnCreate.Command(), "Enter").Run()
     }
     // Return focus to the first configured window
     exec.Command("tmux", "select-window", "-t", sessionName+":0").Run()
-  } else if project.Config.OnCreate != "" {
-    exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.OnCreate, "Enter").Run()
+  } else if len(project.Config.OnCreate) > 0 {
+    exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.OnCreate.Command(), "Enter").Run()
   }
 
   // Switch to / attach the session

@@ -14,10 +14,80 @@ import (
 
 var supportedStartupFiles = []string{"setup.rb", "setup.sh", "setup"}
 
+type CopyFile struct {
+  From string
+  To   string
+}
+
+type CopyFileList []CopyFile
+
+func (c *CopyFileList) UnmarshalTOML(data interface{}) error {
+  switch arr := data.(type) {
+  case []interface{}:
+    // copy_files = ["...", ...]  — inline array of strings
+    for _, item := range arr {
+      switch v := item.(type) {
+      case string:
+        *c = append(*c, CopyFile{From: v, To: v})
+      case map[string]interface{}:
+        *c = append(*c, copyFileFromMap(v))
+      default:
+        return fmt.Errorf("copy_files entries must be strings or tables, got %T", item)
+      }
+    }
+  case []map[string]interface{}:
+    // [[copy_files]]  — array of tables
+    for _, m := range arr {
+      *c = append(*c, copyFileFromMap(m))
+    }
+  default:
+    return fmt.Errorf("copy_files must be an array, got %T", data)
+  }
+  return nil
+}
+
+func copyFileFromMap(m map[string]interface{}) CopyFile {
+  cf := CopyFile{}
+  if from, ok := m["from"].(string); ok {
+    cf.From = from
+  }
+  if to, ok := m["to"].(string); ok {
+    cf.To = to
+  }
+  if cf.To == "" {
+    cf.To = cf.From
+  }
+  return cf
+}
+
+type OnCreateList []string
+
+func (o *OnCreateList) UnmarshalTOML(data interface{}) error {
+  switch v := data.(type) {
+  case string:
+    *o = OnCreateList{v}
+  case []interface{}:
+    for _, item := range v {
+      s, ok := item.(string)
+      if !ok {
+        return fmt.Errorf("on_create entries must be strings, got %T", item)
+      }
+      *o = append(*o, s)
+    }
+  default:
+    return fmt.Errorf("on_create must be a string or array of strings, got %T", data)
+  }
+  return nil
+}
+
+func (o OnCreateList) Command() string {
+  return strings.Join(o, " && ")
+}
+
 type ProjectConfig struct {
   Alias     string                 `toml:"alias"`
-  OnCreate  string                 `toml:"on_create"`
-  CopyFiles []string               `toml:"copy_files"`
+  OnCreate  OnCreateList           `toml:"on_create"`
+  CopyFiles CopyFileList           `toml:"copy_files"`
   Sesh      map[string]interface{} `toml:"sesh"`
 }
 
@@ -43,10 +113,10 @@ func LoadProject(root string) (*Project, error) {
     cfg.Alias = filepath.Base(root)
   }
 
-  if cfg.OnCreate == "" {
+  if len(cfg.OnCreate) == 0 {
     for _, name := range supportedStartupFiles {
       if _, err := os.Stat(filepath.Join(root, name)); err == nil {
-        cfg.OnCreate = "./" + name
+        cfg.OnCreate = OnCreateList{"./" + name}
         break
       }
     }
