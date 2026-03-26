@@ -8,6 +8,8 @@ export DOTFILES="$PROJECTS/dotfiles/main"
 export ICLOUD="$HOME/Library/Mobile\ Documents/com~apple~CloudDocs"
 export BRAIN="$HOME/Documents/Notes"
 
+export FZF_DEFAULT_OPTS="--tiebreak=length,begin,index"
+
 # Custom aliases
 if [ -n "$(find "$XDG_CONFIG_HOME/shell/aliases/" -maxdepth 1 -type f -not \( -name '.' -o -name '..' \))" ]; then
   for file in "$XDG_CONFIG_HOME/shell/aliases/"*; do
