@@ -280,7 +280,9 @@ end
 
 -- target_state: true (complete), false (incomplete), nil (toggle)
 set_todo_state = function(target_state)
-  local current_line_num = vim.api.nvim_win_get_cursor(0)[1]
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local current_line_num = cursor[1]
+  local current_col = cursor[2]
   local line = vim.api.nvim_get_current_line()
   local info = get_todo_pattern_info(line)
 
@@ -329,7 +331,11 @@ set_todo_state = function(target_state)
         -- Always move the task (either before first completed or after last incomplete)
         if target_line then
           local new_pos = move_task_block(task_lines, target_line, insert_mode)
-          vim.api.nvim_win_set_cursor(0, { new_pos, 0 })
+          local buf_line_count = vim.api.nvim_buf_line_count(vim.api.nvim_get_current_buf())
+          local return_row = math.min(task_lines[1], buf_line_count)
+          local return_line = vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), return_row - 1, return_row, false)[1]
+          local return_col = math.min(current_col, #return_line)
+          vim.api.nvim_win_set_cursor(0, { return_row, return_col })
           vim.cmd 'write'
 
           -- Check if parent should be completed
