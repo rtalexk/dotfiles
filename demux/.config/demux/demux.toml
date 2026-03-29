@@ -40,6 +40,10 @@ replace = "~"
 prefix = "$PROJECTS"
 replace = "~/…"
 
+[[path_aliases]]
+prefix = "$ICLOUD"
+replace = "_icloud"
+
 [git]
 # Enable git status indicators in the sidebar
 enabled = true
