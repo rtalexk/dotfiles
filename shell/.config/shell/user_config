@@ -43,7 +43,7 @@ fi
 # strings, which run asynchronously and can leak output to new panes.
 if [ -n "$TMUX" ]; then
   _tmux_rename_preexec() {
-    tmux rename-window "$(tmux_window_name "${1%% *}")" 2>/dev/null
+    tmux rename-window "$(tmux_window_name "$1")" 2>/dev/null
   }
   _tmux_rename_precmd() {
     while IFS=' ' read -r pane_id pane_cmd; do

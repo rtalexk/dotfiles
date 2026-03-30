@@ -1,29 +1,39 @@
 #!/usr/bin/env ruby
 
-cmd = ARGV[0].to_s.downcase.split("/").last
+parts  = ARGV[0].to_s.downcase.split
+cmd    = (parts[0] || "").split("/").last
+subcmd = parts[1]
 
 # INFO: Claude, Lazygit, Nvim & GH Dash icons must be unique.
-icon = case cmd
-when "nvim"                           then "󰘦"
-when "lazygit"                        then ""
-when "gh-dash"                        then ""
-when "gh"                             then ""
-when "vim", "vi"                      then "󰅩"
-when "git"                            then ""
-when "ruby", "irb", "pry"             then ""
-when "node", "npm", "npx", "bun"      then ""
-when "python", "python3", "ipython"   then ""
-when "go", "air"                      then ""
-when "rust", "cargo"                  then ""
-when "docker"                         then ""
-when "kubectl", "k9s"                 then "󱃾"
-when "htop", "btop", "top"            then "󰨇"
-when "ssh"                            then "󰣀"
-when "psql", "mysql", "sqlite3"       then ""
-when "fzf"                            then ""
-when "bash", "zsh", "fish", "sh"      then ""
-when "man"                            then ""
-else                                       ""
+icon = if cmd == "alx"
+  case subcmd
+  when "brain" then ""
+  when "todo"  then ""
+  else              ""
+  end
+else
+  case cmd
+  when "nvim"                           then "󰘦"
+  when "lazygit"                        then ""
+  when "gh-dash"                        then ""
+  when "gh"                             then ""
+  when "vim", "vi"                      then "󰅩"
+  when "git"                            then ""
+  when "ruby", "irb", "pry"             then ""
+  when "node", "npm", "npx", "bun"      then ""
+  when "python", "python3", "ipython"   then ""
+  when "go", "air"                      then ""
+  when "rust", "cargo"                  then ""
+  when "docker"                         then ""
+  when "kubectl", "k9s"                 then "󱃾"
+  when "htop", "btop", "top"            then "󰨇"
+  when "ssh"                            then "󰣀"
+  when "psql", "mysql", "sqlite3"       then ""
+  when "fzf"                            then ""
+  when "bash", "zsh", "fish", "sh"      then ""
+  when "man"                            then ""
+  else                                       ""
+  end
 end
 
 puts icon
