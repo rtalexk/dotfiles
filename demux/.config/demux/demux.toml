@@ -13,8 +13,11 @@ ignored_processes = ["zsh", "bash", "fish", "sh", "dash", "nu", "pwsh"]
 # Default output format for CLI commands: text | table | json
 default_format = "text"
 
-# Status bar format string (tmux #(...) syntax)
-status_bar_format = "tmux"
+# UI layout mode: full | compact
+# compact renders only the sidebar + search (no process list or detail panel)
+# Pair compact mode with a narrower tmux popup, e.g.:
+#   bind-key D display-popup -w 40 -h 80% -E "demux --compact"
+mode = "full"
 
 # Path prefix aliases — shorten verbose absolute paths in the TUI.
 # Both prefix and replace support environment variables.
@@ -35,11 +38,20 @@ replace = "_icloud"
 # Sidebar width in columns
 width = 35
 
+# Show last-seen age indicator on each live session row (e.g. " 5s", "12m", " 3h", "14d")
+show_last_seen = true
+
+# Start with cursor in the search input (also available as --search flag)
+# focus_search_on_open = false
+
 # Where to position the sidebar cursor on open: current_session | alert_session | first_session
 focus_on_open = "alert_session"
 
-# When the ! alert filter is active, which sessions to show: all | alerts_only
-alert_filter = "all"
+# Start with cursor in the search input (also available as --search flag)
+focus_search_on_open = false
+
+# Initial sidebar filter on startup: t (tmux) | a (all) | g (config) | w (worktree) | ! (priority)
+default_filter = "t"
 
 # Session sort order — first key wins, missing keys filled from default order
 # Valid keys: priority | last_seen | alphabetical
@@ -54,7 +66,11 @@ switch_focus = "severity"
 
 [process_list]
 # Right-align pane CWD paths in the process list, with a fill separator
-path_right_align = false
+path_right_align = true
+
+[status_bar]
+# Show the status bar at the bottom of the screen
+show = false
 
 [git]
 # Enable git status indicators in the sidebar
@@ -116,6 +132,10 @@ icon_alert_error = "⚑"
 color_alert_info  = "#89b4fa"
 color_alert_warn  = "#f9e2af"
 color_alert_error = "#f38ba8"
+
+# Session source icons
+icon_tmux_session = ""
+icon_cfg_session  = ""
 
 # Semantic colours
 color_port     = "#a6e3a1"
