@@ -1,0 +1,44 @@
+[[window_templates]]
+id = "editor"
+name = "󰘦"
+after_create_cmd = "nvim ."
+
+[[window_templates]]
+id = "shell"
+name = ""
+
+[[window_templates]]
+id = "claude"
+name = ""
+after_create_cmd = "claude"
+
+[[session]]
+name = "Comando"
+path = "~/"
+windows = ["editor", "shell"]
+
+[[session]]
+name = "Brain"
+path = "/Users/rtalex/Documents/Notes"
+windows = ["editor", "shell"]
+
+[[session]]
+name = "dotf-main"
+group = "dotf"
+worktree = true
+path = "/Users/rtalex/com.github/dotfiles/main"
+windows = ["editor", "shell"]
+
+[[session]]
+name = "dm-main"
+group = "dm"
+path = "/Users/rtalex/com.github/demux/main"
+worktree = true
+windows = ["editor", "shell"]
+
+[[session]]
+name  = "dotf-test"
+group = "dotf"
+path  = "/Users/rtalex/com.github/dotfiles/test"
+worktree = true
+windows  = ["editor", "shell"]
