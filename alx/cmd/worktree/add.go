@@ -67,6 +67,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
     "--group", project.Config.Alias,
     "--path", worktreeDir,
     "--worktree",
+    "--private",
   }
   if len(project.Config.Demux.Windows) > 0 {
     demuxArgs = append(demuxArgs, "--windows", strings.Join(project.Config.Demux.Windows, ","))
