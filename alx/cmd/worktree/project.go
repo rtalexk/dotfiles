@@ -42,15 +42,15 @@ func init() {
 const projectTOMLTemplate = `# alias defaults to the project root directory name
 # alias = "myapp"
 
-# on_create runs once when the worktree is first created (not forwarded to sesh)
+# on_create runs once when the worktree is first created
 # on_create defaults to setup.rb / setup.sh / setup if present
 # on_create = "bin/setup"
 # on_create = ["bundle install", "bin/setup", "bin/rails db:migrate"]
 
 # copy_files = [".env", "config/master.key"]
 
-# [sesh]
-# extra sesh session fields forwarded verbatim
+# [demux]
+# windows = ["editor", "shell", "claude"]
 `
 
 func runProjectInit(cmd *cobra.Command, args []string) error {

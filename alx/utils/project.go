@@ -84,11 +84,15 @@ func (o OnCreateList) Command() string {
   return strings.Join(o, " && ")
 }
 
+type DemuxConfig struct {
+  Windows []string `toml:"windows"`
+}
+
 type ProjectConfig struct {
-  Alias     string                 `toml:"alias"`
-  OnCreate  OnCreateList           `toml:"on_create"`
-  CopyFiles CopyFileList           `toml:"copy_files"`
-  Sesh      map[string]interface{} `toml:"sesh"`
+  Alias     string       `toml:"alias"`
+  OnCreate  OnCreateList `toml:"on_create"`
+  CopyFiles CopyFileList `toml:"copy_files"`
+  Demux     DemuxConfig  `toml:"demux"`
 }
 
 type Project struct {

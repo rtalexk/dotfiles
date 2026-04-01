@@ -61,39 +61,36 @@ func runAdd(cmd *cobra.Command, args []string) error {
     }
   }
 
-  // Add sesh entry
   sessionName := project.SessionName(path)
-  if err := utils.AppendSeshSession(utils.SeshConfigPath(), utils.SeshSession{
-    Name:  sessionName,
-    Path:  worktreeDir,
-    Extra: project.Config.Sesh,
-  }); err != nil {
-    return fmt.Errorf("failed to update sesh config: %w", err)
+  demuxArgs := []string{"session", "add",
+    "--name", path,
+    "--alias", project.Config.Alias,
+    "--path", worktreeDir,
+    "--worktree",
+  }
+  if len(project.Config.Demux.Windows) > 0 {
+    demuxArgs = append(demuxArgs, "--windows", strings.Join(project.Config.Demux.Windows, ","))
+  }
+  if err := exec.Command("demux", demuxArgs...).Run(); err != nil {
+    return fmt.Errorf("failed to update demux config: %w", err)
   }
 
-  // Create tmux session in detached mode (avoids sesh window-creation bug that
-  // targets the active session instead of the new one)
+  // Create tmux session in detached mode to avoid a window-creation bug that
+  // targets the active session instead of the new one
   createCmd := exec.Command("tmux", "new-session", "-d", "-s", sessionName, "-c", worktreeDir)
   createCmd.Stdout = os.Stdout
   createCmd.Stderr = os.Stderr
   if err := createCmd.Run(); err != nil {
-    return fmt.Errorf("worktree and sesh entry created; failed to create tmux session %q: %w", sessionName, err)
+    return fmt.Errorf("worktree created; failed to create tmux session %q: %w", sessionName, err)
   }
 
-  windows := sessionWindows(project.Config.Sesh)
+  windows := project.Config.Demux.Windows
   if len(windows) > 0 {
-    windowDefs, _ := utils.LoadSeshWindowDefs(utils.SeshConfigPath())
-    for i, winName := range windows {
+    for i, winID := range windows {
       if i == 0 {
-        exec.Command("tmux", "rename-window", "-t", sessionName+":0", winName).Run()
-        if def, ok := windowDefs[winName]; ok && def.StartupCommand != "" {
-          exec.Command("tmux", "send-keys", "-t", sessionName+":0", def.StartupCommand, "Enter").Run()
-        }
+        exec.Command("tmux", "rename-window", "-t", sessionName+":0", winID).Run()
       } else {
-        exec.Command("tmux", "new-window", "-t", sessionName, "-n", winName, "-c", worktreeDir).Run()
-        if def, ok := windowDefs[winName]; ok && def.StartupCommand != "" {
-          exec.Command("tmux", "send-keys", "-t", sessionName, def.StartupCommand, "Enter").Run()
-        }
+        exec.Command("tmux", "new-window", "-t", sessionName, "-n", winID, "-c", worktreeDir).Run()
       }
     }
     // Run project startup command in a dedicated window so it doesn't block
@@ -119,32 +116,11 @@ func runAdd(cmd *cobra.Command, args []string) error {
     connectCmd.Stderr = os.Stderr
   }
   if err := connectCmd.Run(); err != nil {
-    return fmt.Errorf("worktree and sesh entry created; failed to attach to session %q: %w", sessionName, err)
+    return fmt.Errorf("worktree created; failed to attach to session %q: %w", sessionName, err)
   }
   return nil
 }
 
-// sessionWindows extracts the []string window list from a sesh extra map.
-func sessionWindows(sesh map[string]interface{}) []string {
-  if sesh == nil {
-    return nil
-  }
-  ws, ok := sesh["windows"]
-  if !ok {
-    return nil
-  }
-  raw, ok := ws.([]interface{})
-  if !ok {
-    return nil
-  }
-  out := make([]string, 0, len(raw))
-  for _, v := range raw {
-    if s, ok := v.(string); ok {
-      out = append(out, s)
-    }
-  }
-  return out
-}
 
 func resolveWorktreeAddArgs(bareDir, branch, worktreeDir string) []string {
   if exec.Command("git", "-C", bareDir, "rev-parse", "--verify", "refs/heads/"+branch).Run() == nil {
