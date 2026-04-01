@@ -11,4 +11,6 @@ alx/alx
 # Use sesh_monorepo_discover to generate base sesh config file
 tmux/.config/sesh/sesh.toml
 
+demux/.config/demux/private.toml
+
 docs/
