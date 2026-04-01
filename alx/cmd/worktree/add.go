@@ -62,7 +62,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
   }
 
   sessionName := project.SessionName(path)
-  demuxArgs := []string{"session", "add",
+  demuxArgs := []string{"session", "config-add",
     "--name", path,
     "--alias", project.Config.Alias,
     "--path", worktreeDir,
@@ -84,23 +84,15 @@ func runAdd(cmd *cobra.Command, args []string) error {
     return fmt.Errorf("worktree created; failed to create tmux session %q: %w", sessionName, err)
   }
 
-  windows := project.Config.Demux.Windows
-  if len(windows) > 0 {
-    for i, winID := range windows {
-      if i == 0 {
-        exec.Command("tmux", "rename-window", "-t", sessionName+":0", winID).Run()
-      } else {
-        exec.Command("tmux", "new-window", "-t", sessionName, "-n", winID, "-c", worktreeDir).Run()
-      }
-    }
-    // Run project startup command in a dedicated window so it doesn't block
-    // the configured windows (it may take a while, e.g. npm install)
+  if len(project.Config.Demux.Windows) > 0 {
+    exec.Command("demux", "session", "create-windows",
+      "--session", sessionName,
+      "--windows", strings.Join(project.Config.Demux.Windows, ","),
+    ).Run()
     if len(project.Config.OnCreate) > 0 {
       exec.Command("tmux", "new-window", "-t", sessionName, "-c", worktreeDir).Run()
       exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.OnCreate.Command(), "Enter").Run()
     }
-    // Return focus to the first configured window
-    exec.Command("tmux", "select-window", "-t", sessionName+":0").Run()
   } else if len(project.Config.OnCreate) > 0 {
     exec.Command("tmux", "send-keys", "-t", sessionName, project.Config.OnCreate.Command(), "Enter").Run()
   }

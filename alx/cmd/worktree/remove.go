@@ -105,7 +105,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
   // Kill tmux session (detach-on-destroy off keeps us in tmux)
   exec.Command("tmux", "kill-session", "-t", sessionName).Run()
 
-  demuxRemoveCmd := exec.Command("demux", "session", "remove",
+  demuxRemoveCmd := exec.Command("demux", "session", "config-remove",
     "--name", path,
     "--alias", project.Config.Alias,
   )
