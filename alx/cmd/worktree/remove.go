@@ -13,19 +13,27 @@ import (
 )
 
 var forceFlag bool
+var fuzzyFlag bool
 
 var errCancelled = fmt.Errorf("cancelled")
 
 var RemoveCmd = &cobra.Command{
-  Use:     "remove [path]",
+  Use:     "remove <name>",
   Aliases: []string{"rm"},
   Short:   "Remove a worktree and its tmux session",
-  Args:    cobra.MaximumNArgs(1),
-  RunE:    runRemove,
+  Args: func(cmd *cobra.Command, args []string) error {
+    fuzzy, _ := cmd.Flags().GetBool("fuzzy")
+    if fuzzy {
+      return cobra.NoArgs(cmd, args)
+    }
+    return cobra.ExactArgs(1)(cmd, args)
+  },
+  RunE: runRemove,
 }
 
 func init() {
   RemoveCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Force delete even if branch is unmerged or worktree has untracked/modified files")
+  RemoveCmd.Flags().BoolVar(&fuzzyFlag, "fuzzy", false, "Pick worktree interactively with fzf")
 }
 
 func runRemove(cmd *cobra.Command, args []string) error {
@@ -43,9 +51,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 
   // Resolve path
   var path string
-  if len(args) == 1 && args[0] != "" {
-    path = args[0]
-  } else {
+  if fuzzyFlag {
     path, err = pickWorktree(bareDir, root)
     if err != nil {
       if err == errCancelled {
@@ -53,6 +59,8 @@ func runRemove(cmd *cobra.Command, args []string) error {
       }
       return err
     }
+  } else {
+    path = args[0]
   }
 
   // Look up branch from worktree path
