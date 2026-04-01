@@ -63,15 +63,17 @@ func runAdd(cmd *cobra.Command, args []string) error {
 
   sessionName := project.SessionName(path)
   demuxArgs := []string{"session", "config-add",
-    "--name", path,
-    "--alias", project.Config.Alias,
+    "--name", sessionName,
+    "--group", project.Config.Alias,
     "--path", worktreeDir,
     "--worktree",
   }
   if len(project.Config.Demux.Windows) > 0 {
     demuxArgs = append(demuxArgs, "--windows", strings.Join(project.Config.Demux.Windows, ","))
   }
-  if err := exec.Command("demux", demuxArgs...).Run(); err != nil {
+  demuxCmd := exec.Command("demux", demuxArgs...)
+  demuxCmd.Stderr = os.Stderr
+  if err := demuxCmd.Run(); err != nil {
     return fmt.Errorf("failed to update demux config: %w", err)
   }
 
