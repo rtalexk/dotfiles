@@ -11,7 +11,6 @@ name = ""
 id = "claude"
 name = ""
 after_create_cmd = "claude"
-
 [[session]]
 name = "Comando"
 path = "~/"
@@ -35,10 +34,3 @@ group = "dm"
 path = "/Users/rtalex/com.github/demux/main"
 worktree = true
 windows = ["editor", "shell"]
-
-[[session]]
-name  = "dotf-test"
-group = "dotf"
-path  = "/Users/rtalex/com.github/dotfiles/test"
-worktree = true
-windows  = ["editor", "shell"]
