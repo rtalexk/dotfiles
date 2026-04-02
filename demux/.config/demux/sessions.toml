@@ -1,7 +1,7 @@
 [[window_templates]]
 id = "editor"
 name = "󰘦"
-after_create_cmd = "nvim ."
+after_create_cmd = "nvim"
 
 [[window_templates]]
 id = "shell"
