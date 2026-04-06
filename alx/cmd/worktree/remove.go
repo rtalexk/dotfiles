@@ -115,6 +115,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 
   demuxRemoveCmd := exec.Command("demux", "session", "config-remove",
     "--name", sessionName,
+    "--private",
   )
   if err := demuxRemoveCmd.Run(); err != nil {
     fmt.Fprintf(os.Stderr, "warning: failed to update demux config: %v\n", err)
