@@ -26,6 +26,7 @@ return {
         hl.LineNrAbove = { fg = '#777d7d' }
         hl.LineNrBelow = { fg = '#777d7d' }
         hl.Comment = { fg = '#777d7d' }
+        hl['@markup.italic.markdown_inline'] = { fg = colors.purple, italic = true }
       end,
     },
   },
