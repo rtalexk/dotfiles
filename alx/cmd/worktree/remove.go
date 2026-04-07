@@ -110,15 +110,9 @@ func runRemove(cmd *cobra.Command, args []string) error {
     }
   }
 
-  // Kill tmux session (detach-on-destroy off keeps us in tmux)
-  exec.Command("tmux", "kill-session", "-t", sessionName).Run()
-
-  demuxRemoveCmd := exec.Command("demux", "session", "config-remove",
-    "--name", sessionName,
-    "--private",
-  )
+  demuxRemoveCmd := exec.Command("demux", "session", "remove", "--name", sessionName)
   if err := demuxRemoveCmd.Run(); err != nil {
-    fmt.Fprintf(os.Stderr, "warning: failed to update demux config: %v\n", err)
+    fmt.Fprintf(os.Stderr, "warning: failed to remove demux session: %v\n", err)
   }
 
   // Remove worktree (use absolute path so git can locate it regardless of cwd)
