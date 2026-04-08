@@ -41,11 +41,8 @@ width = 35
 # Show last-seen age indicator on each live session row (e.g. " 5s", "12m", " 3h", "14d")
 show_last_seen = true
 
-# Start with cursor in the search input (also available as --search flag)
-# focus_search_on_open = false
-
-# Where to position the sidebar cursor on open: current_session | alert_session | first_session
-focus_on_open = "alert_session"
+# Where to position the sidebar cursor on open: current_session | state_session | first_session
+focus_on_open = "state_session"
 
 # Start with cursor in the search input (also available as --search flag)
 focus_search_on_open = false
@@ -67,6 +64,11 @@ switch_focus = "severity"
 [process_list]
 # Right-align pane CWD paths in the process list, with a fill separator
 path_right_align = true
+
+[log]
+# Log level: off | error | warn | info | debug
+# Logs are written to ~/.local/share/demux/demux.log
+level = "warn"
 
 [status_bar]
 # Show the status bar at the bottom of the screen
@@ -94,10 +96,6 @@ error_display = "git err"
 [git.pr]
 # Enable pull-request info in the detail panel
 enabled = false
-
-[alerts]
-# Default reason text used when setting a defer alert without --reason
-defer_default_reason = "Come back"
 
 # ---------------------------------------------------------------------------
 # Theme (Catppuccin Mocha)
@@ -129,26 +127,30 @@ color_git_dirty  = "#f9e2af"
 color_git_behind = "#74c7ec"
 color_git_ahead  = "#a6e3a1"
 
-# Alert icons
-icon_alert_info  = "●"
-color_alert_info  = "#89b4fa"
-color_alert_info_bg  = "#1a2a4d"
+# State colors
+icon_state_working     = "󱁤"
+color_state_working    = "#89b4fa"
+color_state_working_bg = "#1a2a4d"
 
-icon_alert_warn  = "⚑"
-color_alert_warn  = "#f9e2af"
-color_alert_warn_bg  = "#3d3500"
+icon_state_waiting     = ""
+color_state_waiting    = "#f9e2af"
+color_state_waiting_bg = "#3d3500"
 
-icon_alert_error = "⚑"
-color_alert_error = "#f38ba8"
-color_alert_error_bg = "#3d1020"
+icon_state_done        = ""
+color_state_done       = "#a6e3a1"
+color_state_done_bg    = "#1a3a2a"
 
-icon_alert_defer  = ""
-color_alert_defer    = "#b4befe"
-color_alert_defer_bg = "#1e1e2e"
+icon_state_error       = ""
+color_state_error      = "#f38ba8"
+color_state_error_bg   = "#3d1020"
 
-icon_alert_defer_sticky     = ""
-color_alert_defer_sticky    = "#b4befe"
-color_alert_defer_sticky_bg = "#1e1e2e"
+icon_state_flagged     = "⚑"
+color_state_flagged    = "#b4befe"
+color_state_flagged_bg = "#2a1a4d"
+
+icon_state_idle        = "○"
+color_state_idle       = "#89dceb"
+color_state_idle_bg    = "#0d2530"
 
 # Session source icons
 icon_tmux_session = ""
