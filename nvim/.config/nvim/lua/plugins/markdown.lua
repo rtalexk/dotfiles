@@ -11,6 +11,9 @@ return {
         below = ' ',
         highlight_border = 'RenderMarkdownCode',
       },
+      checkbox = {
+        left_pad = 3,
+      },
       win_options = {
         conceallevel = {
           rendered = 2,
