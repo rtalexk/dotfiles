@@ -36,7 +36,7 @@ replace = "_icloud"
 
 [sidebar]
 # Sidebar width in columns
-width = 35
+width = 45
 
 # Show last-seen age indicator on each live session row (e.g. " 5s", "12m", " 3h", "14d")
 show_last_seen = true
