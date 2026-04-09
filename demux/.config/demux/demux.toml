@@ -42,7 +42,7 @@ width = 45
 show_last_seen = true
 
 # Icon shown next to the currently attached tmux session
-active_session_icon = ""
+active_session_icon = "󰮺"
 
 # Where to position the sidebar cursor on open: current_session | state_session | first_session
 focus_on_open = "state_session"
