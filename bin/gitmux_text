@@ -15,4 +15,16 @@ else
   output=""
 fi
 
+if [[ -n "$output" ]]; then
+  pr_url=$(cd "$dir" && ghpr -e 2>/dev/null) || pr_url=""
+  if [[ -n "$pr_url" ]]; then
+    pr_number="${pr_url##*/}"
+    if [[ -n "$pr_number" ]]; then
+      _bg=$(tmux show-option -gqv "@thm_surface_0" 2>/dev/null)
+      _bg_fmt="${_bg:+bg=${_bg},}"
+      output="$output#[${_bg_fmt}fg=colour244] PR #[${_bg_fmt}fg=colour220]#${pr_number}#[none]"
+    fi
+  fi
+fi
+
 echo "$output"
