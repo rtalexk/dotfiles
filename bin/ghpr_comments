@@ -1,0 +1,303 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BOLD=$'\033[1m'
+CYAN=$'\033[0;36m'
+YELLOW=$'\033[0;33m'
+DIM=$'\033[2m'
+RESET=$'\033[0m'
+
+usage() {
+    cat >&2 <<EOF
+Usage: $(basename "$0") <pr-url> --author <username>
+
+  pr-url     GitHub PR URL (https://github.com/owner/repo/pull/N)
+  --author   Filter by this GitHub username (required)
+EOF
+    exit 1
+}
+
+PR_URL=""
+AUTHOR=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --author|-a)
+            AUTHOR="${2:-}"
+            [[ -z "$AUTHOR" ]] && { echo "Error: --author requires a value" >&2; usage; }
+            shift 2
+            ;;
+        -h|--help) usage ;;
+        -*) echo "Unknown option: $1" >&2; usage ;;
+        *) PR_URL="$1"; shift ;;
+    esac
+done
+
+[[ -z "$PR_URL" ]] && { echo "Error: PR URL required" >&2; usage; }
+[[ -z "$AUTHOR" ]] && { echo "Error: --author required" >&2; usage; }
+
+if [[ "$PR_URL" =~ github\.com/([^/]+)/([^/]+)/pull/([0-9]+) ]]; then
+    OWNER="${BASH_REMATCH[1]}"
+    REPO="${BASH_REMATCH[2]}"
+    PR_NUMBER="${BASH_REMATCH[3]}"
+else
+    echo "Error: Expected https://github.com/owner/repo/pull/N" >&2
+    exit 1
+fi
+
+GRAPHQL_QUERY='
+query($owner: String!, $repo: String!, $pr: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr) {
+      reviewThreads(first: 100, after: $cursor) {
+        pageInfo { hasNextPage endCursor }
+        nodes {
+          id
+          isResolved
+          isOutdated
+          path
+          line
+          startLine
+          originalLine
+          originalStartLine
+          comments(first: 20) {
+            totalCount
+            nodes {
+              databaseId
+              createdAt
+              updatedAt
+              author { login }
+              body
+              url
+              replyTo { databaseId }
+            }
+          }
+        }
+      }
+      reviews(first: 50) {
+        nodes {
+          author { login }
+          body
+          url
+          submittedAt
+        }
+      }
+    }
+  }
+}'
+
+ALL_THREADS='[]'
+CURSOR="null"
+LAST_RESPONSE=""
+
+while true; do
+    LAST_RESPONSE=$(gh api graphql \
+        -F owner="$OWNER" \
+        -F repo="$REPO" \
+        -F pr="$PR_NUMBER" \
+        -F cursor="$CURSOR" \
+        -f query="$GRAPHQL_QUERY")
+
+    PAGE=$(echo "$LAST_RESPONSE" | jq '.data.repository.pullRequest.reviewThreads.nodes')
+    ALL_THREADS=$(jq -n --argjson a "$ALL_THREADS" --argjson b "$PAGE" '$a + $b')
+
+    HAS_NEXT=$(echo "$LAST_RESPONSE" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage')
+    [[ "$HAS_NEXT" == "false" ]] && break
+    CURSOR=$(echo "$LAST_RESPONSE" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.endCursor')
+done
+
+REVIEWS=$(echo "$LAST_RESPONSE" | jq '.data.repository.pullRequest.reviews.nodes')
+
+PR_THREADS="$ALL_THREADS" PR_REVIEWS="$REVIEWS" \
+python3 - "$AUTHOR" "$BOLD" "$CYAN" "$YELLOW" "$DIM" "$RESET" <<'PYEOF'
+import sys, json, re, textwrap, os, subprocess, shutil
+
+author = sys.argv[1]
+BOLD, CYAN, YELLOW, DIM, RESET = sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6]
+
+threads = json.loads(os.environ["PR_THREADS"])
+reviews = json.loads(os.environ["PR_REVIEWS"])
+
+BAT = shutil.which('bat') or shutil.which('batcat')
+LANG_ALIASES = {'suggestion': 'diff', 'shell': 'bash'}
+
+CODE_BORDER = '\033[38;5;240m'  # dark gray
+CODE_TEXT   = '\033[38;5;252m'  # off-white
+
+def render_plain_code(code):
+    border = f"{CODE_BORDER}│{RESET}"
+    return '\n'.join(f"  {border} {CODE_TEXT}{line}{RESET}" for line in code.splitlines())
+
+def highlight_code_block(lang, code):
+    lang = LANG_ALIASES.get(lang, lang)
+    if lang and BAT:
+        try:
+            result = subprocess.run(
+                [BAT, '--language', lang, '--style=plain', '--color=always', '--paging=never'],
+                input=code, capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                return result.stdout.rstrip('\n')
+        except Exception:
+            pass
+    return render_plain_code(code)
+
+INLINE_CODE = '\033[38;5;222m'  # soft amber
+ITALIC     = '\033[3m'
+STRIKE     = '\033[9m'
+
+def render_markdown(text):
+    # Must run after code spans are replaced (so we don't touch highlighted text)
+    text = re.sub(r'\*\*(.+?)\*\*', lambda m: f"{BOLD}{m.group(1)}{RESET}", text)
+    text = re.sub(r'~~(.+?)~~',     lambda m: f"{STRIKE}{m.group(1)}{RESET}", text)
+    # _italic_ only when not surrounded by word chars (avoid snake_case)
+    text = re.sub(r'(?<!\w)_(.+?)_(?!\w)', lambda m: f"{ITALIC}{m.group(1)}{RESET}", text)
+    return text
+
+def highlight_code_blocks(text):
+    def replace_fenced(m):
+        return highlight_code_block(m.group(1).strip(), m.group(2))
+    text = re.sub(r'```(\w*)\n(.*?)```', replace_fenced, text, flags=re.DOTALL)
+    text = re.sub(r'`([^`\n]+)`', lambda m: f"{INLINE_CODE}{m.group(1)}{RESET}", text)
+    text = render_markdown(text)
+    return text
+
+NOISE_SUMMARIES = ['analysis chain', 'prompt for ai agents', 'autofix', 'fingerprint']
+
+def strip_details_blocks(text, keep_summaries=None):
+    """Remove <details> blocks whose <summary> matches noise patterns, or all if keep_summaries=None."""
+    result = []
+    i = 0
+    while i < len(text):
+        open_pos = text.find('<details>', i)
+        if open_pos == -1:
+            result.append(text[i:])
+            break
+        result.append(text[i:open_pos])
+        sum_start = text.find('<summary>', open_pos)
+        sum_end = text.find('</summary>', sum_start) if sum_start != -1 else -1
+        summary = text[sum_start + 9:sum_end].lower() if sum_start != -1 and sum_end != -1 else ''
+
+        is_noise = any(p in summary for p in NOISE_SUMMARIES)
+        should_keep = keep_summaries and any(p in summary for p in keep_summaries)
+
+        depth = 1
+        pos = open_pos + len('<details>')
+        while depth > 0 and pos < len(text):
+            next_open = text.find('<details>', pos)
+            next_close = text.find('</details>', pos)
+            if next_close == -1:
+                pos = len(text)
+                break
+            if next_open != -1 and next_open < next_close:
+                depth += 1
+                pos = next_open + len('<details>')
+            else:
+                depth -= 1
+                pos = next_close + len('</details>')
+
+        if should_keep or not is_noise:
+            result.append(text[open_pos:pos])
+        i = pos
+
+    return ''.join(result)
+
+def clean_html(text):
+    text = strip_details_blocks(text, keep_summaries=['suggested fix', 'suggested patch'])
+    text = re.sub(r'<details[^>]*>|</details>', '', text)
+    text = re.sub(r'</?summary>', '', text)
+    text = re.sub(r'</?blockquote>', '', text)
+    text = re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+def extract_details_block(body, summary_pattern):
+    """Extract and clean the content of the first <details> block matching summary_pattern."""
+    idx = body.lower().find(summary_pattern.lower())
+    if idx == -1:
+        return None
+    start = body.rfind('<details>', 0, idx)
+    if start == -1:
+        return None
+    depth = 1
+    pos = start + len('<details>')
+    while depth > 0 and pos < len(body):
+        next_open = body.find('<details>', pos)
+        next_close = body.find('</details>', pos)
+        if next_close == -1:
+            break
+        if next_open != -1 and next_open < next_close:
+            depth += 1
+            pos = next_open + len('<details>')
+        else:
+            depth -= 1
+            pos = next_close + len('</details>')
+    return clean_html(body[start:pos])
+
+def fmt_lines(t):
+    end = t.get("line") or t.get("originalLine")
+    start = t.get("startLine") or t.get("originalStartLine")
+    if start and start != end:
+        return f"lines {start} to {end}"
+    return f"line {end}"
+
+unresolved = [
+    t for t in threads
+    if not t["isResolved"]
+    and any(c["author"]["login"] == author for c in t["comments"]["nodes"])
+]
+
+print(f"{BOLD}=== Unresolved file comments by @{author} ({len(unresolved)}) ==={RESET}\n")
+
+def fmt_date(iso):
+    return iso[:16].replace('T', ' ') if iso else '?'
+
+def fmt_meta(t, c):
+    parts = [f"id:{c['databaseId']}"]
+    if c.get('replyTo'):
+        parts.append(f"reply-to:{c['replyTo']['databaseId']}")
+    parts.append(f"created:{fmt_date(c['createdAt'])}")
+    if c['updatedAt'] != c['createdAt']:
+        parts.append(f"edited:{fmt_date(c['updatedAt'])}")
+    replies = t["comments"]["totalCount"] - 1
+    if replies > 0:
+        parts.append(f"replies:{replies}")
+    if t.get('isOutdated'):
+        parts.append("outdated")
+    parts.append(f"thread:{t['id']}")
+    return '  ·  '.join(parts)
+
+for t in unresolved:
+    author_comments = [c for c in t["comments"]["nodes"] if c["author"]["login"] == author]
+    first = author_comments[0]
+    loc = fmt_lines(t)
+    print(f"{CYAN}{BOLD}{t['path']}{RESET}")
+    print(f"{DIM}{loc}{RESET}")
+    print(f"{DIM}{fmt_meta(t, first)}{RESET}")
+    print()
+    print(highlight_code_blocks(clean_html(first["body"])))
+    print()
+    print(f"{DIM}{first['url']}{RESET}")
+    print(f"{DIM}{'─' * 80}{RESET}\n")
+
+nitpick_reviews = [
+    r for r in reviews
+    if r["author"]["login"] == author
+    and r.get("body")
+    and re.search(r"🧹\s*Nitpick comments", r["body"])
+]
+
+if not nitpick_reviews:
+    sys.exit(0)
+
+print(f"{BOLD}=== Nitpick review sections by @{author} ({len(nitpick_reviews)}) ==={RESET}\n")
+
+for r in nitpick_reviews:
+    section = extract_details_block(r["body"], "🧹 Nitpick comments")
+    if not section:
+        continue
+    print(f"{YELLOW}{r['url']}{RESET}")
+    print(f"{DIM}{r['submittedAt']}{RESET}\n")
+    print(highlight_code_blocks(section))
+    print(f"\n{DIM}{'─' * 80}{RESET}\n")
+PYEOF
