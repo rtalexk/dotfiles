@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+echo_only=false
+
+for arg in "$@"; do
+  [[ "$arg" == "--echo" || "$arg" == "-e" ]] && echo_only=true
+done
+
 url=$(gh pr view --json url -q '.url' 2>/dev/null)
 
 if [[ -z "$url" ]]; then
@@ -7,4 +13,8 @@ if [[ -z "$url" ]]; then
   exit 1
 fi
 
-open "$url"
+if $echo_only; then
+  echo "$url"
+else
+  open "$url"
+fi
