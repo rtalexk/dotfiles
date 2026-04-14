@@ -20,7 +20,7 @@ font-size = 18
 mouse-hide-while-typing = true
 
 # X-inspired blue-ish dark theme
-background = 15202b
+background = 001626
 foreground = ffffff
 
 # Black colors
