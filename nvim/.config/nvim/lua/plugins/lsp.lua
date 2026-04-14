@@ -59,7 +59,7 @@ return {
           bold = true,
         })
         vim.api.nvim_set_hl(0, 'NormalFloat', {
-          bg = '#1e1e2e', -- Catppuccin base
+          bg = 'NONE',
           fg = '#cdd6f4', -- Catppuccin text
         })
         vim.api.nvim_set_hl(0, 'Pmenu', { bg = '#1e1e2e', fg = '#cdd6f4' })
