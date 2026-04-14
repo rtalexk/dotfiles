@@ -4,6 +4,16 @@ return {
     dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
     ft = { 'markdown' },
     opts = {
+      bullet = {
+        icons = { '-' },
+      },
+      dash = {
+        width = 80,
+      },
+      heading = {
+        width = 'block',
+        right_pad = 2,
+      },
       code = {
         style = 'full',
         inline = false,
