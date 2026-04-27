@@ -18,6 +18,8 @@ return {
           hl.LineNrBelow = { fg = '#777d7d' }
           hl.Comment = { fg = '#777d7d' }
           hl['@markup.italic.markdown_inline'] = { fg = colors.purple, italic = true }
+          hl['@markup.strong.asterisk.markdown_inline'] = { fg = colors.blue, bold = true }
+          hl['@markup.strong.underscore.markdown_inline'] = { fg = colors.purple, bold = true }
         end,
       }
       vim.cmd.colorscheme 'tokyonight-moon'
