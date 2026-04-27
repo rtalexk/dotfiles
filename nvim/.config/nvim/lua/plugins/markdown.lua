@@ -34,6 +34,7 @@ return {
           head_background = true,
           head_border = true,
           head_icon = true,
+          quote = true,
         },
       },
       win_options = {
