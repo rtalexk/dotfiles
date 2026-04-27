@@ -16,6 +16,8 @@ return {
       },
       code = {
         style = 'full',
+        width = 'block',
+        right_pad = 2,
         inline = false,
         border = 'thin',
         below = ' ',
@@ -23,6 +25,16 @@ return {
       },
       checkbox = {
         left_pad = 3,
+      },
+      anti_conceal = {
+        ignore = {
+          code_background = true,
+          code_border = true,
+          code_language = true,
+          head_background = true,
+          head_border = true,
+          head_icon = true,
+        },
       },
       win_options = {
         conceallevel = {
