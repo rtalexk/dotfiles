@@ -1,9 +1,9 @@
 prSections:
-  - title: Pending Review
-    filters: is:open -is:draft -reviewed-by:@me -author:@me -label:"Do not review" -label:"Do not merge"
-
   - title: Requested
     filters: is:open user-review-requested:@me
+
+  - title: Pending Review
+    filters: is:open -is:draft -reviewed-by:@me -author:@me -label:"Do not review" -label:"Do not merge"
 
   - title: Reviewing
     filters: is:open commenter:@me
