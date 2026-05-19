@@ -64,6 +64,16 @@ sort = ["priority", "last_seen", "alphabetical"]
 #   oldest   — navigate to oldest alerted window
 switch_focus = "severity"
 
+# Session view: row (single row, default) | card (two-row layout).
+# session_view is the fallback for both modes; the *_mode_* overrides win
+# when set. Use "" (or omit) to inherit from session_view.
+session_view_mode_compact = "card"
+session_view_mode_full = "row"
+
+# Show a blank row between cards (card view only). Set to false for a denser
+# layout with no separator.
+card_separator = "rule"
+
 # Sidebar process labels — render a single highest-count label per session.
 # Globs match either the process name or any whitespace-separated token of the
 # full cmdline (case-insensitive). Only the pane root and its direct children
