@@ -7,6 +7,9 @@ keybind = shift+enter=text:\n
 # Shortcuts
 keybind = f12=toggle_maximize
 
+# Toggle demux sticky sidebar (sends M-E; tmux runs 'demux sidebar toggle')
+keybind = cmd+shift+e=text:\x1bE
+
 # Look and feel
 macos-titlebar-style = hidden
 
