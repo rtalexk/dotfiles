@@ -8,7 +8,19 @@ alias gcwip='git rm $(git ls-files --deleted) 2> /dev/null; git commit --no-veri
 alias gbdm="git branch --merged | egrep -v '(^\*|master|main|dev)' | xargs git branch -d"
 alias gsta='git stash push --include-untracked'
 
-alias gbD='git branch --delete --force'
-alias ggpushF='git push origin "$(git_current_branch)" --no-verify'
+gpush() {
+  local arg bundle flags=()
+  for arg in "$@"; do
+    if [[ $arg =~ '^-?[ufn]+$' ]]; then
+      bundle=${arg#-}
+      [[ $bundle == *u* ]] && flags+=(--set-upstream)
+      [[ $bundle == *f* ]] && flags+=(--force-with-lease --force-if-includes)
+      [[ $bundle == *n* ]] && flags+=(--no-verify)
+    else
+      flags+=("$arg")
+    fi
+  done
+  git push "${flags[@]}" origin "$(git_current_branch)"
+}
 
 alias git-bare='git --git-dir=.bare --work-tree=.'
