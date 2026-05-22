@@ -8,6 +8,9 @@ alias gcwip='git rm $(git ls-files --deleted) 2> /dev/null; git commit --no-veri
 alias gbdm="git branch --merged | egrep -v '(^\*|master|main|dev)' | xargs git branch -d"
 alias gsta='git stash push --include-untracked'
 
+# Drop omz git plugin's ggpush in favor of gpush
+unalias ggpush 2>/dev/null
+
 gpush() {
   local arg bundle flags=()
   for arg in "$@"; do
