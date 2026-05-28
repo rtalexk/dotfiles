@@ -30,6 +30,10 @@ def client_width
   tmux("display-message", "-p", '#{client_width}').to_i
 end
 
+def window_width(target)
+  tmux("display-message", "-p", "-t", target, '#{window_width}').to_i
+end
+
 def find_claude_pane(session)
   lines = tmux(
     "list-panes", "-s", "-t", session,
@@ -69,8 +73,8 @@ def find_nvim_window(session)
   nil
 end
 
-def claude_pane_size
-  [[client_width * 40 / 100, MAX_CLAUDE_PANE_COLS].min, 1].max
+def claude_pane_size(width)
+  [[width * 40 / 100, MAX_CLAUDE_PANE_COLS].min, 1].max
 end
 
 def tag_claude_pane(pane_id)
@@ -86,7 +90,7 @@ end
 def open_claude_in_nvim(nvim_window_id)
   current_path = tmux("display-message", "-p", '#{pane_current_path}')
   pane_id = tmux(
-    "split-window", "-h", "-l", claude_pane_size.to_s,
+    "split-window", "-h", "-l", claude_pane_size(window_width(nvim_window_id)).to_s,
     "-t", nvim_window_id,
     "-c", current_path,
     "-P", "-F", '#{pane_id}',
@@ -140,10 +144,10 @@ def resize_mode
 
   if width >= THRESHOLD && standalone && nvim_window
     File.write(COOLDOWN_FILE, Time.now.to_f.to_s)
-    tmux!("join-pane", "-h", "-s", claude[:pane_id], "-t", nvim_window, "-l", claude_pane_size.to_s)
+    tmux!("join-pane", "-h", "-s", claude[:pane_id], "-t", nvim_window, "-l", claude_pane_size(window_width(nvim_window)).to_s)
     focus_pane(focused_pane)
   elsif width >= THRESHOLD && !standalone
-    tmux!("resize-pane", "-t", claude[:pane_id], "-x", claude_pane_size.to_s)
+    tmux!("resize-pane", "-t", claude[:pane_id], "-x", claude_pane_size(window_width(claude[:pane_id])).to_s)
   elsif width < THRESHOLD && !standalone
     File.write(COOLDOWN_FILE, Time.now.to_f.to_s)
     tmux!("break-pane", "-s", claude[:pane_id], "-n", CLAUDE_WINDOW)
