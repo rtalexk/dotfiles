@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Drop omz aliases
+unalias ggpush 2>/dev/null
+unalias gca! 2>/dev/null
+
 # Git aliases
 alias difon="git diff --name-only origin/main"
 alias difo="git diff origin/main"
@@ -7,9 +11,7 @@ alias grsf="git reset --soft"
 alias gcwip='git rm $(git ls-files --deleted) 2> /dev/null; git commit --no-verify --no-gpg-sign --message "--wip-- [skip ci]"'
 alias gbdm="git branch --merged | egrep -v '(^\*|master|main|dev)' | xargs git branch -d"
 alias gsta='git stash push --include-untracked'
-
-# Drop omz git plugin's ggpush in favor of gpush
-unalias ggpush 2>/dev/null
+alias gca!='git commit --amend --no-edit --no-verify'
 
 gpush() {
   local arg bundle flags=()
