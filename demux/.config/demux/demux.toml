@@ -130,6 +130,10 @@ bg = "#89dceb"
 match = "claude*"
 label = "󰵰 "
 
+[[sidebar.processes]]
+match = ["vim*", "nvim*"]
+label = "󰘦 "
+
 [process_list]
 # Right-align pane CWD paths in the process list, with a fill separator
 path_right_align = true
