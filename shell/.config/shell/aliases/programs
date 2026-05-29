@@ -3,3 +3,8 @@
 alias tm='sesh connect $(sesh list | fzf)'
 alias nv="nvim"
 alias nvz='NVIM_APPNAME="nvim_lz" nvim'
+
+claude() {
+  command claude "$@"
+  printf '\e[?1006l\e[?1003l\e[?1002l\e[?1000l'
+}
