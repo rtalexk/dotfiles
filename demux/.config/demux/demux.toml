@@ -109,6 +109,12 @@ auto_show = false
 # match accepts either a single glob string or an array of globs that share
 # the same label/fg/bg.
 [[sidebar.processes]]
+match = ["ruby*", "rb"]
+label = "ruby"
+fg = "#1e1e2e"
+bg = "#f38ba8"
+
+[[sidebar.processes]]
 match = ["python*", "uvicorn", "uv"]
 label = "py"
 fg = "#1e1e2e"
