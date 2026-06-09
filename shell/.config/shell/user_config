@@ -59,3 +59,16 @@ if [ -n "$TMUX" ]; then
   add-zsh-hook preexec _tmux_rename_preexec
   add-zsh-hook precmd _tmux_rename_precmd
 fi
+
+# A tmux server crash leaves the OUTER terminal in mouse-reporting mode: the
+# dying client never sends the disable sequence, so scroll/move events leak
+# into the shell as escape sequences. Disable mouse + focus reporting on every
+# prompt when outside tmux. A precmd fires on the first prompt after any tmux
+# client returns regardless of how it was launched (tm, sesh, alx, raw tmux),
+# unlike a command wrapper which misses indirected launches.
+if [ -z "$TMUX" ]; then
+  _reset_mouse_reporting() {
+    printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?1015l\e[?1004l' >/dev/tty 2>/dev/null
+  }
+  add-zsh-hook precmd _reset_mouse_reporting
+fi
