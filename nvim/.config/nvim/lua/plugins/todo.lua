@@ -3,7 +3,55 @@ return {
     'echasnovski/mini.nvim',
     config = function()
       require('mini.ai').setup { n_lines = 500 }
-      require('mini.surround').setup()
+      local MiniSurround = require 'mini.surround'
+      MiniSurround.setup()
+
+      -- mini.surround moves the cursor to a delimiter after `sa`/`sd`. These
+      -- helpers keep it on the char it started on: plant an extmark there, run
+      -- the operation, then move the cursor to wherever that char ended up.
+      local surround_ns = vim.api.nvim_create_namespace 'surround_keep_cursor'
+
+      local function clamp_col(row0, col)
+        local line = vim.api.nvim_buf_get_lines(0, row0, row0 + 1, true)[1]
+        return math.min(col, math.max(#line - 1, 0))
+      end
+
+      local function keep_cursor_at(row0, col, action)
+        local id = vim.api.nvim_buf_set_extmark(0, surround_ns, row0, col, { right_gravity = true })
+        local ok, res = pcall(action)
+        local mark = vim.api.nvim_buf_get_extmark_by_id(0, surround_ns, id, {})
+        vim.api.nvim_buf_del_extmark(0, surround_ns, id)
+        if mark[1] then
+          vim.api.nvim_win_set_cursor(0, { mark[1] + 1, clamp_col(mark[1], mark[2]) })
+        end
+        if not ok then
+          error(res)
+        end
+        return res
+      end
+
+      -- `sa`: keep cursor at the visual selection end (the '> mark) instead of
+      -- jumping to the opening delimiter. `:<C-u>` (not `<Cmd>`) leaves visual
+      -- mode so the '< / '> marks are set before MiniSurround.add reads them.
+      _G.SurroundKeepCursor = function()
+        local e = vim.api.nvim_buf_get_mark(0, '>')
+        keep_cursor_at(e[1] - 1, clamp_col(e[1] - 1, e[2]), function()
+          MiniSurround.add 'visual'
+        end)
+      end
+      vim.keymap.set('x', 'sa', ':<C-u>lua SurroundKeepCursor()<CR>', { silent = true, desc = 'Surround add (keep cursor at selection end)' })
+
+      -- `sd`: keep cursor in place instead of jumping to the start of the
+      -- deleted surrounding. `operatorfunc` resolves this dynamically, so
+      -- wrapping the function also covers `sdl`/`sdn` and dot-repeat.
+      local orig_delete = MiniSurround.delete
+      MiniSurround.delete = function(...)
+        local pos = vim.api.nvim_win_get_cursor(0)
+        local args = { ... }
+        return keep_cursor_at(pos[1] - 1, pos[2], function()
+          return orig_delete(table.unpack(args))
+        end)
+      end
 
       local statusline = require 'mini.statusline'
       statusline.setup {
