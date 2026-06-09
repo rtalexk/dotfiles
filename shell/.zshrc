@@ -34,7 +34,7 @@ git() {
   if [[ -f .git ]] || [[ -d .git ]]; then
     command git "$@"
   # Only use .bare if we're in the parent directory
-  elif [[ -d .bare ]] && [[ "$PWD" == *"utilityprofit" ]] && [[ ! "$PWD" == *"utilityprofit/"* ]]; then
+  elif [[ -d .bare ]]; then
     command git --git-dir=.bare "$@"
   else
     command git "$@"
