@@ -49,7 +49,7 @@ return {
         local pos = vim.api.nvim_win_get_cursor(0)
         local args = { ... }
         return keep_cursor_at(pos[1] - 1, pos[2], function()
-          return orig_delete(table.unpack(args))
+          return orig_delete((table.unpack or unpack)(args))
         end)
       end
 
