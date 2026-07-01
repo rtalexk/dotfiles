@@ -435,3 +435,25 @@ vim.keymap.set('n', '<leader>ti', function()
   set_todo_state(false)
 end, { buffer = bufnr, desc = 'Incomplete todo' })
 vim.keymap.set('n', '<leader>tn', create_new_todo, { buffer = bufnr, desc = 'New todo' })
+
+local function glow_preview(split)
+  local file = vim.fn.shellescape(vim.fn.expand '%')
+  if split then
+    vim.cmd 'vsplit'
+  end
+  vim.cmd 'enew'
+  vim.fn.termopen('glow -p ' .. file, {
+    on_exit = function(_, _, _)
+      vim.cmd 'bdelete!'
+    end,
+  })
+  vim.cmd 'startinsert'
+end
+
+vim.keymap.set('n', '<leader>um', function()
+  glow_preview(false)
+end, { buffer = bufnr, desc = 'Glow markdown preview' })
+
+vim.keymap.set('n', '<leader>uM', function()
+  glow_preview(true)
+end, { buffer = bufnr, desc = 'Glow preview (vsplit)' })
