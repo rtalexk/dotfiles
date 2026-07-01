@@ -112,6 +112,9 @@ success "Ghostty installed"
 brew install nvim
 success "Neovim installed"
 
+brew install glow
+success "Glow installed"
+
 brew install tmux
 success "Tmux installed"
 
