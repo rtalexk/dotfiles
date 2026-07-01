@@ -128,6 +128,14 @@ func resolveWorktreeAddArgs(bareDir, branch, worktreeDir string) []string {
 }
 
 func copyFile(src, dst string) error {
+  info, err := os.Stat(src)
+  if err != nil {
+    return err
+  }
+  if info.IsDir() {
+    return copyDir(src, dst, info)
+  }
+
   in, err := os.Open(src)
   if err != nil {
     return err
@@ -148,4 +156,20 @@ func copyFile(src, dst string) error {
     return err
   }
   return out.Close()
+}
+
+func copyDir(src, dst string, info os.FileInfo) error {
+  if err := os.MkdirAll(dst, info.Mode().Perm()); err != nil {
+    return err
+  }
+  entries, err := os.ReadDir(src)
+  if err != nil {
+    return err
+  }
+  for _, e := range entries {
+    if err := copyFile(filepath.Join(src, e.Name()), filepath.Join(dst, e.Name())); err != nil {
+      return err
+    }
+  }
+  return nil
 }
