@@ -26,6 +26,9 @@ return {
       checkbox = {
         left_pad = 3,
       },
+      quote = {
+        repeat_linebreak = true,
+      },
       anti_conceal = {
         ignore = {
           code_background = true,
@@ -41,6 +44,9 @@ return {
         conceallevel = {
           rendered = 2,
         },
+        showbreak = { default = '', rendered = '  ' },
+        breakindent = { default = false, rendered = true },
+        breakindentopt = { default = '', rendered = '' },
       },
     },
   },
