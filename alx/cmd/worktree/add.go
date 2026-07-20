@@ -12,11 +12,17 @@ import (
   "github.com/spf13/cobra"
 )
 
+var addBase string
+
 var AddCmd = &cobra.Command{
   Use:   "add <path> [branch]",
   Short: "Create a new worktree and tmux session",
   Args:  cobra.RangeArgs(1, 2),
   RunE:  runAdd,
+}
+
+func init() {
+  AddCmd.Flags().StringVar(&addBase, "base", "", "base ref for the new branch ('@' = current branch)")
 }
 
 func runAdd(cmd *cobra.Command, args []string) error {
@@ -43,8 +49,16 @@ func runAdd(cmd *cobra.Command, args []string) error {
   bareDir := filepath.Join(root, ".bare")
   worktreeDir := filepath.Join(root, path)
 
+  base, err := resolveBase(addBase)
+  if err != nil {
+    return err
+  }
+
   // Create branch + worktree
-  gitArgs := resolveWorktreeAddArgs(bareDir, branch, worktreeDir)
+  gitArgs, err := resolveWorktreeAddArgs(bareDir, branch, worktreeDir, base)
+  if err != nil {
+    return err
+  }
   gitCmd := exec.Command("git", append([]string{"-C", bareDir}, gitArgs...)...)
   gitCmd.Stdout = os.Stdout
   gitCmd.Stderr = os.Stderr
@@ -117,14 +131,39 @@ func runAdd(cmd *cobra.Command, args []string) error {
 }
 
 
-func resolveWorktreeAddArgs(bareDir, branch, worktreeDir string) []string {
+func resolveBase(base string) (string, error) {
+  if base != "@" {
+    return base, nil
+  }
+  out, err := exec.Command("git", "branch", "--show-current").Output()
+  if err != nil {
+    return "", fmt.Errorf("could not resolve current branch for --base @: %w", err)
+  }
+  current := strings.TrimSpace(string(out))
+  if current == "" {
+    return "", fmt.Errorf("could not resolve --base @: detached HEAD")
+  }
+  return current, nil
+}
+
+func resolveWorktreeAddArgs(bareDir, branch, worktreeDir, base string) ([]string, error) {
   if exec.Command("git", "-C", bareDir, "rev-parse", "--verify", "refs/heads/"+branch).Run() == nil {
-    return []string{"worktree", "add", worktreeDir, branch}
+    if base != "" {
+      return nil, fmt.Errorf("--base only applies when creating a new branch; %q already exists", branch)
+    }
+    return []string{"worktree", "add", worktreeDir, branch}, nil
   }
   if exec.Command("git", "-C", bareDir, "rev-parse", "--verify", "refs/remotes/origin/"+branch).Run() == nil {
-    return []string{"worktree", "add", "--track", "-b", branch, worktreeDir, "origin/" + branch}
+    if base != "" {
+      return nil, fmt.Errorf("--base only applies when creating a new branch; %q already exists on origin", branch)
+    }
+    return []string{"worktree", "add", "--track", "-b", branch, worktreeDir, "origin/" + branch}, nil
   }
-  return []string{"worktree", "add", worktreeDir, "-b", branch}
+  args := []string{"worktree", "add", worktreeDir, "-b", branch}
+  if base != "" {
+    args = append(args, base)
+  }
+  return args, nil
 }
 
 func copyFile(src, dst string) error {
