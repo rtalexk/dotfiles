@@ -1,13 +1,11 @@
 local M = {}
 
 local function is_inside_object()
-  local parsers = require 'nvim-treesitter.parsers'
-
   local bufnr = vim.api.nvim_get_current_buf()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local cursor_row, cursor_col = cursor[1] - 1, cursor[2]
 
-  local parser = parsers.get_parser(bufnr)
+  local parser = vim.treesitter.get_parser(bufnr, nil, { error = false })
   if not parser then
     return false
   end
@@ -29,13 +27,11 @@ local function is_inside_object()
 end
 
 local function get_tag_attributes_info()
-  local parsers = require 'nvim-treesitter.parsers'
-
   local bufnr = vim.api.nvim_get_current_buf()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local cursor_row, cursor_col = cursor[1] - 1, cursor[2]
 
-  local parser = parsers.get_parser(bufnr)
+  local parser = vim.treesitter.get_parser(bufnr, nil, { error = false })
   if not parser then
     return nil
   end
