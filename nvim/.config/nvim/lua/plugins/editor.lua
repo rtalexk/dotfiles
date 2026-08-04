@@ -360,9 +360,8 @@ return {
       { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
       {
         'nvim-telescope/telescope-live-grep-args.nvim',
-        -- This will not install any breaking changes.
-        -- For major updates, this must be adjusted manually.
-        version = '^1.0.0',
+        -- Tracking master: the vim.tbl_flatten removal for nvim 0.12 is not
+        -- in a tagged release yet (latest tag v1.1.0 predates it).
       },
     },
     config = function()
