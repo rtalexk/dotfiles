@@ -439,6 +439,15 @@ return {
       pcall(require('telescope').load_extension, 'ui-select')
       pcall(require('telescope').load_extension, 'live_grep_args')
 
+      -- Upstream bug: with auto_quoting off, an unterminated quote leaves the
+      -- fragment nil and prompt_parser.lua:139 throws while concatenating it.
+      local prompt_parser = require 'telescope-live-grep-args.prompt_parser'
+      local parse = prompt_parser.parse
+      prompt_parser.parse = function(prompt, auto_quoting)
+        local ok, parts = pcall(parse, prompt, auto_quoting)
+        return ok and parts or { prompt }
+      end
+
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
 
