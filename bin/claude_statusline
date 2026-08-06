@@ -1,0 +1,350 @@
+#!/usr/bin/env bash
+# Claude Code status line. Reads session JSON on stdin, prints two rows.
+#
+#   Opus · xhigh · think   [CAVEMAN]   dotfiles
+#   ctx ████████░░ 78%   5h ██░░░ 23%   7d ████░ 41% ↻3d0h
+#
+# Two things are deliberately absent because the surrounding UI already shows them:
+# the PR (Claude Code's own footer badge) and the branch (gitmux, in tmux).
+#
+# Kept bash 3.2 compatible: /bin/bash on macOS is still 3.2.
+# One jq fork for the whole payload; the git branch is read straight from HEAD.
+
+set -u
+
+CAVEMAN_FLAG="${CAVEMAN_FLAG:-$HOME/.claude/.caveman-active}"
+WIDTH="${COLUMNS:-120}"
+case "$WIDTH" in '' | *[!0-9]*) WIDTH=120 ;; esac
+
+MAUVE=$'\033[38;2;203;166;247m'
+BLUE=$'\033[38;2;137;180;250m'
+GREEN=$'\033[38;2;166;227;161m'
+YELLOW=$'\033[38;2;249;226;175m'
+RED=$'\033[38;2;243;139;168m'
+PEACH=$'\033[38;2;250;179;135m'
+DIM=$'\033[38;2;88;91;112m'
+OVERLAY=$'\033[38;2;127;132;156m'
+RESET=$'\033[0m'
+
+input=$(cat)
+[ -n "$input" ] || exit 0
+
+tsv=$(printf '%s' "$input" | jq -r '
+  [ (.model.display_name // "")
+  , (.effort.level // "")
+  , (if .thinking.enabled then "1" else "" end)
+  , (if .fast_mode then "1" else "" end)
+  , (.workspace.current_dir // .cwd // "")
+  , (.workspace.git_worktree // "")
+  , (.workspace.repo.name // "")
+  , (.context_window.used_percentage // "")
+  , (.rate_limits.five_hour.used_percentage // "")
+  , (.rate_limits.five_hour.resets_at // "")
+  , (.rate_limits.seven_day.used_percentage // "")
+  , (.rate_limits.seven_day.resets_at // "")
+  , (.output_style.name // "")
+  ] | map(tostring) | join("\u001f")' 2>/dev/null) || tsv=""
+[ -n "$tsv" ] || exit 0
+
+# Unit separator, not tab: bash collapses runs of whitespace IFS chars, which
+# would swallow empty fields and shift every value after them.
+IFS=$'\037' read -r MODEL EFFORT THINKING FAST DIR WORKTREE REPO \
+  CTX_PCT H5_PCT H5_RESET D7_PCT D7_RESET STYLE <<<"$tsv"
+
+int() {
+  local v="${1%%.*}"
+  case "$v" in '' | *[!0-9]*) printf '' ;; *) printf '%s' "$v" ;; esac
+}
+CTX_PCT=$(int "${CTX_PCT:-}")
+H5_PCT=$(int "${H5_PCT:-}")
+D7_PCT=$(int "${D7_PCT:-}")
+
+# Width tiers: 3 = everything, 2 = no think/countdown, 1 = no 7d + short bars, 0 = numbers only
+if [ "$WIDTH" -ge 100 ]; then TIER=3
+elif [ "$WIDTH" -ge 80 ]; then TIER=2
+elif [ "$WIDTH" -ge 60 ]; then TIER=1
+else TIER=0; fi
+
+if [ "$TIER" -ge 2 ]; then BAR_CELLS=10; else BAR_CELLS=5; fi
+if [ "$TIER" -ge 3 ]; then NAME_CAP=30
+elif [ "$TIER" -ge 2 ]; then NAME_CAP=22
+else NAME_CAP=14; fi
+
+# Shorten from the middle so both the prefix and the distinguishing tail survive.
+TRUNC=""
+TRUNC_W=0
+trunc() {
+  local s="$1" max="$2" keep head tail
+  if [ "${#s}" -le "$max" ]; then
+    TRUNC="$s"
+    TRUNC_W=${#s}
+    return
+  fi
+  if [ "$max" -lt 4 ]; then
+    TRUNC="${s:0:$max}"
+    TRUNC_W=$max
+    return
+  fi
+  keep=$((max - 1))
+  head=$((keep / 2))
+  tail=$((keep - head))
+  TRUNC="${s:0:$head}…${s:$((${#s} - tail))}"
+  TRUNC_W=$max
+}
+
+bar() {
+  local pct=$1 cells=$2 filled empty fill pad
+  filled=$((pct * cells / 100))
+  [ "$filled" -gt "$cells" ] && filled=$cells
+  empty=$((cells - filled))
+  printf -v fill "%${filled}s"
+  printf -v pad "%${empty}s"
+  printf '%s%s' "${fill// /█}" "${pad// /░}"
+}
+
+heat() {
+  local pct=$1 warn=$2 crit=$3
+  if [ "$pct" -ge "$crit" ]; then printf '%s' "$RED"
+  elif [ "$pct" -ge "$warn" ]; then printf '%s' "$YELLOW"
+  else printf '%s' "$GREEN"; fi
+}
+
+eta() {
+  local secs=$1 d h m
+  [ "$secs" -le 0 ] && return 1
+  d=$((secs / 86400))
+  h=$(((secs % 86400) / 3600))
+  m=$(((secs % 3600) / 60))
+  if [ "$d" -gt 0 ]; then printf '%dd%dh' "$d" "$h"
+  elif [ "$h" -gt 0 ]; then printf '%dh%dm' "$h" "$m"
+  else printf '%dm' "$m"; fi
+}
+
+# Sets GIT_ROOT and BRANCH. Called directly rather than in a substitution so the
+# assignments survive.
+GIT_ROOT=""
+BRANCH=""
+resolve_git() {
+  local d="$1" gitdir="" head
+  while [ -n "$d" ] && [ "$d" != "/" ]; do
+    if [ -d "$d/.git" ]; then
+      gitdir="$d/.git"
+      GIT_ROOT="$d"
+      break
+    elif [ -f "$d/.git" ]; then
+      head=$(<"$d/.git")
+      gitdir="${head#gitdir: }"
+      case "$gitdir" in /*) ;; *) gitdir="$d/$gitdir" ;; esac
+      GIT_ROOT="$d"
+      break
+    fi
+    d="${d%/*}"
+  done
+  if [ -z "$gitdir" ] || [ ! -f "$gitdir/HEAD" ]; then
+    GIT_ROOT=""
+    return 1
+  fi
+  head=$(<"$gitdir/HEAD")
+  case "$head" in
+    'ref: refs/heads/'*) BRANCH="${head#ref: refs/heads/}" ;;
+    *) BRANCH="${head:0:7}" ;;
+  esac
+}
+
+# A worktree directory is normally a slug of its branch, which makes showing both
+# a near-repeat. Compare them with case and punctuation removed.
+worktree_is_redundant() {
+  local pair wn bn
+  [ -n "$WORKTREE" ] && [ -n "$BRANCH" ] || return 1
+  pair=$(printf '%s\n%s\n' "$WORKTREE" "$BRANCH" | tr 'A-Z' 'a-z' | tr -cd $'a-z0-9\n')
+  wn="${pair%%$'\n'*}"
+  bn="${pair#*$'\n'}"
+  bn="${bn%%$'\n'*}"
+  [ -n "$wn" ] || return 0
+  case "$bn" in *"$wn"*) return 0 ;; esac
+  return 1
+}
+
+# Segments carry their own visible width: measuring the rendered string would
+# count ANSI escapes and multibyte glyphs wrong.
+BUDGET=$WIDTH
+SEP="${DIM}   ${RESET}"
+row1=""
+row1_w=0
+row2=""
+row2_w=0
+add1() {
+  local chunk="$1" w="$2" need=$2
+  [ -n "$row1" ] && need=$((need + 3))
+  [ $((row1_w + need)) -le "$BUDGET" ] || return 0
+  [ -n "$row1" ] && row1="$row1$SEP"
+  row1="$row1$chunk"
+  row1_w=$((row1_w + need))
+}
+add2() {
+  local chunk="$1" w="$2" need=$2
+  [ -n "$row2" ] && need=$((need + 3))
+  [ $((row2_w + need)) -le "$BUDGET" ] || return 0
+  [ -n "$row2" ] && row2="$row2$SEP"
+  row2="$row2$chunk"
+  row2_w=$((row2_w + need))
+}
+
+# ---- row 1: identity -------------------------------------------------------
+
+if [ -n "$MODEL" ]; then
+  ident="${MAUVE}${MODEL}${RESET}"
+  ident_w=${#MODEL}
+  if [ -n "$EFFORT" ]; then
+    ident="$ident${DIM} · ${RESET}${MAUVE}${EFFORT}${RESET}"
+    ident_w=$((ident_w + 3 + ${#EFFORT}))
+  fi
+  if [ -n "$FAST" ]; then
+    ident="$ident${DIM} · ${RESET}${PEACH}fast${RESET}"
+    ident_w=$((ident_w + 7))
+  fi
+  if [ -n "$THINKING" ] && [ "$TIER" -ge 3 ]; then
+    ident="$ident${DIM} · think${RESET}"
+    ident_w=$((ident_w + 8))
+  fi
+  add1 "$ident" "$ident_w"
+fi
+
+if [ -n "$STYLE" ] && [ "$STYLE" != "default" ]; then
+  add1 "${OVERLAY}${STYLE}${RESET}" "${#STYLE}"
+fi
+
+if [ -r "$CAVEMAN_FLAG" ]; then
+  mode=$(<"$CAVEMAN_FLAG")
+  mode="${mode%%$'\n'*}"
+  if [ -z "$mode" ] || [ "$mode" = "full" ]; then
+    add1 "${PEACH}[CAVEMAN]${RESET}" 9
+  else
+    upper=$(printf '%s' "$mode" | tr '[:lower:]' '[:upper:]')
+    add1 "${PEACH}[CAVEMAN:${upper}]${RESET}" $((10 + ${#upper}))
+  fi
+fi
+
+# ---- row 1: place ----------------------------------------------------------
+
+resolve_git "$DIR" 2>/dev/null || :
+
+# Inside a repo the label is "<repo>/<path below its root>"; a checkout named
+# after its branch (the usual worktree layout) would only repeat the branch
+# segment, so the repo name replaces it.
+PLACE=""
+PLACE_W=0
+place() {
+  local base parent rel last head second
+  PLACE=""
+  PLACE_W=0
+
+  if [ -z "$GIT_ROOT" ]; then
+    base="${DIR##*/}"
+    parent="${DIR%/*}"
+    parent="${parent##*/}"
+    [ -n "$parent" ] && [ "$parent" != "$base" ] && base="$parent/$base"
+    PLACE="$base"
+    PLACE_W=${#base}
+    return
+  fi
+
+  if [ -n "$REPO" ]; then
+    base="$REPO"
+  else
+    base="${GIT_ROOT##*/}"
+    parent="${GIT_ROOT%/*}"
+    parent="${parent##*/}"
+    [ "$base" = "$BRANCH" ] && [ -n "$parent" ] && base="$parent"
+  fi
+
+  rel="${DIR#$GIT_ROOT}"
+  rel="${rel#/}"
+  if [ -z "$rel" ]; then
+    PLACE="$base"
+    PLACE_W=${#base}
+    return
+  fi
+
+  last="${rel##*/}"
+  head="${rel%/*}"
+  if [ "$head" = "$rel" ]; then
+    PLACE="$base/$last"
+    PLACE_W=$((${#base} + 1 + ${#last}))
+    return
+  fi
+  second="${head##*/}"
+  if [ "${head%/*}" != "$head" ]; then
+    PLACE="$base/…/$second/$last"
+    PLACE_W=$((${#base} + 3 + ${#second} + 1 + ${#last}))
+  else
+    PLACE="$base/$second/$last"
+    PLACE_W=$((${#base} + 2 + ${#second} + ${#last}))
+  fi
+}
+
+if [ -n "$DIR" ] && [ "$TIER" -ge 1 ]; then
+  place
+  if [ "$PLACE_W" -gt "$NAME_CAP" ]; then
+    trunc "$PLACE" "$NAME_CAP"
+    PLACE="$TRUNC"
+    PLACE_W="$TRUNC_W"
+  fi
+  add1 "${BLUE}${PLACE}${RESET}" "$PLACE_W"
+fi
+
+# The branch is not shown: gitmux already renders it in the tmux status bar. It is
+# still resolved, because the place label and the worktree check compare against it.
+if [ -n "$WORKTREE" ] && ! worktree_is_redundant; then
+  trunc "$WORKTREE" "$NAME_CAP"
+  add1 "${GREEN}⌥ ${TRUNC}${RESET}" $((TRUNC_W + 2))
+fi
+
+# ---- row 2: meters ---------------------------------------------------------
+
+if [ -n "$CTX_PCT" ]; then
+  color=$(heat "$CTX_PCT" 70 90)
+  if [ "$TIER" -ge 1 ]; then
+    add2 "${DIM}ctx ${RESET}${color}$(bar "$CTX_PCT" "$BAR_CELLS")${RESET} ${color}${CTX_PCT}%${RESET}" \
+      $((4 + BAR_CELLS + 2 + ${#CTX_PCT}))
+  else
+    add2 "${DIM}ctx ${RESET}${color}${CTX_PCT}%${RESET}" $((5 + ${#CTX_PCT}))
+  fi
+else
+  add2 "${DIM}ctx --${RESET}" 6
+fi
+
+NOW=""
+if [ "$TIER" -ge 3 ] && { [ -n "$H5_RESET" ] || [ -n "$D7_RESET" ]; }; then
+  NOW=$(date +%s)
+fi
+
+meter() {
+  local label=$1 pct=$2 reset_at=$3 color chunk w left
+  [ -n "$pct" ] || return 0
+  color=$(heat "$pct" 60 85)
+  if [ "$TIER" -ge 1 ]; then
+    chunk="${DIM}${label} ${RESET}${color}$(bar "$pct" "$BAR_CELLS")${RESET} ${color}${pct}%${RESET}"
+    w=$((${#label} + 1 + BAR_CELLS + 2 + ${#pct}))
+  else
+    chunk="${DIM}${label} ${RESET}${color}${pct}%${RESET}"
+    w=$((${#label} + 2 + ${#pct}))
+  fi
+  if [ -n "$NOW" ] && [ -n "$reset_at" ]; then
+    case "$reset_at" in
+      '' | *[!0-9]*) ;;
+      *)
+        if left=$(eta $((reset_at - NOW))); then
+          chunk="$chunk ${DIM}↻${left}${RESET}"
+          w=$((w + 2 + ${#left}))
+        fi
+        ;;
+    esac
+  fi
+  add2 "$chunk" "$w"
+}
+
+meter "5h" "$H5_PCT" "$H5_RESET"
+[ "$TIER" -ge 2 ] && meter "7d" "$D7_PCT" "$D7_RESET"
+
+printf '%s\n%s\n' "$row1" "$row2"
