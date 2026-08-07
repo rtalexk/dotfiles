@@ -30,6 +30,7 @@ return {
         repeat_linebreak = true,
       },
       anti_conceal = {
+        disabled_modes = { 'n' },
         ignore = {
           code_background = true,
           code_border = true,
