@@ -1,5 +1,67 @@
 #!/usr/bin/env bash
 
+PR_TTL="${GITMUX_PR_TTL:-60}"
+PR_LOCK_TIMEOUT="${GITMUX_PR_LOCK_TIMEOUT:-120}"
+PR_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/gitmux_text"
+
+file_mtime() {
+  stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null
+}
+
+older_than() {
+  local file="$1" seconds="$2" mtime
+  mtime="$(file_mtime "$file")" || return 0
+  [[ -z "$mtime" ]] && return 0
+  (($(date +%s) - mtime >= seconds))
+}
+
+refresh_pr_cache() {
+  local dir="$1" cache_file="$2" stamp_file="$3" lock_dir="$4"
+
+  if [[ -d "$lock_dir" ]] && older_than "$lock_dir" "$PR_LOCK_TIMEOUT"; then
+    rmdir "$lock_dir" 2>/dev/null
+  fi
+  mkdir "$lock_dir" 2>/dev/null || return
+
+  touch "$stamp_file"
+
+  local err_file url rc
+  err_file="$(mktemp)"
+  url="$(cd "$dir" && gh pr view --json url,state -q 'select(.state == "OPEN") | .url' 2>"$err_file")"
+  rc=$?
+
+  if ((rc == 0)); then
+    printf '%s' "${url##*/}" >"$cache_file"
+  elif grep -qi "no pull requests found\|no open pull requests" "$err_file"; then
+    : >"$cache_file"
+  fi
+
+  rm -f "$err_file"
+  rmdir "$lock_dir" 2>/dev/null
+}
+
+pr_number_for() {
+  local dir="$1" toplevel branch key cache_file stamp_file lock_dir
+
+  toplevel="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" || return
+  branch="$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)" || return
+  [[ -z "$toplevel" || -z "$branch" || "$branch" == "HEAD" ]] && return
+
+  key="$(basename "$toplevel")-${branch//\//_}-$(printf '%s' "$toplevel" | cksum | cut -d' ' -f1)"
+  cache_file="$PR_CACHE_DIR/$key"
+  stamp_file="$PR_CACHE_DIR/$key.stamp"
+  lock_dir="$PR_CACHE_DIR/$key.lock"
+
+  mkdir -p "$PR_CACHE_DIR" 2>/dev/null
+
+  if [[ ! -f "$stamp_file" ]] || older_than "$stamp_file" "$PR_TTL"; then
+    refresh_pr_cache "$dir" "$cache_file" "$stamp_file" "$lock_dir" >/dev/null 2>&1 &
+    disown 2>/dev/null
+  fi
+
+  [[ -f "$cache_file" ]] && cat "$cache_file"
+}
+
 if [ -z "$1" ]; then
   dir="$(pwd)"
 else
@@ -9,21 +71,18 @@ fi
 if is_git_repo "$dir"; then
   output=$(gitmux -cfg "$XDG_CONFIG_HOME/gitmux/gitmux.conf" "$dir")
 elif git --git-dir="$dir/.bare" rev-parse --git-dir &>/dev/null 2>&1; then
-  # Bare worktree parent directory — no active branch, show a static indicator
+  # Bare worktree parent directory, no active branch, show a static indicator
   output="#[fg=white,bold]_bare_#[none]"
 else
-  output=""
+  output=""
 fi
 
 if [[ -n "$output" ]]; then
-  pr_url=$(cd "$dir" && ghpr -e 2>/dev/null) || pr_url=""
-  if [[ -n "$pr_url" ]]; then
-    pr_number="${pr_url##*/}"
-    if [[ -n "$pr_number" ]]; then
-      _bg=$(tmux show-option -gqv "@thm_surface_0" 2>/dev/null)
-      _bg_fmt="${_bg:+bg=${_bg},}"
-      output="$output#[${_bg_fmt}fg=colour244] PR #[${_bg_fmt}fg=colour220]#${pr_number}#[none]"
-    fi
+  pr_number="$(pr_number_for "$dir")"
+  if [[ -n "$pr_number" ]]; then
+    _bg=$(tmux show-option -gqv "@thm_surface_0" 2>/dev/null)
+    _bg_fmt="${_bg:+bg=${_bg},}"
+    output="$output#[${_bg_fmt}fg=colour244] PR #[${_bg_fmt}fg=colour220]#${pr_number}#[none]"
   fi
 fi
 
