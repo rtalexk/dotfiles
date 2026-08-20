@@ -128,7 +128,13 @@ bg = "#89dceb"
 
 [[sidebar.processes]]
 match = "claude*"
-label = "󰵰 "
+label = " "
+fg = "#cba6f7"
+
+[[sidebar.processes]]
+match = "opencode*"
+label = "󰨔 "
+fg = "#89b4fa"
 
 [[sidebar.processes]]
 match = ["vim*", "nvim*"]
@@ -263,3 +269,17 @@ servers = [
 ]
 shells = ["zsh", "bash", "sh", "fish", "dash", "nu", "pwsh"]
 
+[tools.claude]
+name = "Claude"
+icon = ""
+color = "#cba6f7"
+
+[tools.opencode]
+name = "OpenCode"
+icon = "󰨔"
+color = "#89b4fa"
+
+[tools.codex]
+name = "Codex"
+icon = ""
+color = "#a6e3a1"
