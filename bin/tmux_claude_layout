@@ -1,214 +1,484 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
+#!/usr/bin/env bash
 
-require 'digest'
-require 'open3'
-require 'securerandom'
-require 'tmpdir'
+THRESHOLD=200
+MAX_CLAUDE_PANE_COLS=90
+NVIM_WINDOW="󰘦"
+CLAUDE_WINDOW=""
+CLAUDE_CMD="fnm use default; claude"
+DEBOUNCE_SECS=0.15
+LOCK_TIMEOUT_SECS=1
 
-THRESHOLD            = 200
-MAX_CLAUDE_PANE_COLS = 90
-NVIM_WINDOW          = "󰘦"
-CLAUDE_WINDOW        = ""
-CLAUDE_CMD           = "fnm use default; claude"
-DEBOUNCE_SECS        = 0.15
+TMUX_OUTPUT=
+POSITIVE_WIDTH=
+CLAUDE_PANE_ID=
+CLAUDE_WINDOW_NAME=
+NVIM_WINDOW_ID=
+KERNEL_LOCK_KIND=
+KERNEL_LOCK_COMMAND=
 
-# Run a tmux command and return its stdout.
-def tmux(*args)
-  out, err, status = Open3.capture3("tmux", *args)
-  raise "tmux command failed: #{args.inspect}: #{err.strip}" unless status.success?
-
-  out.strip
-end
-
-# Run a tmux command for side effects (does not capture output).
-def tmux!(*args)
-  return if system("tmux", *args)
-
-  raise "tmux command failed: #{args.inspect}"
-end
-
-def current_session
-  tmux("display-message", "-p", '#S')
-end
-
-def positive_width(value, label)
-  width = Integer(value, exception: false)
-  raise "invalid #{label}: #{value.inspect}" unless width&.positive?
-
-  width
-end
-
-def client_width
-  positive_width(tmux("display-message", "-p", '#{client_width}'), "client width")
-end
-
-def window_width(target)
-  positive_width(tmux("display-message", "-p", "-t", target, '#{window_width}'), "window width")
-end
-
-def find_claude_pane(session)
-  lines = tmux(
-    "list-panes", "-s", "-t", session,
-    "-F", '#{@main_claude}:#{pane_id}:#{window_name}'
-  ).lines
-  lines.each do |line|
-    flag, pane_id, window_name = line.strip.split(":", 3)
-    return { pane_id: pane_id, window_name: window_name } if flag == "1"
-  end
-  adopt_untagged_claude_pane(session)
-end
-
-def adopt_untagged_claude_pane(session)
-  lines = tmux(
-    "list-windows", "-t", session,
-    "-F", '#{window_name}:#{window_id}'
-  ).lines
-  lines.each do |line|
-    name, window_id = line.strip.split(":", 2)
-    next unless name == CLAUDE_WINDOW
-    pane_id = tmux("display-message", "-p", "-t", window_id, '#{pane_id}')
-    tag_claude_pane(pane_id)
-    return { pane_id: pane_id, window_name: name }
-  end
-  nil
-end
-
-def find_nvim_window(session)
-  lines = tmux(
-    "list-windows", "-t", session,
-    "-F", '#{window_name}:#{window_id}'
-  ).lines
-  lines.each do |line|
-    name, window_id = line.strip.split(":", 2)
-    return window_id if name == NVIM_WINDOW
-  end
-  nil
-end
-
-def claude_pane_size(width)
-  [[width * 40 / 100, MAX_CLAUDE_PANE_COLS].min, 1].max
-end
-
-def tag_claude_pane(pane_id)
-  tmux!("set-option", "-p", "-t", pane_id, "@main_claude", "1")
-end
-
-def focus_pane(pane_id)
-  window_id = tmux("display-message", "-p", "-t", pane_id, '#{window_id}')
-  tmux!("select-window", "-t", window_id)
-  tmux!("select-pane", "-t", pane_id)
-end
-
-def pane_current_path(pane_id = nil)
-  args = ["display-message", "-p"]
-  args.concat(["-t", pane_id]) if pane_id
-  tmux(*args, '#{pane_current_path}')
-end
-
-def open_claude_in_nvim(nvim_window_id, source_pane = nil)
-  current_path = pane_current_path(source_pane)
-  pane_id = tmux(
-    "split-window", "-h", "-l", claude_pane_size(window_width(nvim_window_id)).to_s,
-    "-t", nvim_window_id,
-    "-c", current_path,
-    "-P", "-F", '#{pane_id}',
-    "sh", "-c", CLAUDE_CMD
-  )
-  tag_claude_pane(pane_id)
-  focus_pane(pane_id)
-end
-
-def open_claude_standalone(source_pane = nil)
-  current_path = pane_current_path(source_pane)
-  pane_id = tmux(
-    "new-window",
-    "-n", CLAUDE_WINDOW,
-    "-c", current_path,
-    "-P", "-F", '#{pane_id}',
-    "sh", "-c", CLAUDE_CMD
-  )
-  tag_claude_pane(pane_id)
-end
-
-def open_mode(session = current_session, width = client_width, source_pane = nil)
-  width = positive_width(width, "client width")
-  claude = find_claude_pane(session)
-
-  if claude
-    focus_pane(claude[:pane_id])
-    return
-  end
-
-  nvim_window = find_nvim_window(session)
-
-  if width >= THRESHOLD && nvim_window
-    open_claude_in_nvim(nvim_window, source_pane)
-  else
-    open_claude_standalone(source_pane)
-  end
-end
-
-def resize_mode(session = current_session, width = client_width, focused_pane = nil)
-  width = positive_width(width, "client width")
-  claude  = find_claude_pane(session)
-  return unless claude
-
-  standalone  = claude[:window_name] == CLAUDE_WINDOW
-  nvim_window = find_nvim_window(session)
-
-  focused_pane ||= tmux("display-message", "-p", '#{pane_id}')
-
-  if width >= THRESHOLD && standalone && nvim_window
-    tmux!("join-pane", "-h", "-s", claude[:pane_id], "-t", nvim_window, "-l", claude_pane_size(window_width(nvim_window)).to_s)
-    focus_pane(focused_pane)
-  elsif width >= THRESHOLD && !standalone
-    tmux!("resize-pane", "-t", claude[:pane_id], "-x", claude_pane_size(window_width(claude[:pane_id])).to_s)
-  elsif width < THRESHOLD && !standalone
-    tmux!("break-pane", "-s", claude[:pane_id], "-n", CLAUDE_WINDOW)
-    focus_pane(focused_pane)
-  end
-end
-
-def debounce_file(session)
-  server = ENV.fetch("TMUX", "").split(",", 2).first
-  namespace = Digest::SHA256.hexdigest("#{server}\0#{session}")[0, 16]
-  File.join(Dir.tmpdir, "tmux_claude_resize.#{namespace}.debounce")
-end
-
-def read_token(path)
-  File.read(path)
-rescue Errno::ENOENT
-  nil
-end
-
-def with_debounce_lock(path)
-  File.open("#{path}.lock", File::RDWR | File::CREAT, 0o600) do |lock|
-    lock.flock(File::LOCK_EX)
-    yield
-  end
-end
-
-def debounced_resize(session = nil, width = nil, focused_pane = nil)
-  session ||= current_session
-  width ||= client_width
-  path = debounce_file(session)
-  token = SecureRandom.hex
-  with_debounce_lock(path) { File.write(path, token) }
-  sleep DEBOUNCE_SECS
-
-  with_debounce_lock(path) do
-    return unless read_token(path) == token
-
-    File.delete(path)
-    resize_mode(session, width, focused_pane)
-  end
-end
-
-case ARGV[0]
-when "open"   then open_mode(ARGV[1] || current_session, ARGV[2] || client_width, ARGV[3])
-when "resize" then debounced_resize(ARGV[1], ARGV[2], ARGV[3])
-else
-  warn "Usage: tmux_claude_layout <open|resize>"
+die() {
+  printf '%s\n' "$*" >&2
   exit 1
-end
+}
+
+tmux_capture() {
+  local output
+  if ! output=$(command tmux "$@"); then
+    die "tmux command failed: $*"
+  fi
+  TMUX_OUTPUT=$output
+}
+
+tmux_run() {
+  command tmux "$@" || die "tmux command failed: $*"
+}
+
+current_session() {
+  tmux_capture display-message -p '#S'
+}
+
+positive_width() {
+  local value=$1
+  local label=$2
+  local normalized
+
+  if [[ ! $value =~ ^[[:space:]]*[+-]?[0-9]+[[:space:]]*$ ]]; then
+    die "invalid $label: $value"
+  fi
+  normalized=${value//[[:space:]]/}
+  if [[ $normalized == -* ]]; then
+    die "invalid $label: $value"
+  fi
+  normalized=${normalized#+}
+  POSITIVE_WIDTH=$((10#$normalized))
+  (( POSITIVE_WIDTH > 0 )) || die "invalid $label: $value"
+}
+
+client_width() {
+  tmux_capture display-message -p '#{client_width}'
+  positive_width "$TMUX_OUTPUT" "client width"
+}
+
+window_width() {
+  tmux_capture display-message -p -t "$1" '#{window_width}'
+  positive_width "$TMUX_OUTPUT" "window width"
+}
+
+tag_claude_pane() {
+  tmux_run set-option -p -t "$1" '@main_claude' 1
+}
+
+adopt_untagged_claude_pane() {
+  local session=$1
+  local name window_id pane_id
+
+  tmux_capture list-windows -t "$session" -F '#{window_name}:#{window_id}'
+  while IFS=: read -r name window_id; do
+    if [[ $name == "$CLAUDE_WINDOW" ]]; then
+      tmux_capture display-message -p -t "$window_id" '#{pane_id}'
+      pane_id=$TMUX_OUTPUT
+      tag_claude_pane "$pane_id"
+      CLAUDE_PANE_ID=$pane_id
+      CLAUDE_WINDOW_NAME=$name
+      return 0
+    fi
+  done <<< "$TMUX_OUTPUT"
+  return 1
+}
+
+find_claude_pane() {
+  local session=$1
+  local flag pane_id window_name
+
+  CLAUDE_PANE_ID=
+  CLAUDE_WINDOW_NAME=
+  tmux_capture list-panes -s -t "$session" -F '#{@main_claude}:#{pane_id}:#{window_name}'
+  while IFS=: read -r flag pane_id window_name; do
+    if [[ $flag == 1 ]]; then
+      CLAUDE_PANE_ID=$pane_id
+      CLAUDE_WINDOW_NAME=$window_name
+      return 0
+    fi
+  done <<< "$TMUX_OUTPUT"
+  adopt_untagged_claude_pane "$session"
+}
+
+find_nvim_window() {
+  local session=$1
+  local name window_id
+
+  NVIM_WINDOW_ID=
+  tmux_capture list-windows -t "$session" -F '#{window_name}:#{window_id}'
+  while IFS=: read -r name window_id; do
+    if [[ $name == "$NVIM_WINDOW" ]]; then
+      NVIM_WINDOW_ID=$window_id
+      return 0
+    fi
+  done <<< "$TMUX_OUTPUT"
+  return 1
+}
+
+claude_pane_size() {
+  local width=$1
+  local size=$((width * 40 / 100))
+
+  (( size > MAX_CLAUDE_PANE_COLS )) && size=$MAX_CLAUDE_PANE_COLS
+  (( size < 1 )) && size=1
+  POSITIVE_WIDTH=$size
+}
+
+focus_pane() {
+  local pane_id=$1
+  local window_id
+
+  tmux_capture display-message -p -t "$pane_id" '#{window_id}'
+  window_id=$TMUX_OUTPUT
+  tmux_run select-window -t "$window_id"
+  tmux_run select-pane -t "$pane_id"
+}
+
+pane_current_path() {
+  if (( $# > 0 )); then
+    tmux_capture display-message -p -t "$1" '#{pane_current_path}'
+  else
+    tmux_capture display-message -p '#{pane_current_path}'
+  fi
+}
+
+open_claude_in_nvim() {
+  local nvim_window_id=$1
+  local current_path pane_id
+
+  if (( $# > 1 )); then
+    pane_current_path "$2"
+  else
+    pane_current_path
+  fi
+  current_path=$TMUX_OUTPUT
+  window_width "$nvim_window_id"
+  claude_pane_size "$POSITIVE_WIDTH"
+  tmux_capture split-window -h -l "$POSITIVE_WIDTH" -t "$nvim_window_id" \
+    -c "$current_path" -P -F '#{pane_id}' sh -c "$CLAUDE_CMD"
+  pane_id=$TMUX_OUTPUT
+  tag_claude_pane "$pane_id"
+  focus_pane "$pane_id"
+}
+
+open_claude_standalone() {
+  local current_path pane_id
+
+  if (( $# > 0 )); then
+    pane_current_path "$1"
+  else
+    pane_current_path
+  fi
+  current_path=$TMUX_OUTPUT
+  tmux_capture new-window -n "$CLAUDE_WINDOW" -c "$current_path" \
+    -P -F '#{pane_id}' sh -c "$CLAUDE_CMD"
+  pane_id=$TMUX_OUTPUT
+  tag_claude_pane "$pane_id"
+}
+
+open_mode() {
+  local session=$1
+  local width=$2
+
+  positive_width "$width" "client width"
+  width=$POSITIVE_WIDTH
+  if find_claude_pane "$session"; then
+    focus_pane "$CLAUDE_PANE_ID"
+    return
+  fi
+
+  find_nvim_window "$session" || true
+  if (( width >= THRESHOLD )) && [[ -n $NVIM_WINDOW_ID ]]; then
+    if (( $# > 2 )); then
+      open_claude_in_nvim "$NVIM_WINDOW_ID" "$3"
+    else
+      open_claude_in_nvim "$NVIM_WINDOW_ID"
+    fi
+  elif (( $# > 2 )); then
+    open_claude_standalone "$3"
+  else
+    open_claude_standalone
+  fi
+}
+
+resize_mode() {
+  local session=$1
+  local width=$2
+  local claude_pane claude_window focused_pane standalone
+
+  positive_width "$width" "client width"
+  width=$POSITIVE_WIDTH
+  find_claude_pane "$session" || return 0
+  claude_pane=$CLAUDE_PANE_ID
+  claude_window=$CLAUDE_WINDOW_NAME
+
+  standalone=0
+  [[ $claude_window == "$CLAUDE_WINDOW" ]] && standalone=1
+  find_nvim_window "$session" || true
+
+  if (( $# > 2 )); then
+    focused_pane=$3
+  else
+    tmux_capture display-message -p '#{pane_id}'
+    focused_pane=$TMUX_OUTPUT
+  fi
+
+  if (( width >= THRESHOLD && standalone == 1 )) && [[ -n $NVIM_WINDOW_ID ]]; then
+    window_width "$NVIM_WINDOW_ID"
+    claude_pane_size "$POSITIVE_WIDTH"
+    tmux_run join-pane -h -s "$claude_pane" -t "$NVIM_WINDOW_ID" -l "$POSITIVE_WIDTH"
+    focus_pane "$focused_pane"
+  elif (( width >= THRESHOLD && standalone == 0 )); then
+    window_width "$claude_pane"
+    claude_pane_size "$POSITIVE_WIDTH"
+    tmux_run resize-pane -t "$claude_pane" -x "$POSITIVE_WIDTH"
+  elif (( width < THRESHOLD && standalone == 0 )); then
+    tmux_run break-pane -s "$claude_pane" -n "$CLAUDE_WINDOW"
+    focus_pane "$focused_pane"
+  fi
+}
+
+debounce_state_dir() {
+  local temp_root=${TMPDIR:-/tmp}
+  local state_dir=${temp_root%/}/tmux_claude_layout.$EUID
+  local os_name stat_output file_type owner mode
+
+  [[ ! -L $state_dir ]] || die "unsafe debounce state directory (symlink): $state_dir"
+  if [[ ! -e $state_dir ]]; then
+    if ! (umask 077 && mkdir -m 700 "$state_dir") 2>/dev/null; then
+      [[ ! -L $state_dir ]] || die "unsafe debounce state directory (symlink): $state_dir"
+      [[ -d $state_dir ]] || die "failed to create debounce state directory: $state_dir"
+    fi
+  fi
+  [[ ! -L $state_dir ]] || die "unsafe debounce state directory (symlink): $state_dir"
+
+  os_name=$(uname -s) || die "failed to determine operating system for debounce state"
+  case $os_name in
+    Darwin)
+      stat_output=$(stat -f '%HT:%u:%Lp' "$state_dir" 2>/dev/null) || \
+        die "failed to inspect debounce state directory: $state_dir"
+      ;;
+    Linux)
+      stat_output=$(stat -c '%F:%u:%a' "$state_dir" 2>/dev/null) || \
+        die "failed to inspect debounce state directory: $state_dir"
+      ;;
+    *)
+      die "unsupported operating system for debounce state: $os_name"
+      ;;
+  esac
+  IFS=: read -r file_type owner mode <<< "$stat_output"
+  [[ $file_type == Directory || $file_type == directory ]] || \
+    die "unsafe debounce state directory type: $state_dir"
+  [[ $owner == "$EUID" ]] || \
+    die "unsafe debounce state directory ownership: $state_dir"
+  [[ $mode == 700 ]] || \
+    die "unsafe debounce state directory permissions: $state_dir"
+
+  TMUX_OUTPUT=$state_dir
+}
+
+debounce_file() {
+  local session=$1
+  local tmux_value=${TMUX-}
+  local tmux_pattern='^(.+),([1-9][0-9]*),([0-9]+)$'
+  local session_pattern='^\$(0|[1-9][0-9]*)$'
+  local server_pid session_number state_dir
+
+  if [[ ! $tmux_value =~ $tmux_pattern ]]; then
+    die "invalid TMUX server identity: $tmux_value"
+  fi
+  server_pid=${BASH_REMATCH[2]}
+  if [[ ! $session =~ $session_pattern ]]; then
+    die "invalid tmux session ID: $session"
+  fi
+  session_number=${BASH_REMATCH[1]}
+  debounce_state_dir
+  state_dir=$TMUX_OUTPUT
+  TMUX_OUTPUT=$state_dir/tmux_claude_resize.${server_pid}.${session_number}.debounce
+}
+
+canonical_session_id() {
+  local session=$1
+  local session_pattern='^\$(0|[1-9][0-9]*)$'
+
+  if [[ $session =~ $session_pattern ]]; then
+    TMUX_OUTPUT=$session
+    return
+  fi
+
+  tmux_capture display-message -p -t "$session" '#{session_id}'
+  [[ $TMUX_OUTPUT =~ $session_pattern ]] || die "invalid tmux session ID: $TMUX_OUTPUT"
+}
+
+configure_kernel_lock() {
+  local os_name
+
+  [[ -n $KERNEL_LOCK_KIND ]] && return
+  os_name=$(uname -s) || die "failed to determine operating system for debounce lock"
+  if [[ $os_name == Darwin ]]; then
+    [[ -x /usr/bin/lockf ]] || die "kernel lock unavailable: /usr/bin/lockf"
+    KERNEL_LOCK_KIND=lockf
+    KERNEL_LOCK_COMMAND=/usr/bin/lockf
+  else
+    KERNEL_LOCK_COMMAND=$(command -v flock) || die "kernel lock unavailable: flock"
+    KERNEL_LOCK_KIND=flock
+  fi
+}
+
+with_kernel_lock() {
+  local lock_path=$1
+  local internal_mode=$2
+  local internal_key=$$.$RANDOM.$RANDOM
+  local status
+  shift 2
+
+  configure_kernel_lock
+  if [[ $KERNEL_LOCK_KIND == lockf ]]; then
+    if TMUX_CLAUDE_LAYOUT_INTERNAL_KEY=$internal_key \
+      "$KERNEL_LOCK_COMMAND" -k -t "$LOCK_TIMEOUT_SECS" "$lock_path" \
+      "$0" "$internal_mode" "$internal_key" "$@"; then
+      return
+    else
+      status=$?
+    fi
+  else
+    if TMUX_CLAUDE_LAYOUT_INTERNAL_KEY=$internal_key \
+      "$KERNEL_LOCK_COMMAND" -E 75 -w "$LOCK_TIMEOUT_SECS" "$lock_path" \
+      "$0" "$internal_mode" "$internal_key" "$@"; then
+      return
+    else
+      status=$?
+    fi
+  fi
+
+  (( status == 75 )) && die "failed to acquire debounce lock: $lock_path"
+  return "$status"
+}
+
+validate_internal_invocation() {
+  local internal_key=$1
+
+  [[ -n ${TMUX_CLAUDE_LAYOUT_INTERNAL_KEY-} ]] || die "invalid internal invocation"
+  [[ $internal_key == "$TMUX_CLAUDE_LAYOUT_INTERNAL_KEY" ]] || die "invalid internal invocation"
+}
+
+publish_debounce_token() {
+  local internal_key=$1
+  local session=$2
+  local token=$3
+  local path
+
+  validate_internal_invocation "$internal_key"
+  [[ $token =~ ^[1-9][0-9]*$ ]] || die "invalid debounce token: $token"
+  debounce_file "$session"
+  path=$TMUX_OUTPUT
+  printf '%s' "$token" > "$path" || die "failed to write debounce token: $path"
+}
+
+apply_debounced_resize() {
+  local internal_key=$1
+  local session=$2
+  local token=$3
+  local width=$4
+  local has_focused_pane=$5
+  local focused_pane=$6
+  local path latest
+
+  validate_internal_invocation "$internal_key"
+  [[ $token =~ ^[1-9][0-9]*$ ]] || die "invalid debounce token: $token"
+  [[ $has_focused_pane == 0 || $has_focused_pane == 1 ]] || die "invalid focused pane flag"
+  debounce_file "$session"
+  path=$TMUX_OUTPUT
+  [[ -e $path ]] || return
+  [[ -f $path && -r $path ]] || die "failed to read debounce token: $path"
+  latest=$(<"$path") || die "failed to read debounce token: $path"
+  [[ $latest == "$token" ]] || return
+
+  rm -f "$path" || die "failed to remove debounce token: $path"
+  if (( has_focused_pane )); then
+    resize_mode "$session" "$width" "$focused_pane"
+  else
+    resize_mode "$session" "$width"
+  fi
+}
+
+debounced_resize() {
+  local session width focused_pane path lock_path token
+  local has_focused_pane=0
+
+  if (( $# > 0 )); then
+    session=$1
+  else
+    current_session
+    session=$TMUX_OUTPUT
+  fi
+  canonical_session_id "$session"
+  session=$TMUX_OUTPUT
+  if (( $# > 1 )); then
+    width=$2
+  else
+    client_width
+    width=$POSITIVE_WIDTH
+  fi
+  if (( $# > 2 )); then
+    focused_pane=$3
+    has_focused_pane=1
+  fi
+
+  debounce_file "$session"
+  path=$TMUX_OUTPUT
+  lock_path=$path.os.lock
+  token=$$
+  with_kernel_lock "$lock_path" __debounce_publish "$session" "$token"
+  sleep "$DEBOUNCE_SECS"
+  with_kernel_lock "$lock_path" __debounce_apply \
+    "$session" "$token" "$width" "$has_focused_pane" "${focused_pane-}"
+}
+
+case ${1-} in
+  open)
+    if (( $# > 1 )); then
+      session=$2
+    else
+      current_session
+      session=$TMUX_OUTPUT
+    fi
+    if (( $# > 2 )); then
+      width=$3
+    else
+      client_width
+      width=$POSITIVE_WIDTH
+    fi
+    if (( $# > 3 )); then
+      open_mode "$session" "$width" "$4"
+    else
+      open_mode "$session" "$width"
+    fi
+    ;;
+  resize)
+    if (( $# > 3 )); then
+      debounced_resize "$2" "$3" "$4"
+    elif (( $# > 2 )); then
+      debounced_resize "$2" "$3"
+    elif (( $# > 1 )); then
+      debounced_resize "$2"
+    else
+      debounced_resize
+    fi
+    ;;
+  __debounce_publish)
+    (( $# == 4 )) || die "invalid internal invocation"
+    publish_debounce_token "$2" "$3" "$4"
+    ;;
+  __debounce_apply)
+    (( $# == 7 )) || die "invalid internal invocation"
+    apply_debounced_resize "$2" "$3" "$4" "$5" "$6" "$7"
+    ;;
+  *)
+    printf '%s\n' 'Usage: tmux_claude_layout <open|resize>' >&2
+    exit 1
+    ;;
+esac
