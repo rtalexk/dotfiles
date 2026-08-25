@@ -259,7 +259,7 @@ color_cpu_high = "#f38ba8"
 # Process type classification — controls how process names are coloured
 [theme.processes]
 editors = ["nvim", "vim", "vi", "nano", "emacs", "hx", "micro", "helix"]
-agents  = ["claude", "aider", "cursor", "copilot", "continue", "cody"]
+agents  = ["claude", "opencode", "aider", "cursor", "copilot", "continue", "cody"]
 servers = [
   "railway", "rails", "node", "deno", "bun",
   "python", "python3", "uvicorn", "gunicorn", "fastapi", "django", "flask",
