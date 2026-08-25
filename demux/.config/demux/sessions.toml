@@ -9,7 +9,7 @@ name = ""
 
 [[window_templates]]
 id = "claude"
-name = ""
+name = ""
 after_create_cmd = "claude"
 [[session]]
 name = "Comando"
