@@ -1,37 +1,50 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'digest'
 require 'open3'
+require 'securerandom'
+require 'tmpdir'
 
 THRESHOLD            = 200
 MAX_CLAUDE_PANE_COLS = 90
 NVIM_WINDOW          = "󰘦"
 CLAUDE_WINDOW        = ""
 CLAUDE_CMD           = "fnm use default; claude"
-COOLDOWN_FILE        = "/tmp/tmux_claude_resize.cooldown"
-COOLDOWN_SECS        = 1.0
+DEBOUNCE_SECS        = 0.15
 
 # Run a tmux command and return its stdout.
 def tmux(*args)
-  out, _status = Open3.capture2("tmux", *args)
+  out, err, status = Open3.capture3("tmux", *args)
+  raise "tmux command failed: #{args.inspect}: #{err.strip}" unless status.success?
+
   out.strip
 end
 
 # Run a tmux command for side effects (does not capture output).
 def tmux!(*args)
-  system("tmux", *args)
+  return if system("tmux", *args)
+
+  raise "tmux command failed: #{args.inspect}"
 end
 
 def current_session
   tmux("display-message", "-p", '#S')
 end
 
+def positive_width(value, label)
+  width = Integer(value, exception: false)
+  raise "invalid #{label}: #{value.inspect}" unless width&.positive?
+
+  width
+end
+
 def client_width
-  tmux("display-message", "-p", '#{client_width}').to_i
+  positive_width(tmux("display-message", "-p", '#{client_width}'), "client width")
 end
 
 def window_width(target)
-  tmux("display-message", "-p", "-t", target, '#{window_width}').to_i
+  positive_width(tmux("display-message", "-p", "-t", target, '#{window_width}'), "window width")
 end
 
 def find_claude_pane(session)
@@ -87,8 +100,14 @@ def focus_pane(pane_id)
   tmux!("select-pane", "-t", pane_id)
 end
 
-def open_claude_in_nvim(nvim_window_id)
-  current_path = tmux("display-message", "-p", '#{pane_current_path}')
+def pane_current_path(pane_id = nil)
+  args = ["display-message", "-p"]
+  args.concat(["-t", pane_id]) if pane_id
+  tmux(*args, '#{pane_current_path}')
+end
+
+def open_claude_in_nvim(nvim_window_id, source_pane = nil)
+  current_path = pane_current_path(source_pane)
   pane_id = tmux(
     "split-window", "-h", "-l", claude_pane_size(window_width(nvim_window_id)).to_s,
     "-t", nvim_window_id,
@@ -100,8 +119,8 @@ def open_claude_in_nvim(nvim_window_id)
   focus_pane(pane_id)
 end
 
-def open_claude_standalone
-  current_path = tmux("display-message", "-p", '#{pane_current_path}')
+def open_claude_standalone(source_pane = nil)
+  current_path = pane_current_path(source_pane)
   pane_id = tmux(
     "new-window",
     "-n", CLAUDE_WINDOW,
@@ -112,8 +131,8 @@ def open_claude_standalone
   tag_claude_pane(pane_id)
 end
 
-def open_mode
-  session = current_session
+def open_mode(session = current_session, width = client_width, source_pane = nil)
+  width = positive_width(width, "client width")
   claude = find_claude_pane(session)
 
   if claude
@@ -121,51 +140,74 @@ def open_mode
     return
   end
 
-  width = client_width
   nvim_window = find_nvim_window(session)
 
   if width >= THRESHOLD && nvim_window
-    open_claude_in_nvim(nvim_window)
+    open_claude_in_nvim(nvim_window, source_pane)
   else
-    open_claude_standalone
+    open_claude_standalone(source_pane)
   end
 end
 
-def resize_mode
-  session = current_session
+def resize_mode(session = current_session, width = client_width, focused_pane = nil)
+  width = positive_width(width, "client width")
   claude  = find_claude_pane(session)
   return unless claude
 
-  width       = client_width
   standalone  = claude[:window_name] == CLAUDE_WINDOW
   nvim_window = find_nvim_window(session)
 
-  focused_pane = tmux("display-message", "-p", '#{pane_id}')
+  focused_pane ||= tmux("display-message", "-p", '#{pane_id}')
 
   if width >= THRESHOLD && standalone && nvim_window
-    File.write(COOLDOWN_FILE, Time.now.to_f.to_s)
     tmux!("join-pane", "-h", "-s", claude[:pane_id], "-t", nvim_window, "-l", claude_pane_size(window_width(nvim_window)).to_s)
     focus_pane(focused_pane)
   elsif width >= THRESHOLD && !standalone
     tmux!("resize-pane", "-t", claude[:pane_id], "-x", claude_pane_size(window_width(claude[:pane_id])).to_s)
   elsif width < THRESHOLD && !standalone
-    File.write(COOLDOWN_FILE, Time.now.to_f.to_s)
     tmux!("break-pane", "-s", claude[:pane_id], "-n", CLAUDE_WINDOW)
     focus_pane(focused_pane)
   end
 end
 
-def cooldown_resize
-  if File.exist?(COOLDOWN_FILE)
-    return if Time.now.to_f - File.read(COOLDOWN_FILE).to_f < COOLDOWN_SECS
-  end
+def debounce_file(session)
+  server = ENV.fetch("TMUX", "").split(",", 2).first
+  namespace = Digest::SHA256.hexdigest("#{server}\0#{session}")[0, 16]
+  File.join(Dir.tmpdir, "tmux_claude_resize.#{namespace}.debounce")
+end
 
-  resize_mode
+def read_token(path)
+  File.read(path)
+rescue Errno::ENOENT
+  nil
+end
+
+def with_debounce_lock(path)
+  File.open("#{path}.lock", File::RDWR | File::CREAT, 0o600) do |lock|
+    lock.flock(File::LOCK_EX)
+    yield
+  end
+end
+
+def debounced_resize(session = nil, width = nil, focused_pane = nil)
+  session ||= current_session
+  width ||= client_width
+  path = debounce_file(session)
+  token = SecureRandom.hex
+  with_debounce_lock(path) { File.write(path, token) }
+  sleep DEBOUNCE_SECS
+
+  with_debounce_lock(path) do
+    return unless read_token(path) == token
+
+    File.delete(path)
+    resize_mode(session, width, focused_pane)
+  end
 end
 
 case ARGV[0]
-when "open"   then open_mode
-when "resize" then cooldown_resize
+when "open"   then open_mode(ARGV[1] || current_session, ARGV[2] || client_width, ARGV[3])
+when "resize" then debounced_resize(ARGV[1], ARGV[2], ARGV[3])
 else
   warn "Usage: tmux_claude_layout <open|resize>"
   exit 1
