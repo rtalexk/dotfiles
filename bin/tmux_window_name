@@ -1,41 +1,49 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env bash
 
-parts  = ARGV[0].to_s.downcase.split
-cmd    = (parts[0] || "").split("/").last
-subcmd = parts[1]
+split_command() {
+  local input=${1-}
+
+  input=${input//$'\n'/ }
+  read -r cmd subcmd _ <<< "$input"
+}
+
+split_command "${1-}"
+cmd="${cmd##*/}"
+
+shopt -s nocasematch
 
 # INFO: Claude, OpenCode, Lazygit, Nvim & GH Dash icons must be unique.
-icon = if cmd == "alx"
-  case subcmd
-  when "brain" then ""
-  when "todo"  then ""
-  else              ""
-  end
+if [[ "$cmd" == "alx" ]]; then
+  case "$subcmd" in
+    brain) icon="" ;;
+    todo)  icon="" ;;
+    *)     icon="" ;;
+  esac
 else
-  case cmd
-  when "claude"                         then ""
-  when "opencode"                       then "󰨔"
-  when "nvim"                           then "󰘦"
-  when "lazygit"                        then ""
-  when "gh-dash"                        then ""
-  when "gh"                             then ""
-  when "vim", "vi"                      then "󰅩"
-  when "git"                            then ""
-  when "ruby", "irb", "pry"             then ""
-  when "node", "npm", "npx", "bun"      then ""
-  when "python", "python3", "ipython"   then ""
-  when "go", "air"                      then ""
-  when "rust", "cargo"                  then ""
-  when "docker"                         then ""
-  when "kubectl", "k9s"                 then "󱃾"
-  when "htop", "btop", "top"            then "󰨇"
-  when "ssh"                            then "󰣀"
-  when "psql", "mysql", "sqlite3"       then ""
-  when "fzf"                            then ""
-  when "bash", "zsh", "fish", "sh"      then ""
-  when "man"                            then ""
-  else                                       ""
-  end
-end
+  case "$cmd" in
+    claude)                       icon="" ;;
+    opencode)                     icon="󰨔" ;;
+    nvim)                         icon="󰘦" ;;
+    lazygit)                      icon="" ;;
+    gh-dash)                      icon="" ;;
+    gh)                           icon="" ;;
+    vim | vi)                     icon="󰅩" ;;
+    git)                          icon="" ;;
+    ruby | irb | pry)             icon="" ;;
+    node | npm | npx | bun)       icon="" ;;
+    python | python3 | ipython)   icon="" ;;
+    go | air)                     icon="" ;;
+    rust | cargo)                 icon="" ;;
+    docker)                       icon="" ;;
+    kubectl | k9s)                icon="󱃾" ;;
+    htop | btop | top)            icon="󰨇" ;;
+    ssh)                          icon="󰣀" ;;
+    psql | mysql | sqlite3)       icon="" ;;
+    fzf)                          icon="" ;;
+    bash | zsh | fish | sh)       icon="" ;;
+    man)                          icon="" ;;
+    *)                            icon="" ;;
+  esac
+fi
 
-puts icon
+printf '%s\n' "$icon"
