@@ -6,7 +6,7 @@ require 'open3'
 THRESHOLD            = 200
 MAX_CLAUDE_PANE_COLS = 90
 NVIM_WINDOW          = "󰘦"
-CLAUDE_WINDOW        = ""
+CLAUDE_WINDOW        = ""
 CLAUDE_CMD           = "fnm use default; claude"
 COOLDOWN_FILE        = "/tmp/tmux_claude_resize.cooldown"
 COOLDOWN_SECS        = 1.0

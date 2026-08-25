@@ -4,7 +4,7 @@ parts  = ARGV[0].to_s.downcase.split
 cmd    = (parts[0] || "").split("/").last
 subcmd = parts[1]
 
-# INFO: Claude, Lazygit, Nvim & GH Dash icons must be unique.
+# INFO: Claude, OpenCode, Lazygit, Nvim & GH Dash icons must be unique.
 icon = if cmd == "alx"
   case subcmd
   when "brain" then ""
@@ -13,6 +13,8 @@ icon = if cmd == "alx"
   end
 else
   case cmd
+  when "claude"                         then ""
+  when "opencode"                       then "󰨔"
   when "nvim"                           then "󰘦"
   when "lazygit"                        then ""
   when "gh-dash"                        then ""
