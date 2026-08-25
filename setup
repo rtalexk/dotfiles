@@ -74,6 +74,9 @@ success "Terminal configs stowed"
 stow --restow --target="$HOME" git-tools
 success "Git tools configs stowed"
 
+stow --restow --target="$HOME" opencode
+success "OpenCode configs stowed"
+
 # Tmux Package Manager
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
