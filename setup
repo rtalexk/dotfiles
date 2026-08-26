@@ -59,7 +59,7 @@ log "Stowing configurations..."
 find "$HOME" -maxdepth 1 -type l -exec sh -c '[ ! -e "$1" ] && rm "$1"' _ {} \;
 find "$HOME/.config" -maxdepth 1 -type l -exec sh -c '[ ! -e "$1" ] && rm "$1"' _ {} \;
 
-"$PWD/bin/stow_configs" "$HOME"
+stow --restow --dir="$PWD" --target="$HOME" shell tmux nvim terminal git-tools demux agents
 success "Configurations stowed"
 
 # Tmux Package Manager
