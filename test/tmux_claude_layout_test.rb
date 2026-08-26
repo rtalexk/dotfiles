@@ -153,8 +153,12 @@ class TmuxClaudeLayoutTest < Minitest::Test
     first_token = wait_for_token(debounce_path)
     second = spawn_layout("resize", "$1", "180", "%12")
     wait_for_token_change(debounce_path, first_token)
-    [first, second].each { |pid| Process.wait(pid) }
+    statuses = [first, second].map do |pid|
+      Process.wait(pid)
+      $?
+    end
 
+    assert statuses.all?(&:success?), "superseded resize returned failure: #{statuses.map(&:exitstatus)}"
     layout_commands = commands.select do |command|
       %w[break-pane join-pane resize-pane].include?(command.first)
     end
