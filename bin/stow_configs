@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+target=${1:-$HOME}
+
+for path in \
+  .claude/settings.json \
+  .config/opencode/AGENTS.md \
+  .config/opencode/lib/demux-hooks.ts \
+  .config/opencode/opencode.jsonc \
+  .config/opencode/plugin/demux-notifications.ts \
+  .config/opencode/tui.json; do
+  source_file="$root/agents/$path"
+  target_file="$target/$path"
+  if [ -f "$target_file" ] && [ ! -L "$target_file" ] && cmp -s "$source_file" "$target_file"; then
+    rm "$target_file"
+  fi
+done
+
+for path in .config/demux/demux.toml .config/demux/private.toml .config/demux/sessions.toml; do
+  source_file="$root/demux/$path"
+  target_file="$target/$path"
+  if [ -f "$target_file" ] && [ ! -L "$target_file" ] && cmp -s "$source_file" "$target_file"; then
+    rm "$target_file"
+  fi
+done
+
+old_tui="$target/.config/opencode/tui.json"
+if [ -L "$old_tui" ] && [ ! -e "$old_tui" ]; then
+  rm "$old_tui"
+fi
+
+for package in shell tmux nvim terminal git-tools demux agents; do
+  stow --restow --dir="$root" --target="$target" "$package"
+done
