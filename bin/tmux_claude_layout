@@ -395,7 +395,7 @@ apply_debounced_resize() {
   [[ -e $path ]] || return
   [[ -f $path && -r $path ]] || die "failed to read debounce token: $path"
   latest=$(<"$path") || die "failed to read debounce token: $path"
-  [[ $latest == "$token" ]] || return
+  [[ $latest == "$token" ]] || return 0
 
   rm -f "$path" || die "failed to remove debounce token: $path"
   if (( has_focused_pane )); then
