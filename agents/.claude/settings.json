@@ -13,19 +13,19 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/rtalex/.claude/hooks/rtk-rewrite.sh"
-          }
-        ]
-      },
-      {
         "hooks": [
           {
             "type": "command",
             "command": "demux state set --target-id \"$TMUX_PANE\" --state working --tool claude --message \"on it\" --force || demux event hook_error --hook PreToolUse --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
           }
         ]
       }
