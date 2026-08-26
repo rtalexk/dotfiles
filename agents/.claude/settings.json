@@ -1,0 +1,196 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "mcp__pencil"
+    ],
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/rtalex/.claude/hooks/rtk-rewrite.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state working --tool claude --message \"on it\" --force || demux event hook_error --hook PreToolUse --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\""
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state waiting --tool claude --message \"awaiting permission\" || demux event hook_error --hook Notification.permission_prompt --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\""
+          },
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Ping.aiff",
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "elicitation_dialog",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state waiting --tool claude --message \"mcp input needed\" || demux event hook_error --hook Notification.elicitation_dialog --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\""
+          },
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Ping.aiff",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state working --tool claude --message \"on it\" || demux event hook_error --hook SessionStart.resume --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state working --tool claude --message \"on it\" || demux event hook_error --hook UserPromptSubmit --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\""
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state working --tool claude --message \"spawning agent\" || demux event hook_error --hook SubagentStart --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state working --tool claude --message \"subagent complete\" --if-state working || demux event hook_error --hook SubagentStop --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state done --tool claude --message \"task complete\" || demux event hook_error --hook Stop --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\" --set-state-error"
+          },
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Glass.aiff",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "demux state set --target-id \"$TMUX_PANE\" --state error --tool claude --message-json '.last_assistant_message,.error_details,.error' --message \"task failed\" || demux event hook_error --hook StopFailure --tool claude --target-id \"$TMUX_PANE\" --message \"state set failed\" --set-state-error"
+          },
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Submarine.aiff",
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "claude_statusline"
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "caveman@caveman": true,
+    "frontend-design@claude-plugins-official": true,
+    "diagram-design@diagram-design": true
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "diagram-design": {
+      "source": {
+        "source": "github",
+        "repo": "cathrynlavery/diagram-design"
+      }
+    }
+  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "xhigh",
+  "tui": "fullscreen",
+  "skipAutoPermissionPrompt": true,
+  "autoMode": {
+    "soft_deny": [
+      "$defaults",
+      "Bash(git worktree:*) — this repo's CLAUDE.md mandates `alx worktree` instead of raw `git worktree`; flag raw usage for review",
+      "Bash(git commit:*) on `main` or `dev` in SunroomOrg/utilityprofit — repo's CRITICAL RULES forbid working directly on these branches"
+    ],
+    "environment": [
+      "### Org-wide",
+      "**Organization**: SunroomOrg (GitHub org; repo `SunroomOrg/utilityprofit`)",
+      "**Cloud provider(s)**: AWS (aws CLI in shell history; AWS_ACCOUNT_ID, AWS_SECRET_KEY, secretsmanager markers in config)",
+      "**Repository visibility**: private (confirmed via gh — SunroomOrg/utilityprofit)",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: AWS Secrets Manager (aws secretsmanager marker in config); CI secrets referenced by name only (no values) — e.g. AWS_SECRET_KEY, DATADOG_API_KEY, CLAUDE_API_KEY, BULL_BOARD_PASSWORD, BUNDLEDEALER_PASSWORD, and others listed in repo CI config",
+      "**Default / protected branches**: `main` (protected, via gh); repo docs also name `dev` as never-work-on-directly but this is not confirmed via gh branch protection",
+      "**CI/CD deploy targets**: ephemeral k8s environments and prod, per `.github/workflows/deploy-prod.yml`, `deploy-ephemeral-k8s.yml`, `update-ephemeral-k8s.yml`, `restore-db-ephemeral-k8s.yml`, `reinstall-ephemeral-k8s.yml`, `cron-sync-dev-baseline-secrets.yml`, `cron-delete-ephemeral-k8s.yml`",
+      "**Network posture**: None configured",
+      "**Source control**: SunroomOrg/utilityprofit (this repo) and its `origin` remote (github.com:SunroomOrg/utilityprofit.git) only",
+      "**Trusted internal domains**: None configured",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: ephemeral K8s environments (per-ticket-prefix namespaces, e.g. FEAT-C39), AWS EKS (per `ephemeral-env-db` skill: `aws eks update-kubeconfig` + `kubectl exec` psql pattern)",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: `.env`, `.env.dev`, `.env.eph`, `.env.prod` (secrets); `infra/terraform/prod.tfvars` and `infra/terraform/main.tf` (infra/prod config); `docs/runbooks/2026-04-24-utilityprofit-prod-private-subnet-migration.md` (prod network/infra detail); PII in user/household models per `security-reviewer` agent doc — share only with engineers on this repo, cleared per the org's normal access",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any namespace/host/container with `prod` or `production` as a whole word/segment — includes the `deploy-prod.yml` workflow target and `infra/terraform/prod.tfvars`",
+      "**Protected deployment namespaces / environments**: `prod` (per `.github/workflows/deploy-prod.yml`); ephemeral k8s namespaces derived per-ticket are lower-risk but still deploy targets, not local dev",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, node-pool resources; anything tagged/named `prod`/`production` — includes `infra/terraform/prod.tfvars` and `infra/terraform/main.tf`/`infra/terraform/setup/main.tf`",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (NX monorepo — API, web apps, Lambda microservices, Playwright scrapers) — this repo, `SunroomOrg/utilityprofit`, working from worktree `FEAT-F25-referral-link-legacy`",
+      "**Trusted repo**: `SunroomOrg/utilityprofit` (this repo, private) and its `origin` remote — confidential material fine to commit/push here; content ported from other repos or outside this session is not this repo's own work",
+      "**Org-specific CLIs**: `alx` (worktree/tmux helper, per `~/.claude/CLAUDE.md`), `gh` (GitHub CLI), `nx` (NX monorepo commands), `aws`/`kubectl` (per `ephemeral-env-db` skill)",
+      "**Routine under this repo's `.claude/` prefix**: `.claude/settings.local.json` personal overrides, `.claude/skills/`, `.claude/agents/`, `.claude/hooks/` are expected editable/readable locations for this project"
+    ]
+  }
+}
