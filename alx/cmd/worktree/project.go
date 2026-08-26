@@ -64,6 +64,22 @@ func runProjectInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("project.toml already exists; use --force to overwrite")
 	}
 
+	gitFilePath := filepath.Join(root, ".git")
+	gitFile, err := os.OpenFile(gitFilePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if err == nil {
+		if _, err := gitFile.WriteString("gitdir: ./.bare\n"); err != nil {
+			closeErr := gitFile.Close()
+			removeErr := os.Remove(gitFilePath)
+			return fmt.Errorf("write %s: %w", gitFilePath, errors.Join(err, closeErr, removeErr))
+		}
+		if err := gitFile.Close(); err != nil {
+			removeErr := os.Remove(gitFilePath)
+			return fmt.Errorf("close %s: %w", gitFilePath, errors.Join(err, removeErr))
+		}
+	} else if !errors.Is(err, fs.ErrExist) {
+		return fmt.Errorf("create %s: %w", gitFilePath, err)
+	}
+
 	return os.WriteFile(tomlPath, []byte(projectTOMLTemplate), 0644)
 }
 
