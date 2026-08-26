@@ -27,5 +27,3 @@ gpush() {
   done
   git push "${flags[@]}" origin "$(git_current_branch)"
 }
-
-alias git-bare='git --git-dir=.bare --work-tree=.'
