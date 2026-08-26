@@ -45,6 +45,31 @@ class StowConfigsTest < Minitest::Test
     end
   end
 
+  def test_preserves_sources_when_target_package_is_already_stowed
+    Dir.mktmpdir do |sandbox|
+      root = File.join(sandbox, "dotfiles")
+      home = File.join(sandbox, "home")
+      script = File.join(root, "bin/stow_configs")
+      source_dir = File.join(root, "demux/.config/demux")
+      source_file = File.join(source_dir, "private.toml")
+
+      FileUtils.mkdir_p(File.dirname(script))
+      FileUtils.cp(SCRIPT, script)
+      %w[shell tmux nvim terminal git-tools agents].each do |package|
+        FileUtils.mkdir_p(File.join(root, package))
+      end
+      FileUtils.mkdir_p(source_dir)
+      File.write(source_file, "[[session]]\nname = \"private\"\npath = \"/private\"\n")
+      FileUtils.mkdir_p(File.join(home, ".config"))
+      File.symlink("../../dotfiles/demux/.config/demux", File.join(home, ".config/demux"))
+
+      _stdout, stderr, status = Open3.capture3("/bin/bash", script, home)
+
+      assert status.success?, stderr
+      assert_path_exists source_file
+    end
+  end
+
   private
 
   def install_existing_file(home, destination, source)

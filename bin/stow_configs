@@ -14,7 +14,7 @@ for path in \
   .config/opencode/tui.json; do
   source_file="$root/agents/$path"
   target_file="$target/$path"
-  if [ -f "$target_file" ] && [ ! -L "$target_file" ] && cmp -s "$source_file" "$target_file"; then
+  if [ -f "$target_file" ] && [ ! -L "$target_file" ] && ! [ "$source_file" -ef "$target_file" ] && cmp -s "$source_file" "$target_file"; then
     rm "$target_file"
   fi
 done
@@ -22,7 +22,7 @@ done
 for path in .config/demux/demux.toml .config/demux/private.toml .config/demux/sessions.toml; do
   source_file="$root/demux/$path"
   target_file="$target/$path"
-  if [ -f "$target_file" ] && [ ! -L "$target_file" ] && cmp -s "$source_file" "$target_file"; then
+  if [ -f "$target_file" ] && [ ! -L "$target_file" ] && ! [ "$source_file" -ef "$target_file" ] && cmp -s "$source_file" "$target_file"; then
     rm "$target_file"
   fi
 done
