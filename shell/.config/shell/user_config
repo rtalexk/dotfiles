@@ -21,6 +21,14 @@ fi
 
 export PATH="$HOME/.local/bin:$DOTFILES/bin:$PATH"
 
+export PNPM_HOME="$HOME/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+
+export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
+
 # Work specific shell configuration
 if [ -f "$XDG_CONFIG_HOME/shell/work" ]; then
   source "$XDG_CONFIG_HOME/shell/work"
