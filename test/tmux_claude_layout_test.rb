@@ -534,6 +534,7 @@ class TmuxClaudeLayoutTest < Minitest::Test
     config = isolated_layout_config
     tmux_server("set-environment", "-g", "PATH", "#{@bin_dir}:#{ENV.fetch("PATH")}")
     tmux_server("set-environment", "-g", "TMUX_LAYOUT_HOOK_LOG", @hook_log)
+    tmux_server("set-hook", "-g", "client-session-changed[40]", 'run-shell "demux event session_changed"')
     _out, err, status = tmux_server("source-file", config)
     assert_predicate status, :success?, err
 
@@ -547,6 +548,7 @@ class TmuxClaudeLayoutTest < Minitest::Test
     expected = /tmux_claude_layout resize .*#\{q:session_id\}.*#\{client_width\}.*#\{q:pane_id\}/
     assert_match expected, resize_hook
     assert_match expected, session_hook
+    assert_includes session_hook, "demux event session_changed"
     assert_match(/tmux_claude_layout open .*#\{q:session_id\}.*#\{client_width\}.*#\{q:pane_id\}/, open_binding)
 
     attach_control_client("test")
