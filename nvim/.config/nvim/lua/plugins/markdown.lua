@@ -45,6 +45,9 @@ return {
         conceallevel = {
           rendered = 2,
         },
+        concealcursor = {
+          rendered = 'n',
+        },
         showbreak = { default = '', rendered = '  ' },
         breakindent = { default = false, rendered = true },
         breakindentopt = { default = '', rendered = '' },
