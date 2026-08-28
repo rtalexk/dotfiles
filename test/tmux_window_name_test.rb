@@ -39,4 +39,23 @@ class TmuxWindowNameTest < Minitest::Test
       assert_equal "󰘦\n", stdout
     end
   end
+
+  def test_treats_plain_shell_pane_as_idle
+    stdout, status = Open3.capture2(SCRIPT, "--pane-is-idle", "zsh", "")
+
+    assert status.success?
+    assert_empty stdout
+  end
+
+  def test_treats_shell_wrapper_with_start_command_as_busy
+    stdout, status = Open3.capture2(
+      SCRIPT,
+      "--pane-is-idle",
+      "bash",
+      'sh -c "fnm use default; claude"'
+    )
+
+    refute status.success?
+    assert_empty stdout
+  end
 end

@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+if [[ "${1-}" == "--pane-is-idle" ]]; then
+  pane_command=${2##*/}
+  pane_start_command=${3-}
+
+  [[ "$pane_command" =~ ^(bash|zsh|fish|sh)$ && -z "$pane_start_command" ]]
+  exit
+fi
+
 split_command() {
   local input=${1-}
 
