@@ -30,7 +30,7 @@ return {
         repeat_linebreak = true,
       },
       anti_conceal = {
-        disabled_modes = { 'n' },
+        disabled_modes = { 'n', 'v', 'V', '\22' },
         ignore = {
           code_background = true,
           code_border = true,
@@ -46,7 +46,7 @@ return {
           rendered = 2,
         },
         concealcursor = {
-          rendered = 'n',
+          rendered = 'nv',
         },
         showbreak = { default = '', rendered = '  ' },
         breakindent = { default = false, rendered = true },
