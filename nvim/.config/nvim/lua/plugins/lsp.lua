@@ -177,6 +177,11 @@ return {
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
+
+          if client and client:supports_method 'textDocument/inlayHint' then
+            vim.lsp.inlay_hint.enable(true, { bufnr = event.buf })
+          end
+
           if client and client.server_capabilities.documentHighlightProvider then
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
               buffer = event.buf,
@@ -266,6 +271,10 @@ return {
             end
           end
       end
+
+      vim.keymap.set('n', '<leader>uh', function()
+        vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = 0 }, { bufnr = 0 })
+      end, { desc = 'Toggle Inlay Hints' })
 
       vim.keymap.set('n', '<leader>uv', function()
         if vim.diagnostic.config().virtual_text then
