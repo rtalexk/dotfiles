@@ -237,8 +237,11 @@ return {
             end
           end
         else
-          -- We're in a normal window, safe to use default K behavior
-          vim.cmd 'normal! K'
+          -- We're in a normal window, fall back to default K behavior, but
+          -- keywordprg (man) has no entry for most identifiers
+          if not pcall(vim.cmd, 'normal! K') then
+            vim.notify('No documentation found', vim.log.levels.INFO)
+          end
         end
       end, { desc = 'Smart hover toggle' })
 
