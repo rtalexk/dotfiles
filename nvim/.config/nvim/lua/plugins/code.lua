@@ -47,6 +47,8 @@ return {
         typescript = { 'prettier' },
         typescriptreact = { 'prettier' },
         json = { 'prettier' },
+        rust = { 'rustfmt' },
+        toml = { 'taplo' },
         -- ruby = { 'standardrb' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
