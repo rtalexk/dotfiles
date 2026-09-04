@@ -318,6 +318,28 @@ return {
         -- solargraph = {},
         -- standardrb = {},
 
+        -- Rust
+        rust_analyzer = {
+          settings = {
+            ['rust-analyzer'] = {
+              cargo = {
+                allFeatures = true,
+                buildScripts = { enable = true },
+              },
+              check = { command = 'clippy' },
+              procMacro = { enable = true },
+              inlayHints = {
+                parameterHints = { enable = true },
+                typeHints = { enable = true },
+                closureReturnTypeHints = { enable = 'always' },
+              },
+            },
+          },
+        },
+
+        -- TOML, Cargo.toml and friends
+        taplo = {},
+
         -- Markdown LSP
         marksman = {},
 

@@ -14,6 +14,8 @@ M.ensure_installed = {
   'markdown',
   'markdown_inline',
   'ruby',
+  'rust',
+  'toml',
   'tsx',
   'typescript',
   'vim',
