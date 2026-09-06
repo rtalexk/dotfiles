@@ -5,7 +5,7 @@ export EDITOR="nvim"
 
 export PROJECTS="$HOME/com.github"
 export DOTFILES="$PROJECTS/dotfiles/main"
-export ICLOUD="$HOME/Library/Mobile\ Documents/com~apple~CloudDocs"
+export ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 export BRAIN="$HOME/Documents/Notes"
 
 export FZF_DEFAULT_OPTS="--tiebreak=length,begin,index"
