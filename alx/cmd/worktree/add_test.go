@@ -3,6 +3,7 @@ package worktree
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -86,5 +87,40 @@ func TestLinkFileErrorsWhenSourceMissing(t *testing.T) {
 	}
 	if _, err := os.Lstat(dst); !os.IsNotExist(err) {
 		t.Errorf("dst should not exist, Lstat err: %v", err)
+	}
+}
+
+func TestConnectCommandDetachedReturnsNil(t *testing.T) {
+	for _, insideTmux := range []bool{true, false} {
+		if cmd := connectCommand("dotf-feat", true, insideTmux); cmd != nil {
+			t.Errorf("insideTmux=%v: got %v, want nil", insideTmux, cmd.Args)
+		}
+	}
+}
+
+func TestConnectCommandInsideTmuxSwitchesClient(t *testing.T) {
+	cmd := connectCommand("dotf-feat", false, true)
+	if cmd == nil {
+		t.Fatal("got nil, want a tmux command")
+	}
+
+	want := []string{"tmux", "switch-client", "-t", "dotf-feat"}
+	if !slices.Equal(cmd.Args, want) {
+		t.Errorf("got %v, want %v", cmd.Args, want)
+	}
+}
+
+func TestConnectCommandOutsideTmuxAttachesSession(t *testing.T) {
+	cmd := connectCommand("dotf-feat", false, false)
+	if cmd == nil {
+		t.Fatal("got nil, want a tmux command")
+	}
+
+	want := []string{"tmux", "attach-session", "-t", "dotf-feat"}
+	if !slices.Equal(cmd.Args, want) {
+		t.Errorf("got %v, want %v", cmd.Args, want)
+	}
+	if cmd.Stdin != os.Stdin {
+		t.Error("attach must inherit stdin")
 	}
 }

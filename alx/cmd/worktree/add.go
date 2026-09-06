@@ -12,7 +12,10 @@ import (
   "github.com/spf13/cobra"
 )
 
-var addBase string
+var (
+  addBase     string
+  addDetached bool
+)
 
 var AddCmd = &cobra.Command{
   Use:   "add <path> [branch]",
@@ -23,6 +26,7 @@ var AddCmd = &cobra.Command{
 
 func init() {
   AddCmd.Flags().StringVar(&addBase, "base", "", "base ref for the new branch ('@' = current branch)")
+  AddCmd.Flags().BoolVarP(&addDetached, "detached", "d", false, "Leave the new session detached instead of switching to it")
 }
 
 func runAdd(cmd *cobra.Command, args []string) error {
@@ -122,19 +126,29 @@ func runAdd(cmd *cobra.Command, args []string) error {
   }
 
   // Switch to / attach the session
-  var connectCmd *exec.Cmd
-  if os.Getenv("TMUX") != "" {
-    connectCmd = exec.Command("tmux", "switch-client", "-t", sessionName)
-  } else {
-    connectCmd = exec.Command("tmux", "attach-session", "-t", sessionName)
-    connectCmd.Stdin = os.Stdin
-    connectCmd.Stdout = os.Stdout
-    connectCmd.Stderr = os.Stderr
+  connectCmd := connectCommand(sessionName, addDetached, os.Getenv("TMUX") != "")
+  if connectCmd == nil {
+    fmt.Printf("session %s created (detached)\n", sessionName)
+    return nil
   }
   if err := connectCmd.Run(); err != nil {
     return fmt.Errorf("worktree created; failed to attach to session %q: %w", sessionName, err)
   }
   return nil
+}
+
+func connectCommand(sessionName string, detached, insideTmux bool) *exec.Cmd {
+  if detached {
+    return nil
+  }
+  if insideTmux {
+    return exec.Command("tmux", "switch-client", "-t", sessionName)
+  }
+  cmd := exec.Command("tmux", "attach-session", "-t", sessionName)
+  cmd.Stdin = os.Stdin
+  cmd.Stdout = os.Stdout
+  cmd.Stderr = os.Stderr
+  return cmd
 }
 
 
