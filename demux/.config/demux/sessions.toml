@@ -18,19 +18,19 @@ windows = ["editor", "shell"]
 
 [[session]]
 name = "Brain"
-path = "/Users/rtalex/Documents/Notes"
+path = "~/Documents/Notes"
 windows = ["editor", "shell"]
 
 [[session]]
 name = "dotf-main"
 group = "dotf"
 worktree = true
-path = "/Users/rtalex/com.github/dotfiles/main"
+path = "~/com.github/dotfiles/main"
 windows = ["editor", "shell"]
 
 [[session]]
 name = "dm-main"
 group = "dm"
-path = "/Users/rtalex/com.github/demux/main"
+path = "~/com.github/demux/main"
 worktree = true
 windows = ["editor", "shell"]
