@@ -4,6 +4,7 @@ import (
   "os"
   "os/exec"
   "path/filepath"
+  "strings"
   "testing"
 
   "alx/utils"
@@ -285,5 +286,81 @@ func TestSessionName(t *testing.T) {
   got := p.SessionName("feature-1")
   if got != "up-feature-1" {
     t.Errorf("expected up-feature-1, got %q", got)
+  }
+}
+
+func TestLoadProject_CopyFiles_DefaultStrategyIsCopy(t *testing.T) {
+  cases := map[string]string{
+    "inline strings": `copy_files = [".env"]`,
+    "table without strategy": `
+[[copy_files]]
+from = "config/master.key"
+`,
+  }
+
+  for name, config := range cases {
+    t.Run(name, func(t *testing.T) {
+      tmp := t.TempDir()
+      os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(config), 0644)
+
+      p, err := utils.LoadProject(tmp)
+      if err != nil {
+        t.Fatal(err)
+      }
+      if len(p.Config.CopyFiles) != 1 {
+        t.Fatalf("copy_files len: got %d", len(p.Config.CopyFiles))
+      }
+      if p.Config.CopyFiles[0].Strategy != utils.StrategyCopy {
+        t.Errorf("got strategy %q, want %q", p.Config.CopyFiles[0].Strategy, utils.StrategyCopy)
+      }
+    })
+  }
+}
+
+func TestLoadProject_CopyFiles_SymlinkStrategy(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`
+[[copy_files]]
+from = "node_modules"
+strategy = "symlink"
+
+[[copy_files]]
+from = "master.key"
+to = "config/master.key"
+strategy = "copy"
+`), 0644)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if len(p.Config.CopyFiles) != 2 {
+    t.Fatalf("copy_files len: got %d", len(p.Config.CopyFiles))
+  }
+  if p.Config.CopyFiles[0].Strategy != utils.StrategySymlink {
+    t.Errorf("copy_files[0]: got strategy %q, want %q", p.Config.CopyFiles[0].Strategy, utils.StrategySymlink)
+  }
+  if p.Config.CopyFiles[1].Strategy != utils.StrategyCopy {
+    t.Errorf("copy_files[1]: got strategy %q, want %q", p.Config.CopyFiles[1].Strategy, utils.StrategyCopy)
+  }
+  if p.Config.CopyFiles[1].To != "config/master.key" {
+    t.Errorf("copy_files[1]: got to=%q", p.Config.CopyFiles[1].To)
+  }
+}
+
+func TestLoadProject_CopyFiles_UnknownStrategyErrors(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`
+[[copy_files]]
+from = ".env"
+strategy = "hardlink"
+`), 0644)
+
+  _, err := utils.LoadProject(tmp)
+  if err == nil {
+    t.Fatal("expected error for unknown strategy, got nil")
+  }
+  if !strings.Contains(err.Error(), "hardlink") {
+    t.Errorf("error should name the bad strategy, got: %v", err)
   }
 }

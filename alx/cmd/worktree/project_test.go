@@ -148,3 +148,39 @@ func TestProjectInitDoesNotOverwriteExistingGitDirectory(t *testing.T) {
 		t.Fatalf("existing .git directory contents changed to %q", contents)
 	}
 }
+
+func TestRenderProjectConfigInlinesCopyFilesWhenAllPlainCopies(t *testing.T) {
+	cfg := utils.ProjectConfig{
+		Alias: "myapp",
+		CopyFiles: utils.CopyFileList{
+			{From: ".env", To: ".env", Strategy: utils.StrategyCopy},
+			{From: "config/master.key", To: "config/master.key", Strategy: utils.StrategyCopy},
+		},
+	}
+
+	got := renderProjectConfig(cfg)
+
+	want := "alias = \"myapp\"\ncopy_files = [\".env\", \"config/master.key\"]\n"
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestRenderProjectConfigShowsSymlinkStrategy(t *testing.T) {
+	cfg := utils.ProjectConfig{
+		Alias: "myapp",
+		CopyFiles: utils.CopyFileList{
+			{From: "node_modules", To: "node_modules", Strategy: utils.StrategySymlink},
+			{From: ".env", To: ".env", Strategy: utils.StrategyCopy},
+		},
+	}
+
+	got := renderProjectConfig(cfg)
+
+	want := "alias = \"myapp\"\n" +
+		"\n[[copy_files]]\nfrom = \"node_modules\"\nstrategy = \"symlink\"\n" +
+		"\n[[copy_files]]\nfrom = \".env\"\n"
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}

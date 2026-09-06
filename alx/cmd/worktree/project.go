@@ -49,6 +49,12 @@ const projectTOMLTemplate = `# alias defaults to the project root directory name
 
 # copy_files = [".env", "config/master.key"]
 
+# strategy is "copy" (default) or "symlink"; symlink points back at the
+# project root copy instead of duplicating it
+# [[copy_files]]
+# from = "node_modules"
+# strategy = "symlink"
+
 # [demux]
 # windows = ["editor", "shell", "claude"]
 `
@@ -103,7 +109,11 @@ func runProjectShow(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 	}
 
-	cfg := project.Config
+	fmt.Print(renderProjectConfig(project.Config))
+	return nil
+}
+
+func renderProjectConfig(cfg utils.ProjectConfig) string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("alias = %q\n", cfg.Alias))
 	if len(cfg.OnCreate) == 1 {
@@ -118,7 +128,7 @@ func runProjectShow(cmd *cobra.Command, args []string) error {
 	if len(cfg.CopyFiles) > 0 {
 		allSame := true
 		for _, f := range cfg.CopyFiles {
-			if f.From != f.To {
+			if f.From != f.To || f.Strategy == utils.StrategySymlink {
 				allSame = false
 				break
 			}
@@ -136,9 +146,11 @@ func runProjectShow(cmd *cobra.Command, args []string) error {
 				if f.To != f.From {
 					sb.WriteString(fmt.Sprintf("to = %q\n", f.To))
 				}
+				if f.Strategy == utils.StrategySymlink {
+					sb.WriteString(fmt.Sprintf("strategy = %q\n", f.Strategy))
+				}
 			}
 		}
 	}
-	fmt.Print(sb.String())
-	return nil
+	return sb.String()
 }
