@@ -14,9 +14,17 @@ import (
 
 var supportedStartupFiles = []string{"setup.rb", "setup.sh", "setup"}
 
+type CopyStrategy string
+
+const (
+  StrategyCopy    CopyStrategy = "copy"
+  StrategySymlink CopyStrategy = "symlink"
+)
+
 type CopyFile struct {
-  From string
-  To   string
+  From     string
+  To       string
+  Strategy CopyStrategy
 }
 
 type CopyFileList []CopyFile
@@ -28,9 +36,13 @@ func (c *CopyFileList) UnmarshalTOML(data interface{}) error {
     for _, item := range arr {
       switch v := item.(type) {
       case string:
-        *c = append(*c, CopyFile{From: v, To: v})
+        *c = append(*c, CopyFile{From: v, To: v, Strategy: StrategyCopy})
       case map[string]interface{}:
-        *c = append(*c, copyFileFromMap(v))
+        cf, err := copyFileFromMap(v)
+        if err != nil {
+          return err
+        }
+        *c = append(*c, cf)
       default:
         return fmt.Errorf("copy_files entries must be strings or tables, got %T", item)
       }
@@ -38,7 +50,11 @@ func (c *CopyFileList) UnmarshalTOML(data interface{}) error {
   case []map[string]interface{}:
     // [[copy_files]]  — array of tables
     for _, m := range arr {
-      *c = append(*c, copyFileFromMap(m))
+      cf, err := copyFileFromMap(m)
+      if err != nil {
+        return err
+      }
+      *c = append(*c, cf)
     }
   default:
     return fmt.Errorf("copy_files must be an array, got %T", data)
@@ -46,8 +62,8 @@ func (c *CopyFileList) UnmarshalTOML(data interface{}) error {
   return nil
 }
 
-func copyFileFromMap(m map[string]interface{}) CopyFile {
-  cf := CopyFile{}
+func copyFileFromMap(m map[string]interface{}) (CopyFile, error) {
+  cf := CopyFile{Strategy: StrategyCopy}
   if from, ok := m["from"].(string); ok {
     cf.From = from
   }
@@ -57,7 +73,15 @@ func copyFileFromMap(m map[string]interface{}) CopyFile {
   if cf.To == "" {
     cf.To = cf.From
   }
-  return cf
+  if s, ok := m["strategy"].(string); ok && s != "" {
+    switch CopyStrategy(s) {
+    case StrategyCopy, StrategySymlink:
+      cf.Strategy = CopyStrategy(s)
+    default:
+      return CopyFile{}, fmt.Errorf("copy_files: unknown strategy %q for %q (want %q or %q)", s, cf.From, StrategyCopy, StrategySymlink)
+    }
+  }
+  return cf, nil
 }
 
 type OnCreateList []string

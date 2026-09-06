@@ -70,8 +70,15 @@ func runAdd(cmd *cobra.Command, args []string) error {
   for _, f := range project.Config.CopyFiles {
     src := filepath.Join(root, f.From)
     dst := filepath.Join(worktreeDir, f.To)
-    if err := copyFile(src, dst); err != nil {
-      fmt.Fprintf(os.Stderr, "warning: could not copy %s: %v\n", f.From, err)
+    switch f.Strategy {
+    case utils.StrategySymlink:
+      if err := linkFile(src, dst); err != nil {
+        fmt.Fprintf(os.Stderr, "warning: could not link %s: %v\n", f.From, err)
+      }
+    default:
+      if err := copyFile(src, dst); err != nil {
+        fmt.Fprintf(os.Stderr, "warning: could not copy %s: %v\n", f.From, err)
+      }
     }
   }
 
@@ -195,6 +202,26 @@ func copyFile(src, dst string) error {
     return err
   }
   return out.Close()
+}
+
+func linkFile(src, dst string) error {
+  if _, err := os.Stat(src); err != nil {
+    return err
+  }
+
+  if info, err := os.Lstat(dst); err == nil {
+    if info.Mode()&os.ModeSymlink == 0 {
+      return fmt.Errorf("%s already exists and is not a symlink", dst)
+    }
+    if err := os.Remove(dst); err != nil {
+      return err
+    }
+  }
+
+  if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+    return err
+  }
+  return os.Symlink(src, dst)
 }
 
 func copyDir(src, dst string, info os.FileInfo) error {
