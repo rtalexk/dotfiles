@@ -62,6 +62,19 @@ find "$HOME/.config" -maxdepth 1 -type l -exec sh -c '[ ! -e "$1" ] && rm "$1"' 
 stow --restow --dir="$PWD" --target="$HOME" shell tmux nvim terminal git-tools demux agents
 success "Configurations stowed"
 
+# $BRAIN notes vault, lives in iCloud and is linked into ~/Documents
+BRAIN_TARGET="${ICLOUD:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}/Notes"
+BRAIN_LINK="$HOME/Documents/Notes"
+if [ ! -d "$BRAIN_TARGET" ]; then
+    log "iCloud Notes not found, skipping \$BRAIN link"
+elif [ -e "$BRAIN_LINK" ] && [ ! -L "$BRAIN_LINK" ]; then
+    log "$BRAIN_LINK exists and is not a symlink, leaving it alone"
+else
+    mkdir -p "$(dirname "$BRAIN_LINK")"
+    ln -sfn "$BRAIN_TARGET" "$BRAIN_LINK"
+    success "\$BRAIN linked to iCloud Notes"
+fi
+
 # Tmux Package Manager
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
