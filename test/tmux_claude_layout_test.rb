@@ -217,6 +217,26 @@ class TmuxClaudeLayoutTest < Minitest::Test
     assert_includes commands, ["select-pane", "-t", "%99"]
   end
 
+  def test_resize_ignores_and_untags_a_pane_where_claude_exited
+    write_state(
+      "sessions" => {
+        "$1" => {
+          "nvim_window" => "@10",
+          "claude" => {
+            "pane_id" => "%11", "window_name" => "", "window_id" => "@12",
+            "current_command" => "zsh"
+          }
+        }
+      }
+    )
+
+    _out, err, status = run_layout("resize", "$1", "180", "%99")
+
+    assert_predicate status, :success?, err
+    assert_includes commands, ["set-option", "-p", "-u", "-t", "%11", "@main_claude"]
+    refute commands.any? { |command| %w[break-pane join-pane resize-pane].include?(command.first) }
+  end
+
   def test_resize_accepts_a_session_name
     write_state(
       "current_session" => "$1",
@@ -779,7 +799,9 @@ class TmuxClaudeLayoutTest < Minitest::Test
         claude = session["claude"]
         if claude
           flag = claude.fetch("tagged", true) ? "1" : ""
-          puts "#{flag}:#{claude["pane_id"]}:#{claude["window_name"]}"
+          current_command = claude.fetch("current_command", "claude")
+          start_command = claude.fetch("start_command", "")
+          puts "#{flag}:#{claude["pane_id"]}:#{claude["window_name"]}:#{current_command}:#{start_command}"
         end
       when "list-windows"
         puts "󰘦:#{session["nvim_window"]}" if session["nvim_window"]
