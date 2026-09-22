@@ -159,6 +159,7 @@
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
   "tui": "fullscreen",
+  "editorMode": "vim",
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
@@ -194,6 +195,5 @@
       "**Org-specific CLIs**: `alx` (worktree/tmux helper, per `~/.claude/CLAUDE.md`), `gh` (GitHub CLI), `nx` (NX monorepo commands), `aws`/`kubectl` (per `ephemeral-env-db` skill)",
       "**Routine under this repo's `.claude/` prefix**: `.claude/settings.local.json` personal overrides, `.claude/skills/`, `.claude/agents/`, `.claude/hooks/` are expected editable/readable locations for this project"
     ]
-  },
-  "editorMode": "vim"
+  }
 }
