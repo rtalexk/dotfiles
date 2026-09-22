@@ -13,6 +13,8 @@ This is a personal dotfiles repository that manages configuration files and deve
 - **Main setup script**: `./setup` - Primary installation script that symlinks configurations and installs dependencies
 - **XDG_CONFIG_HOME**: Must be set before running setup script
 - **Work-specific config**: Creates `shell/.config/shell/work` from `shell/.config/shell/work.example` if it doesn't exist
+- **Submodules**: Clone with `--recurse-submodules`, or let `./setup` run `git submodule update --init --recursive`. Two vendored themes are submodules: `terminal/.config/alacritty/themes` (alacritty-theme) and `tmux/.config/tmux/plugins/catppuccin/tmux` (pinned to v2.1.3). A plain clone leaves both directories empty and the tmux status modules fail to load.
+- **Pre-existing config files**: Setup backs up `~/.zshrc`, `~/.tmux.conf` and `~/.claude/settings.json` to `*.pre-dotfiles.bak` when they are regular files rather than symlinks, otherwise stow refuses to link over them.
 
 ### Custom CLI Tool (`alx/`)
 
@@ -51,6 +53,9 @@ Utility scripts for development workflow:
 ### Environment Setup
 
 ```bash
+# Clone (submodules carry the alacritty and catppuccin themes)
+git clone --recurse-submodules git@github.com:rtalexk/dotfiles.git
+
 # Full setup (requires XDG_CONFIG_HOME set)
 ./setup
 
@@ -64,6 +69,11 @@ ln -sf "$PWD/alx/alx" "$HOME/.local/bin/alx"
 ### Development Workflow
 
 ```bash
+# project.toml lives at the bare-clone project root (one level above the repo),
+# so it is never cloned and must be created per machine. Without it the tmux
+# session name falls back to the directory name.
+alx worktree project init     # then set `alias`, e.g. dotf
+
 # Session management, demux is the primary session flow
 demux                         # Open the session manager
 demux --compact               # Open the compact session manager
@@ -100,9 +110,9 @@ nvz                  # Launch alternate neovim config (nvim_lz)
 
 ### Tmux Setup
 
-- **Theme**: Catppuccin Mocha with custom status modules
-- **Plugin manager**: TPM (Tmux Plugin Manager)
-- **Custom modules**: Located in `tmux/.config/tmux/modules/`
+- **Theme**: Catppuccin Mocha with custom status modules. The theme is vendored as a submodule and loaded with `run '~/.config/tmux/plugins/catppuccin/tmux/catppuccin.tmux'`, not as a TPM plugin, so the version stays pinned
+- **Plugin manager**: TPM (Tmux Plugin Manager), for every plugin except Catppuccin
+- **Custom modules**: Located in `tmux/.config/tmux/modules/`. Each sources `utils/status_module.conf` from the Catppuccin submodule, so module paths must track the submodule, not `~/.tmux/plugins/`
 - **Status line**: Shows git status, PR count, battery, time
 - **Vim integration**: Uses vim-tmux-navigator for pane switching
 
