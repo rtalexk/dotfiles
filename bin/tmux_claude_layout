@@ -88,17 +88,23 @@ adopt_untagged_claude_pane() {
 
 find_claude_pane() {
   local session=$1
-  local flag pane_id window_name
+  local flag pane_id window_name pane_command pane_start_command
 
   CLAUDE_PANE_ID=
   CLAUDE_WINDOW_NAME=
-  tmux_capture list-panes -s -t "$session" -F '#{@main_claude}:#{pane_id}:#{window_name}'
-  while IFS=: read -r flag pane_id window_name; do
-    if [[ $flag == 1 ]]; then
-      CLAUDE_PANE_ID=$pane_id
-      CLAUDE_WINDOW_NAME=$window_name
-      return 0
+  tmux_capture list-panes -s -t "$session" \
+    -F '#{@main_claude}:#{pane_id}:#{window_name}:#{pane_current_command}:#{pane_start_command}'
+  while IFS=: read -r flag pane_id window_name pane_command pane_start_command; do
+    [[ $flag == 1 ]] || continue
+    # The tag outlives Claude when it ran from an interactive shell; moving
+    # that idle shell would name its window after Claude.
+    if [[ ${pane_command##*/} =~ ^(bash|zsh|fish|sh)$ && -z $pane_start_command ]]; then
+      tmux_run set-option -p -u -t "$pane_id" '@main_claude'
+      continue
     fi
+    CLAUDE_PANE_ID=$pane_id
+    CLAUDE_WINDOW_NAME=$window_name
+    return 0
   done <<< "$TMUX_OUTPUT"
   adopt_untagged_claude_pane "$session"
 }
