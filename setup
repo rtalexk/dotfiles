@@ -144,6 +144,10 @@ success "Git tools installed"
 brew install fnm pnpm
 success "Node packages installed"
 
+# Backs the PreToolUse hook in agents/.claude/settings.json
+brew install rtk
+success "rtk installed"
+
 # Build and install custom alx CLI
 if [ -d "$PWD/alx" ]; then
     log "Building alx CLI..."
