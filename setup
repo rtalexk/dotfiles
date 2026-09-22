@@ -159,6 +159,23 @@ if [ -d "$PWD/alx" ]; then
     success "alx CLI built and installed"
 fi
 
+# demux, built from source into the bare-worktree layout alx and sessions.toml expect
+DEMUX_ROOT="${PROJECTS:-$HOME/com.github}/demux"
+if [ ! -d "$DEMUX_ROOT/.bare" ]; then
+    log "Cloning demux..."
+    git clone --bare https://github.com/rtalexk/demux.git "$DEMUX_ROOT/.bare"
+    printf 'gitdir: ./.bare\n' >"$DEMUX_ROOT/.git"
+    git -C "$DEMUX_ROOT/.bare" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+    git -C "$DEMUX_ROOT/.bare" fetch origin
+    git -C "$DEMUX_ROOT" worktree add "$DEMUX_ROOT/main" main
+fi
+
+log "Building demux..."
+demux_version=$(git -C "$DEMUX_ROOT/main" describe --tags --always)
+(cd "$DEMUX_ROOT/main" && go build -ldflags "-X github.com/rtalexk/demux/cmd.Version=${demux_version#v}" -o demux .)
+ln -sf "$DEMUX_ROOT/main/demux" "$HOME/.local/bin/demux"
+success "demux $demux_version built and installed"
+
 echo ""
 echo -e "${GREEN}Setup complete!${NC}"
 

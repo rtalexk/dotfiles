@@ -14,6 +14,7 @@ This is a personal dotfiles repository that manages configuration files and deve
 - **XDG_CONFIG_HOME**: Must be set before running setup script
 - **Work-specific config**: Creates `shell/.config/shell/work` from `shell/.config/shell/work.example` if it doesn't exist
 - **Submodules**: Clone with `--recurse-submodules`, or let `./setup` run `git submodule update --init --recursive`. Two vendored themes are submodules: `terminal/.config/alacritty/themes` (alacritty-theme) and `tmux/.config/tmux/plugins/catppuccin/tmux` (pinned to v2.1.3). A plain clone leaves both directories empty and the tmux status modules fail to load.
+- **demux**: Setup clones it to `$PROJECTS/demux` in the same bare-worktree layout as any other project and builds it with `go build`, version-stamped from `git describe`, symlinked into `~/.local/bin`. It is not installed from Homebrew, so the binary tracks the checkout.
 - **Pre-existing config files**: Setup backs up `~/.zshrc`, `~/.tmux.conf` and `~/.claude/settings.json` to `*.pre-dotfiles.bak` when they are regular files rather than symlinks, otherwise stow refuses to link over them.
 
 ### Custom CLI Tool (`alx/`)
