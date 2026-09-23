@@ -17,3 +17,6 @@ source $XDG_CONFIG_HOME/shell/user_config
 
 # See `:help modeline`
 # vim: ts=4 sts=4 sw=4 et
+
+# direnv
+eval "$(direnv hook zsh)"
