@@ -10,6 +10,11 @@ keybind = f12=toggle_maximize
 # Toggle demux sticky sidebar (sends M-E; tmux runs 'demux sidebar toggle')
 keybind = cmd+shift+e=text:\x1bE
 
+# Jump to main sessions (sends M-1..3; Option+digit is taken by Mission Control)
+keybind = cmd+digit_1=text:\x1b1
+keybind = cmd+digit_2=text:\x1b2
+keybind = cmd+digit_3=text:\x1b3
+
 # Look and feel
 macos-titlebar-style = hidden
 
