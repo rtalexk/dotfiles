@@ -15,8 +15,8 @@ source $XDG_CONFIG_HOME/shell/user_config
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
 
-# See `:help modeline`
-# vim: ts=4 sts=4 sw=4 et
-
 # direnv
 eval "$(direnv hook zsh)"
+
+# See `:help modeline`
+# vim: ts=4 sts=4 sw=4 et
