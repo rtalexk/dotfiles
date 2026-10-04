@@ -7,6 +7,7 @@ export PROJECTS="$HOME/com.github"
 export DOTFILES="$PROJECTS/dotfiles/main"
 export ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 export BRAIN="$HOME/Documents/Notes"
+export MASTER="$ICLOUD/Documents/Educación/Maestría/"
 
 export FZF_DEFAULT_OPTS="--tiebreak=length,begin,index"
 
