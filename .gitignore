@@ -12,5 +12,6 @@ alx/alx
 tmux/.config/sesh/sesh.toml
 
 demux/.config/demux/private.toml
+agents/.config/opencode/service.json
 
 docs/
