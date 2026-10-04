@@ -436,17 +436,85 @@ vim.keymap.set('n', '<leader>ti', function()
 end, { buffer = bufnr, desc = 'Incomplete todo' })
 vim.keymap.set('n', '<leader>tn', create_new_todo, { buffer = bufnr, desc = 'New todo' })
 
+local GLOW_MAX_WIDTH = 0
+local GLOW_SCROLL_LINES = 3
+
 local function glow_preview(split)
   local file = vim.fn.shellescape(vim.fn.expand '%')
   if split then
     vim.cmd 'vsplit'
   end
   vim.cmd 'enew'
-  vim.fn.termopen('glow -p ' .. file, {
+
+  local term_buf = vim.api.nvim_get_current_buf()
+  local width = vim.api.nvim_win_get_width(0) - 2
+  if GLOW_MAX_WIDTH > 0 then
+    width = math.min(width, GLOW_MAX_WIDTH)
+  end
+
+  local job = vim.fn.termopen(('glow -w %d -p %s'):format(math.max(width, 40), file), {
     on_exit = function(_, _, _)
       vim.cmd 'bdelete!'
     end,
   })
+
+  -- Clicks drop nvim out of terminal mode and steal the pager keys; send them back.
+  for _, lhs in ipairs { '<LeftMouse>', '<LeftRelease>', '<LeftDrag>', '<2-LeftMouse>' } do
+    vim.keymap.set('n', lhs, '<Cmd>startinsert<CR>', { buffer = term_buf })
+  end
+  vim.keymap.set('n', '<Esc>', '<Cmd>startinsert<CR>', { buffer = term_buf })
+
+  -- Glow's pager ignores wheel events, so translate them into its j/k bindings.
+  local function wheel(key)
+    return function()
+      vim.api.nvim_chan_send(job, string.rep(key, GLOW_SCROLL_LINES))
+      vim.cmd 'startinsert'
+    end
+  end
+
+  local directions = { ScrollWheelDown = 'j', ScrollWheelUp = 'k' }
+  -- Fast or diagonal trackpad scrolling emits multi-click and horizontal variants;
+  -- any one left unmapped falls through to nvim and kicks the buffer into normal mode.
+  local prefixes = { '', '2-', '3-', '4-', 'S-', 'C-', 'M-' }
+  for _, mode in ipairs { 'n', 't' } do
+    for name, key in pairs(directions) do
+      for _, prefix in ipairs(prefixes) do
+        vim.keymap.set(mode, ('<%s%s>'):format(prefix, name), wheel(key), { buffer = term_buf })
+      end
+    end
+    for _, name in ipairs { 'ScrollWheelLeft', 'ScrollWheelRight' } do
+      for _, prefix in ipairs(prefixes) do
+        vim.keymap.set(mode, ('<%s%s>'):format(prefix, name), '<Nop>', { buffer = term_buf })
+      end
+    end
+  end
+
+  -- Last resort: anything that still escapes to normal mode goes straight back,
+  -- unless the exit was deliberate.
+  vim.b[term_buf].glow_pinned = true
+  vim.keymap.set('t', '<C-\\><C-n>', function()
+    vim.b[term_buf].glow_pinned = false
+    vim.cmd 'stopinsert'
+  end, { buffer = term_buf })
+
+  vim.api.nvim_create_autocmd('ModeChanged', {
+    pattern = 't:n',
+    callback = function()
+      if not vim.api.nvim_buf_is_valid(term_buf) then
+        return true
+      end
+      vim.schedule(function()
+        if
+          vim.api.nvim_buf_is_valid(term_buf)
+          and vim.api.nvim_get_current_buf() == term_buf
+          and vim.b[term_buf].glow_pinned
+        then
+          vim.cmd 'startinsert'
+        end
+      end)
+    end,
+  })
+
   vim.cmd 'startinsert'
 end
 
