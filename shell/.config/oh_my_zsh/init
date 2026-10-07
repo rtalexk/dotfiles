@@ -83,4 +83,7 @@ source $ZSH/oh-my-zsh.sh
 
 # User Configuration
 
+# Set after the theme loads so it is not overwritten by it.
+RPROMPT='%F{245}%D{%b %-d at %H:%M:%S}%f'
+
 eval "$(fnm env --use-on-cd --shell zsh)"
