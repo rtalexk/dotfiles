@@ -48,11 +48,12 @@ func runRemove(cmd *cobra.Command, args []string) error {
   }
 
   bareDir := filepath.Join(root, ".bare")
+  defaultBranch := utils.DefaultBranch(bareDir, project.Config)
 
   // Resolve path
   var path string
   if fuzzyFlag {
-    path, err = pickWorktree(bareDir, root)
+    path, err = pickWorktree(bareDir, root, defaultBranch)
     if err != nil {
       if err == errCancelled {
         return nil
@@ -73,7 +74,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 
   forceDelete := forceFlag
   if !forceFlag {
-    merged, err := isMerged(bareDir, branch)
+    merged, err := isMerged(bareDir, branch, defaultBranch)
     if err != nil {
       return err
     }
@@ -161,19 +162,10 @@ func runRemove(cmd *cobra.Command, args []string) error {
   return nil
 }
 
-func pickWorktree(bareDir, root string) (string, error) {
+func pickWorktree(bareDir, root, defaultBranch string) (string, error) {
   out, err := exec.Command("git", "-C", bareDir, "worktree", "list").Output()
   if err != nil {
     return "", fmt.Errorf("failed to list worktrees: %w", err)
-  }
-
-  defaultBranch := "main"
-  if refOut, err := exec.Command("git", "-C", bareDir, "symbolic-ref", "refs/remotes/origin/HEAD").Output(); err == nil {
-    ref := strings.TrimSpace(string(refOut))
-    parts := strings.Split(ref, "/")
-    if len(parts) > 0 {
-      defaultBranch = parts[len(parts)-1]
-    }
   }
 
   var names []string
@@ -251,16 +243,7 @@ func worktreeBranch(bareDir, worktreePath string) (string, error) {
   return "", fmt.Errorf("could not find branch for worktree path %s", worktreePath)
 }
 
-func isMerged(bareDir, branch string) (bool, error) {
-  defaultBranch := "main"
-  if out, err := exec.Command("git", "-C", bareDir, "symbolic-ref", "refs/remotes/origin/HEAD").Output(); err == nil {
-    ref := strings.TrimSpace(string(out))
-    parts := strings.Split(ref, "/")
-    if len(parts) > 0 {
-      defaultBranch = parts[len(parts)-1]
-    }
-  }
-
+func isMerged(bareDir, branch, defaultBranch string) (bool, error) {
   out, err := exec.Command("git", "-C", bareDir, "branch", "--merged", defaultBranch).Output()
   if err != nil {
     return false, fmt.Errorf("failed to check merged branches: %w", err)
