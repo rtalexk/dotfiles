@@ -5,6 +5,7 @@ import (
   "fmt"
   "os"
   "os/exec"
+  "path/filepath"
 
   "github.com/spf13/cobra"
 )
@@ -28,10 +29,27 @@ func runMain(cmd *cobra.Command, args []string) error {
     return err
   }
 
-  sessionName := project.SessionName("main")
+  bareDir := filepath.Join(root, ".bare")
+  defaultBranch := utils.DefaultBranch(bareDir, project.Config)
+
+  worktrees, err := utils.ListWorktrees(bareDir, root, project)
+  if err != nil {
+    return err
+  }
+
+  sessionName := mainSessionName(project, worktrees, defaultBranch)
   connectCmd := exec.Command("demux", "session", "connect", sessionName)
   connectCmd.Stdin = os.Stdin
   connectCmd.Stdout = os.Stdout
   connectCmd.Stderr = os.Stderr
   return connectCmd.Run()
+}
+
+func mainSessionName(project *utils.Project, worktrees []utils.WorktreeInfo, defaultBranch string) string {
+  for _, wt := range worktrees {
+    if wt.Branch == defaultBranch {
+      return project.SessionName(wt.Path)
+    }
+  }
+  return project.SessionName(defaultBranch)
 }

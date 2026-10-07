@@ -364,3 +364,72 @@ strategy = "hardlink"
     t.Errorf("error should name the bad strategy, got: %v", err)
   }
 }
+
+func TestLoadProject_DefaultBranch(t *testing.T) {
+  tmp := t.TempDir()
+  os.WriteFile(filepath.Join(tmp, "project.toml"), []byte(`default_branch = "release_candidate"`), 0644)
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.DefaultBranch != "release_candidate" {
+    t.Errorf("got %q, want release_candidate", p.Config.DefaultBranch)
+  }
+}
+
+func TestLoadProject_NoDefaultBranch_StaysEmpty(t *testing.T) {
+  tmp := t.TempDir()
+
+  p, err := utils.LoadProject(tmp)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if p.Config.DefaultBranch != "" {
+    t.Errorf("expected empty, got %q", p.Config.DefaultBranch)
+  }
+}
+
+func TestDefaultBranch_ConfigWinsOverOriginHEAD(t *testing.T) {
+  bare := newBareWithOriginHEAD(t, "release_candidate")
+
+  got := utils.DefaultBranch(bare, utils.ProjectConfig{DefaultBranch: "trunk"})
+  if got != "trunk" {
+    t.Errorf("got %q, want trunk", got)
+  }
+}
+
+func TestDefaultBranch_FromOriginHEAD(t *testing.T) {
+  bare := newBareWithOriginHEAD(t, "release_candidate")
+
+  got := utils.DefaultBranch(bare, utils.ProjectConfig{})
+  if got != "release_candidate" {
+    t.Errorf("got %q, want release_candidate", got)
+  }
+}
+
+func TestDefaultBranch_FallsBackToMain(t *testing.T) {
+  tmp := t.TempDir()
+  bare := filepath.Join(tmp, ".bare")
+  if err := runCmd(tmp, "git", "init", "--bare", bare); err != nil {
+    t.Fatalf("git init --bare: %v", err)
+  }
+
+  got := utils.DefaultBranch(bare, utils.ProjectConfig{})
+  if got != "main" {
+    t.Errorf("got %q, want main", got)
+  }
+}
+
+func newBareWithOriginHEAD(t *testing.T, branch string) string {
+  t.Helper()
+  tmp := t.TempDir()
+  bare := filepath.Join(tmp, ".bare")
+  if err := runCmd(tmp, "git", "init", "--bare", bare); err != nil {
+    t.Fatalf("git init --bare: %v", err)
+  }
+  if err := runCmd(bare, "git", "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/"+branch); err != nil {
+    t.Fatalf("git symbolic-ref: %v", err)
+  }
+  return bare
+}

@@ -42,6 +42,9 @@ func init() {
 const projectTOMLTemplate = `# alias defaults to the project root directory name
 # alias = "myapp"
 
+# default_branch defaults to origin/HEAD, then "main"
+# default_branch = "release_candidate"
+
 # on_create runs once when the worktree is first created
 # on_create defaults to setup.rb / setup.sh / setup if present
 # on_create = "bin/setup"
@@ -116,6 +119,9 @@ func runProjectShow(cmd *cobra.Command, args []string) error {
 func renderProjectConfig(cfg utils.ProjectConfig) string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("alias = %q\n", cfg.Alias))
+	if cfg.DefaultBranch != "" {
+		sb.WriteString(fmt.Sprintf("default_branch = %q\n", cfg.DefaultBranch))
+	}
 	if len(cfg.OnCreate) == 1 {
 		sb.WriteString(fmt.Sprintf("on_create = %q\n", cfg.OnCreate[0]))
 	} else if len(cfg.OnCreate) > 1 {

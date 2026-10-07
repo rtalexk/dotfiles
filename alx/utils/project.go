@@ -113,10 +113,11 @@ type DemuxConfig struct {
 }
 
 type ProjectConfig struct {
-  Alias     string       `toml:"alias"`
-  OnCreate  OnCreateList `toml:"on_create"`
-  CopyFiles CopyFileList `toml:"copy_files"`
-  Demux     DemuxConfig  `toml:"demux"`
+  Alias         string       `toml:"alias"`
+  DefaultBranch string       `toml:"default_branch"`
+  OnCreate      OnCreateList `toml:"on_create"`
+  CopyFiles     CopyFileList `toml:"copy_files"`
+  Demux         DemuxConfig  `toml:"demux"`
 }
 
 type Project struct {
@@ -151,6 +152,26 @@ func LoadProject(root string) (*Project, error) {
   }
 
   return &Project{Root: root, Config: cfg}, nil
+}
+
+// DefaultBranch resolves the project's default branch: project.toml wins,
+// then origin/HEAD, then "main".
+func DefaultBranch(bareDir string, cfg ProjectConfig) string {
+  if cfg.DefaultBranch != "" {
+    return cfg.DefaultBranch
+  }
+
+  out, err := exec.Command("git", "-C", bareDir, "symbolic-ref", "refs/remotes/origin/HEAD").Output()
+  if err != nil {
+    return "main"
+  }
+
+  ref := strings.TrimSpace(string(out))
+  if branch := strings.TrimPrefix(ref, "refs/remotes/origin/"); branch != ref && branch != "" {
+    return branch
+  }
+
+  return "main"
 }
 
 func (p *Project) SessionName(path string) string {

@@ -75,6 +75,10 @@ ln -sf "$PWD/alx/alx" "$HOME/.local/bin/alx"
 # session name falls back to the directory name.
 alx worktree project init     # then set `alias`, e.g. dotf
 
+# alx worktree main connects to the worktree holding the default branch,
+# resolved from project.toml `default_branch`, then origin/HEAD, then "main".
+# Set default_branch only when origin/HEAD is unset or points elsewhere.
+
 # Session management, demux is the primary session flow
 demux                         # Open the session manager
 demux --compact               # Open the compact session manager
