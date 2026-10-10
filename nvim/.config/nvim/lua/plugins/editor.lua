@@ -143,6 +143,30 @@ return {
     },
   },
 
+  { -- Open the current file, line or selection on the git remote
+    'linrongbin16/gitlinker.nvim',
+    cmd = 'GitLink',
+    keys = {
+      -- rev=HEAD skips the search for the closest pushed commit: the url carries the
+      -- branch name, so the rev is only used to check the file exists and is unchanged.
+      { '<leader>goo', '<cmd>GitLink! file rev=HEAD<cr>', desc = 'Open file' },
+      { '<leader>gol', '<cmd>GitLink! current_branch rev=HEAD<cr>', mode = { 'n', 'v' }, desc = 'Open line' },
+      { '<leader>goy', '<cmd>GitLink current_branch rev=HEAD<cr>', mode = { 'n', 'v' }, desc = 'Yank link' },
+      { '<leader>gor', '<cmd>GitLink! repo rev=HEAD<cr>', desc = 'Open repo' },
+    },
+    opts = {
+      message = false,
+      router = {
+        file = {
+          ['^github%.com'] = 'https://github.com/{_A.ORG}/{_A.REPO}/blob/{_A.CURRENT_BRANCH}/{_A.FILE}',
+        },
+        repo = {
+          ['^github%.com'] = 'https://github.com/{_A.ORG}/{_A.REPO}',
+        },
+      },
+    },
+  },
+
   { -- Easily navigate between working files
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
@@ -602,6 +626,7 @@ return {
         { '<leader>gb', group = 'Blame' },
         { '<leader>gd', group = 'Diff' },
         { '<leader>gh', group = 'Hunk' },
+        { '<leader>go', group = 'Open' },
         { '<leader>r', group = 'Rest' },
         { '<leader>s', group = 'Search' },
         { '<leader>t', group = 'Test' },
