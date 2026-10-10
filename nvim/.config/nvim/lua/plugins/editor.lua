@@ -127,13 +127,13 @@ return {
 
         map('n', '<leader>ghp', gs.preview_hunk_inline, 'Preview hunk inline')
 
-        map('n', '<leader>ghb', function()
+        map('n', '<leader>gbl', function()
           gs.blame_line { full = true }
         end, 'Blame line')
-        map('n', '<leader>ghL', '<cmd>Gitsigns toggle_current_line_blame<CR>', 'Toggle line blame')
+        map('n', '<leader>gbt', '<cmd>Gitsigns toggle_current_line_blame<CR>', 'Toggle line blame')
 
-        map('n', '<leader>ghd', gs.diffthis, 'Diff this')
-        map('n', '<leader>ghD', function()
+        map('n', '<leader>gdl', gs.diffthis, 'Diff this')
+        map('n', '<leader>gdp', function()
           gs.diffthis '~'
         end, 'Diff this ~')
 
@@ -526,7 +526,7 @@ return {
 
       vim.keymap.set('n', '<leader>gC', builtin.git_commits, { desc = 'Project commits' })
       vim.keymap.set('n', '<leader>gc', builtin.git_bcommits, { desc = 'Buffer commits' })
-      vim.keymap.set('n', '<leader>gb', builtin.git_branches, { desc = 'Branches' })
+      vim.keymap.set('n', '<leader>gB', builtin.git_branches, { desc = 'Branches' })
       -- Bare repo + worktree setup: the parent dir is not a git repo, so we must resolve
       -- the worktree toplevel explicitly. Without cwd, Telescope falls through to try_worktrees
       -- and errors. expand_dir=false avoids -uall which causes a plenary oneshot channel
@@ -599,6 +599,8 @@ return {
         { '<leader>c', group = 'Code' },
         { '<leader>f', group = 'File' },
         { '<leader>g', group = 'Git' },
+        { '<leader>gb', group = 'Blame' },
+        { '<leader>gd', group = 'Diff' },
         { '<leader>gh', group = 'Hunk' },
         { '<leader>r', group = 'Rest' },
         { '<leader>s', group = 'Search' },
