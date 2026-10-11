@@ -29,6 +29,7 @@ end
 require 'config.options'
 require 'config.keymaps'
 require 'config.autocmds'
+require 'config.undo'
 require 'config.globals'
 
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
