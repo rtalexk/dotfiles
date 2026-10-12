@@ -13,6 +13,7 @@ M.ensure_installed = {
   'luadoc',
   'markdown',
   'markdown_inline',
+  'python',
   'ruby',
   'rust',
   'toml',

@@ -49,9 +49,9 @@ return {
         json = { 'prettier' },
         rust = { 'rustfmt' },
         toml = { 'taplo' },
+        python = { 'ruff_organize_imports', 'ruff_format' },
         -- ruby = { 'standardrb' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
       },
     },
   },

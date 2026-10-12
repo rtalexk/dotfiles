@@ -337,6 +337,36 @@ return {
           },
         },
 
+        -- Python types, completion and hover
+        basedpyright = {
+          settings = {
+            basedpyright = {
+              analysis = {
+                typeCheckingMode = 'standard',
+                diagnosticMode = 'openFilesOnly',
+                inlayHints = {
+                  variableTypes = true,
+                  functionReturnTypes = true,
+                  callArgumentNames = true,
+                },
+              },
+            },
+          },
+          -- Bare basedpyright does not look for a project venv, so point it at
+          -- one when the project carries it
+          before_init = function(_, config)
+            local root = config.root_dir or vim.fn.getcwd()
+            local python = root .. '/.venv/bin/python'
+            if vim.fn.executable(python) == 1 then
+              config.settings = config.settings or {}
+              config.settings.python = { pythonPath = python }
+            end
+          end,
+        },
+
+        -- Python lint and format
+        ruff = {},
+
         -- TOML, Cargo.toml and friends
         taplo = {},
 
