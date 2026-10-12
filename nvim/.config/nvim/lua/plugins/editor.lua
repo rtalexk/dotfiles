@@ -56,6 +56,9 @@ return {
       view = { display_mode = 'border' },
     },
     cmd = { 'CsvViewEnable', 'CsvViewDisable', 'CsvViewToggle' },
+    keys = {
+      { '<leader>uc', '<cmd>CsvViewToggle<CR>', desc = 'Toggle CSV view' },
+    },
   },
 
   -- {
