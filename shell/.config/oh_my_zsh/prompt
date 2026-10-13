@@ -1,0 +1,37 @@
+#!/usr/bin/env zsh
+
+ZSH_THEME_GIT_PROMPT_PREFIX=" %F{8}(%F{red}"
+ZSH_THEME_GIT_PROMPT_SUFFIX="%F{8})%f"
+ZSH_THEME_GIT_PROMPT_DIRTY="%F{yellow} ✗"
+ZSH_THEME_GIT_PROMPT_CLEAN=""
+
+_prompt_visible_length() {
+  setopt localoptions extendedglob
+  local expanded=${(%%)1}
+  expanded=${(S)expanded//$'\e'\[[0-9;]#[a-zA-Z]/}
+  print -r -- ${#expanded}
+}
+
+_prompt_render() {
+  local head="%F{green}[ %n ]%f %F{cyan}../%c%f$(git_prompt_info)"
+  local tail="%F{245}%D{%b %-d at %H:%M:%S}%f"
+  local empty="" spacer
+
+  local gap=$(( COLUMNS - 3 - $(_prompt_visible_length $head) - $(_prompt_visible_length $tail) ))
+  if (( gap > 3 )); then
+    spacer=" %F{8}${(l:$((gap - 2))::-:)empty}%f "
+  else
+    (( gap < 1 )) && gap=1
+    spacer=${(l:gap:: :)empty}
+  fi
+
+  PROMPT="%F{8}╭─%f${head}${spacer}${tail}"$'\n'"%F{8}╰─%f%F{green}\$%f "
+}
+
+precmd_functions+=(_prompt_render)
+RPROMPT=''
+
+TRAPWINCH() {
+  _prompt_render
+  zle && zle reset-prompt
+}

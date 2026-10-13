@@ -7,7 +7,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="fwalch"
+ZSH_THEME=""
 
 # Disable terminal title and command echoing
 DISABLE_AUTO_TITLE="true"
@@ -83,7 +83,7 @@ source $ZSH/oh-my-zsh.sh
 
 # User Configuration
 
-# Set after the theme loads so it is not overwritten by it.
-RPROMPT='%F{245}%D{%b %-d at %H:%M:%S}%f'
+# Set after oh-my-zsh loads so the git plugin helpers are available.
+source $XDG_CONFIG_HOME/oh_my_zsh/prompt
 
 eval "$(fnm env --use-on-cd --shell zsh)"
