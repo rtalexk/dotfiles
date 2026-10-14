@@ -15,18 +15,19 @@ This is a personal dotfiles repository that manages configuration files and deve
 - **Work-specific config**: Creates `shell/.config/shell/work` from `shell/.config/shell/work.example` if it doesn't exist
 - **Submodules**: Clone with `--recurse-submodules`, or let `./setup` run `git submodule update --init --recursive`. Two vendored themes are submodules: `terminal/.config/alacritty/themes` (alacritty-theme) and `tmux/.config/tmux/plugins/catppuccin/tmux` (pinned to v2.1.3). A plain clone leaves both directories empty and the tmux status modules fail to load.
 - **demux**: Setup clones it to `$PROJECTS/demux` in the same bare-worktree layout as any other project and builds it with `go build`, version-stamped from `git describe`, symlinked into `~/.local/bin`. It is not installed from Homebrew, so the binary tracks the checkout.
-- **Pre-existing config files**: Setup backs up `~/.zshrc`, `~/.tmux.conf` and `~/.claude/settings.json` to `*.pre-dotfiles.bak` when they are regular files rather than symlinks, otherwise stow refuses to link over them.
+- **Pre-existing config files**: Setup backs up `~/.zshrc` and `~/.tmux.conf` to `*.pre-dotfiles.bak` when they are regular files rather than symlinks, otherwise stow refuses to link over them. `~/.claude/settings.json` belongs to the private repo, which does its own backing up.
 - **Destination directories**: Setup creates `~/.claude` before stowing. Stow links a directory whole when the target lacks it, which would redirect everything later written there into this repository.
 
 ### Private Configuration
 
-The configuration that cannot be public (per-project agent instructions, helper scripts, and the `project.toml` and `.bare/info/exclude` files that live at project roots) is kept in a private sibling repository with its own setup script.
+The configuration that cannot be public (Claude Code settings, per-project agent instructions, helper scripts, and the `project.toml` and `.bare/info/exclude` files that live at project roots) is kept in a private sibling repository with its own setup script.
 
 - **Clone URL**: `DOTFILES_PRIVATE_REPO`, resolved by `bin/private_repo_url` from the environment first, then from `shell/.config/shell/work`. The variable is commented out in `shell/.config/shell/work.example`, so a fresh machine passes it once: `DOTFILES_PRIVATE_REPO=... ./setup`
 - **Location**: cloned to `private/` beside this worktree, at the bare-clone project root, so no worktree has to ignore it
 - **Runs another repository's script**: `./setup` executes `../private/setup` when it is executable. A failure there is logged and the rest of setup continues
 - **Unset or unreachable**: setup logs and skips the whole private phase, so the public configuration installs on its own. The clone is over SSH and setup provisions no key
 - **Cloned once**: setup clones only when `../private/.git` is absent and never fetches, so pull that repository by hand to pick up config added on another machine
+- **Owns `~/.claude`**: `settings.json` and `CLAUDE.md` both come from there. `settings.json` carries `autoMode.environment`, which describes a private employer system, so it cannot live in this repository. Setup warns when the file is absent after the private phase, because Claude Code otherwise starts with no hooks and no `autoMode` policy and says nothing about it
 
 ### Custom CLI Tool (`alx/`)
 

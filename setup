@@ -5,6 +5,7 @@ set -e
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 log() {
@@ -13,6 +14,10 @@ log() {
 
 success() {
     echo -e "${GREEN}✓${NC} $1"
+}
+
+warn() {
+    echo -e "${YELLOW}!${NC} $1"
 }
 
 # Set XDG_CONFIG_HOME if not already set
@@ -55,7 +60,7 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
 fi
 
 # Oh My Zsh writes its own .zshrc when none exists, which then blocks stow
-for target in "$HOME/.zshrc" "$HOME/.tmux.conf" "$HOME/.claude/settings.json"; do
+for target in "$HOME/.zshrc" "$HOME/.tmux.conf"; do
     if [ -f "$target" ] && [ ! -L "$target" ]; then
         log "Backing up existing $(basename "$target") to $target.pre-dotfiles.bak"
         mv "$target" "$target.pre-dotfiles.bak"
@@ -90,6 +95,14 @@ fi
 
 if [ -x "$PRIVATE_ROOT/setup" ]; then
     "$PRIVATE_ROOT/setup" || log "Private setup failed, continuing"
+fi
+
+# The private repo owns ~/.claude/settings.json. Without it Claude Code starts
+# with defaults: no hooks, no autoMode policy. That is quiet enough to go
+# unnoticed, so say so loudly.
+if [ ! -e "$HOME/.claude/settings.json" ]; then
+    warn "~/.claude/settings.json is missing, so Claude Code has no hooks and no autoMode policy"
+    warn "it comes from the private repo, so fix the private phase above and re-run"
 fi
 
 # $BRAIN notes vault, lives in iCloud and is linked into ~/Documents
@@ -164,10 +177,10 @@ success "Git tools installed"
 brew install fnm pnpm
 success "Node packages installed"
 
-# Backs the PreToolUse hook in agents/.claude/settings.json
+# Backs the PreToolUse hook the private repo configures in ~/.claude/settings.json
 brew install rtk
 # Generates ~/.claude/RTK.md, which CLAUDE.md references as @RTK.md.
-# --no-patch still writes RTK.md, and leaves the stowed settings.json alone
+# --no-patch still writes RTK.md, and leaves the linked settings.json alone
 rtk init --global --no-patch
 success "rtk installed and initialized"
 
