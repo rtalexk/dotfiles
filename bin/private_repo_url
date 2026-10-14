@@ -12,8 +12,9 @@ work_file="${1:-${XDG_CONFIG_HOME:-$HOME/.config}/shell/work}"
 [ -f "$work_file" ] || exit 0
 
 # The work file is sourced by zsh and may hold syntax bash cannot parse, so read
-# the value out of a subshell where a failure cannot propagate.
-url=$(bash -c 'source "$1" >/dev/null 2>&1; printf "%s" "${DOTFILES_PRIVATE_REPO:-}"' _ "$work_file" 2>/dev/null) || url=""
+# the value out of a subshell where a failure cannot propagate. Its stdin is
+# closed because a prompt in the work file would otherwise hang setup unseen.
+url=$(bash -c 'source "$1" >/dev/null 2>&1; printf "%s" "${DOTFILES_PRIVATE_REPO:-}"' _ "$work_file" </dev/null 2>/dev/null) || url=""
 
 [ -n "$url" ] && printf '%s\n' "$url"
 exit 0
