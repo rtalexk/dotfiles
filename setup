@@ -72,6 +72,21 @@ find "$HOME/.config" -maxdepth 1 -type l -exec sh -c '[ ! -e "$1" ] && rm "$1"' 
 stow --restow --dir="$PWD" --target="$HOME" shell tmux nvim terminal git-tools demux agents
 success "Configurations stowed"
 
+# Private config, cloned beside the worktrees so no worktree has to ignore it
+PRIVATE_REPO="$("$PWD/bin/private_repo_url" "$PWD/shell/.config/shell/work")"
+PRIVATE_ROOT="$(dirname "$PWD")/private"
+
+if [ -z "$PRIVATE_REPO" ]; then
+    log "DOTFILES_PRIVATE_REPO unset, skipping private config"
+elif [ ! -d "$PRIVATE_ROOT/.git" ]; then
+    log "Cloning private config..."
+    git clone "$PRIVATE_REPO" "$PRIVATE_ROOT" || log "Private config unavailable, skipping"
+fi
+
+if [ -x "$PRIVATE_ROOT/setup" ]; then
+    "$PRIVATE_ROOT/setup"
+fi
+
 # $BRAIN notes vault, lives in iCloud and is linked into ~/Documents
 BRAIN_TARGET="${ICLOUD:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}/Notes"
 BRAIN_LINK="$HOME/Documents/Notes"

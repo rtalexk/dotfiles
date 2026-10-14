@@ -7,3 +7,6 @@
 export GITHUB_WIP_LABELS="WIP,POC"
 export CURRENT_EMPLOYER=""
 export WORK_MAIN_PROJECT=""
+
+# Clone URL for the private dotfiles config repo, read by ./setup.
+# export DOTFILES_PRIVATE_REPO="git@github.com:<user>/<repo>.git"
