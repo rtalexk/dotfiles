@@ -161,7 +161,9 @@ success "Node packages installed"
 
 # Backs the PreToolUse hook in agents/.claude/settings.json
 brew install rtk
-success "rtk installed"
+# Generates ~/.claude/RTK.md, which CLAUDE.md references as @RTK.md
+rtk init --global --auto-patch
+success "rtk installed and initialized"
 
 # Build and install custom alx CLI
 if [ -d "$PWD/alx" ]; then
