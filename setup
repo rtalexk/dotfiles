@@ -84,7 +84,7 @@ elif [ ! -d "$PRIVATE_ROOT/.git" ]; then
 fi
 
 if [ -x "$PRIVATE_ROOT/setup" ]; then
-    "$PRIVATE_ROOT/setup"
+    "$PRIVATE_ROOT/setup" || log "Private setup failed, continuing"
 fi
 
 # $BRAIN notes vault, lives in iCloud and is linked into ~/Documents
