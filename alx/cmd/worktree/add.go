@@ -15,31 +15,25 @@ import (
 var (
   addBase     string
   addDetached bool
+  addIssue    int
+  addPR       int
 )
 
 var AddCmd = &cobra.Command{
-  Use:   "add <path> [branch]",
+  Use:   "add [path] [branch]",
   Short: "Create a new worktree and tmux session",
-  Args:  cobra.RangeArgs(1, 2),
+  Args:  cobra.RangeArgs(0, 2),
   RunE:  runAdd,
 }
 
 func init() {
   AddCmd.Flags().StringVar(&addBase, "base", "", "base ref for the new branch ('@' = current branch)")
   AddCmd.Flags().BoolVarP(&addDetached, "detached", "d", false, "Leave the new session detached instead of switching to it")
+  AddCmd.Flags().IntVar(&addIssue, "issue", 0, "Name the branch after GitHub issue N")
+  AddCmd.Flags().IntVar(&addPR, "pr", 0, "Check out the head branch of GitHub pull request N")
 }
 
 func runAdd(cmd *cobra.Command, args []string) error {
-  path := args[0]
-  branch := path
-  if len(args) == 2 {
-    branch = args[1]
-  }
-
-  if strings.Contains(path, "..") {
-    return fmt.Errorf("path must not contain '..': %s", path)
-  }
-
   root, err := utils.FindProjectRoot()
   if err != nil {
     return err
@@ -51,6 +45,16 @@ func runAdd(cmd *cobra.Command, args []string) error {
   }
 
   bareDir := filepath.Join(root, ".bare")
+
+  path, branch, err := resolveAddTarget(bareDir, args, addIssue, addPR)
+  if err != nil {
+    return err
+  }
+
+  if strings.Contains(path, "..") {
+    return fmt.Errorf("path must not contain '..': %s", path)
+  }
+
   worktreeDir := filepath.Join(root, path)
 
   base, err := resolveBase(addBase)
@@ -151,6 +155,72 @@ func connectCommand(sessionName string, detached, insideTmux bool) *exec.Cmd {
   return cmd
 }
 
+
+func validateAddArgs(args []string, issue, pr int) error {
+  switch {
+  case issue != 0 && pr != 0:
+    return fmt.Errorf("--issue and --pr are mutually exclusive")
+  case issue < 0:
+    return fmt.Errorf("--issue must be a positive number")
+  case pr < 0:
+    return fmt.Errorf("--pr must be a positive number")
+  case issue == 0 && pr == 0 && len(args) == 0:
+    return fmt.Errorf("a worktree path is required unless --issue or --pr is given")
+  case (issue != 0 || pr != 0) && len(args) == 2:
+    return fmt.Errorf("--issue and --pr name the branch themselves; pass at most a path")
+  }
+  return nil
+}
+
+// resolveAddTarget decides the worktree path and the branch, asking GitHub
+// for the name when --issue or --pr is given.
+func resolveAddTarget(bareDir string, args []string, issue, pr int) (string, string, error) {
+  if err := validateAddArgs(args, issue, pr); err != nil {
+    return "", "", err
+  }
+
+  if issue == 0 && pr == 0 {
+    path := args[0]
+    branch := path
+    if len(args) == 2 {
+      branch = args[1]
+    }
+    return path, branch, nil
+  }
+
+  var branch string
+  if issue != 0 {
+    info, err := fetchIssue(bareDir, issue)
+    if err != nil {
+      return "", "", err
+    }
+    branch = issueBranch(issue, info.Title)
+  } else {
+    info, err := fetchPullRequest(bareDir, pr)
+    if err != nil {
+      return "", "", err
+    }
+    branch = prBranch(info)
+    if err := fetchPullRequestRef(bareDir, info, branch); err != nil {
+      return "", "", err
+    }
+  }
+
+  if len(args) == 1 {
+    return args[0], branch, nil
+  }
+  return worktreePathFor(branch), branch, nil
+}
+
+func fetchPullRequestRef(bareDir string, info pullRequestInfo, branch string) error {
+  fetch := exec.Command("git", "-C", bareDir, "fetch", "origin", prFetchRefspec(info, branch))
+  fetch.Stdout = os.Stdout
+  fetch.Stderr = os.Stderr
+  if err := fetch.Run(); err != nil {
+    return fmt.Errorf("failed to fetch pull request %d: %w", info.Number, err)
+  }
+  return nil
+}
 
 func resolveBase(base string) (string, error) {
   if base != "@" {
