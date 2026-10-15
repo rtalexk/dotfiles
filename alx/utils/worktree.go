@@ -12,6 +12,7 @@ import (
 
 type WorktreeInfo struct {
 	Path          string
+	AbsPath       string
 	Root          string
 	Branch        string
 	Session       string
@@ -102,6 +103,7 @@ func parseWorktreeBlock(block, projectRoot, root string, project *Project) (Work
 
 	return WorktreeInfo{
 		Path:          rel,
+		AbsPath:       wtPath,
 		Root:          root,
 		Branch:        branch,
 		Session:       project.SessionName(rel),
