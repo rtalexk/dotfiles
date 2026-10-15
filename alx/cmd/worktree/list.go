@@ -18,6 +18,7 @@ var (
 	listFlagNameOnly bool
 	listFlagAlias    bool
 	listFlagFormat   string
+	listFlagJSON     bool
 )
 
 var ListCmd = &cobra.Command{
@@ -30,7 +31,8 @@ var ListCmd = &cobra.Command{
 func init() {
 	ListCmd.Flags().BoolVar(&listFlagNameOnly, "name-only", false, "Print only worktree names, one per line")
 	ListCmd.Flags().BoolVarP(&listFlagAlias, "alias", "a", false, "Prefix name with project alias (e.g. dotf-main)")
-	ListCmd.Flags().StringVar(&listFlagFormat, "format", "", `Go template (fields: Path, Root, Branch, Session, CreatedAt, LastCommitAt, LastCommitMsg)`)
+	ListCmd.Flags().StringVar(&listFlagFormat, "format", "", `Go template (fields: Path, AbsPath, Root, Branch, Session, CreatedAt, LastCommitAt, LastCommitMsg)`)
+	ListCmd.Flags().BoolVar(&listFlagJSON, "json", false, "Emit a JSON array instead of a table")
 }
 
 func runList(cmd *cobra.Command, args []string) error {
@@ -48,6 +50,15 @@ func runList(cmd *cobra.Command, args []string) error {
 	worktrees, err := utils.ListWorktrees(bareDir, root, project)
 	if err != nil {
 		return err
+	}
+
+	if listFlagJSON {
+		defaultBranch := utils.DefaultBranch(bareDir, project.Config)
+		records := make([]worktreeRecord, 0, len(worktrees))
+		for _, wt := range worktrees {
+			records = append(records, newWorktreeRecord(wt, project, defaultBranch))
+		}
+		return writeJSON(os.Stdout, records)
 	}
 
 	if listFlagFormat != "" {
