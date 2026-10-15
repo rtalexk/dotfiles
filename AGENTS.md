@@ -28,6 +28,7 @@ The configuration that cannot be public (Claude Code settings, per-project agent
 - **Unset or unreachable**: setup logs and skips the whole private phase, so the public configuration installs on its own. The clone is over SSH and setup provisions no key
 - **Cloned once**: setup clones only when `../private/.git` is absent and never fetches, so pull that repository by hand to pick up config added on another machine
 - **Owns `~/.claude`**: `settings.json` and `CLAUDE.md` both come from there. `settings.json` carries `autoMode.environment`, which describes a private employer system, so it cannot live in this repository. Setup warns when the file is absent after the private phase, because Claude Code otherwise starts with no hooks and no `autoMode` policy and says nothing about it
+- **`omc-patch`**: the private repo also carries the `omc-patch` package, which builds a patched oh-my-claudecode tree into `~/.local/share/omc-patched` from pinned upstreams and a frozen merge manifest. The `claude` shell function in `shell/.config/shell/user_config` points `--plugin-dir` at it when it exists
 
 ### Custom CLI Tool (`alx/`)
 

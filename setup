@@ -77,7 +77,7 @@ find "$HOME/.config" -maxdepth 1 -type l -exec sh -c '[ ! -e "$1" ] && rm "$1"' 
 # stow whole-links a directory the target lacks, which would send the runtime
 # state these tools write into their config directories straight into this
 # repository
-mkdir -p "$HOME/.claude" "$HOME/.config/opencode"
+mkdir -p "$HOME/.claude" "$HOME/.config/opencode" "$XDG_CONFIG_HOME/git"
 
 stow --restow --dir="$PWD" --target="$HOME" shell tmux nvim terminal git-tools demux agents
 success "Configurations stowed"

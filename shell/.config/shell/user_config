@@ -40,6 +40,18 @@ export GOPATH="$HOME/go"
 export GOBIN="$GOPATH/bin"
 export PATH="$GOBIN:$PATH"
 
+# OMC loads from the patched tree built by omc-patch. --plugin-dir is not a
+# setting, so it has to be on every invocation. A missing or half-built tree
+# degrades to plain claude rather than failing to start.
+export OMC_PATCHED="$HOME/.local/share/omc-patched"
+claude() {
+    if [ -f "$OMC_PATCHED/.claude-plugin/plugin.json" ]; then
+        OMC_PLUGIN_ROOT="$OMC_PATCHED" command claude --plugin-dir "$OMC_PATCHED" "$@"
+    else
+        command claude "$@"
+    fi
+}
+
 # Rust
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
