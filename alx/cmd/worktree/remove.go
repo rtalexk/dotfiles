@@ -14,16 +14,20 @@ import (
 
 var forceFlag bool
 var fuzzyFlag bool
+var removeNameFlag string
+var removeBranchFlag string
 
 var errCancelled = fmt.Errorf("cancelled")
 
 var RemoveCmd = &cobra.Command{
-  Use:     "remove <name>",
+  Use:     "remove [name]",
   Aliases: []string{"rm"},
   Short:   "Remove a worktree and its tmux session",
   Args: func(cmd *cobra.Command, args []string) error {
     fuzzy, _ := cmd.Flags().GetBool("fuzzy")
-    if fuzzy {
+    name, _ := cmd.Flags().GetString("name")
+    branch, _ := cmd.Flags().GetString("branch")
+    if fuzzy || name != "" || branch != "" {
       return cobra.NoArgs(cmd, args)
     }
     return cobra.ExactArgs(1)(cmd, args)
@@ -34,6 +38,8 @@ var RemoveCmd = &cobra.Command{
 func init() {
   RemoveCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Force delete even if branch is unmerged or worktree has untracked/modified files")
   RemoveCmd.Flags().BoolVar(&fuzzyFlag, "fuzzy", false, "Pick worktree interactively with fzf")
+  RemoveCmd.Flags().StringVar(&removeNameFlag, "name", "", "Worktree directory name or path, instead of the positional argument")
+  RemoveCmd.Flags().StringVar(&removeBranchFlag, "branch", "", "Branch whose worktree to remove")
 }
 
 func runRemove(cmd *cobra.Command, args []string) error {
@@ -52,7 +58,11 @@ func runRemove(cmd *cobra.Command, args []string) error {
 
   // Resolve path
   var path string
-  if fuzzyFlag {
+  switch {
+  case fuzzyFlag:
+    if removeNameFlag != "" || removeBranchFlag != "" {
+      return fmt.Errorf("--fuzzy cannot be combined with --name or --branch")
+    }
     path, err = pickWorktree(bareDir, root, defaultBranch)
     if err != nil {
       if err == errCancelled {
@@ -60,7 +70,17 @@ func runRemove(cmd *cobra.Command, args []string) error {
       }
       return err
     }
-  } else {
+  case removeNameFlag != "" || removeBranchFlag != "":
+    worktrees, err := utils.ListWorktrees(bareDir, root, project)
+    if err != nil {
+      return err
+    }
+    wt, err := selectWorktree(worktrees, removeNameFlag, removeBranchFlag)
+    if err != nil {
+      return err
+    }
+    path = wt.Path
+  default:
     path = args[0]
   }
 
