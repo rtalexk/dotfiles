@@ -92,6 +92,22 @@ alx worktree project init     # then set `alias`, e.g. dotf
 # resolved from project.toml `default_branch`, then origin/HEAD, then "main".
 # Set default_branch only when origin/HEAD is unset or points elsewhere.
 
+# Worktree queries. --json is the machine-readable form of each one, and is
+# what the agent-facing skills read.
+alx worktree current          # the worktree holding the current directory
+alx worktree status           # git and session state of the current worktree
+alx worktree status --branch feat/auth --json
+alx worktree list --json
+
+# Create a worktree from GitHub. --issue names the branch <N>-<title-slug>;
+# --pr checks out the head branch, or pr-<N> when the PR comes from a fork.
+alx worktree add --issue 42
+alx worktree add --pr 17
+
+# Remove by directory name, by relative path, or by branch
+alx worktree remove feat-auth
+alx worktree remove --branch feat/auth
+
 # Session management, demux is the primary session flow
 demux                         # Open the session manager
 demux --compact               # Open the compact session manager
@@ -156,7 +172,11 @@ nvz                  # Launch alternate neovim config (nvim_lz)
 
 ## Testing and Linting
 
-No automated test suite. Manual testing involves:
+`alx` carries a Go test suite, run with `cd alx && go test ./...`. The worktree
+tests build throwaway bare-clone projects in `t.TempDir()` and drive real git,
+so they need git on PATH and nothing else.
+
+The rest of the repository has no automated tests. Manual testing involves:
 
 1. Running `./setup` in a clean environment
 2. Verifying symlinks are created correctly
