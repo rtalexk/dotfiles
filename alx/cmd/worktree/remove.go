@@ -243,14 +243,18 @@ func worktreeBranch(bareDir, worktreePath string) (string, error) {
   return "", fmt.Errorf("could not find branch for worktree path %s", worktreePath)
 }
 
+// isMerged asks for plain names, because the default listing marks the
+// current branch with "* " and any branch checked out in another worktree
+// with "+ ".
 func isMerged(bareDir, branch, defaultBranch string) (bool, error) {
-  out, err := exec.Command("git", "-C", bareDir, "branch", "--merged", defaultBranch).Output()
+  out, err := exec.Command("git", "-C", bareDir, "branch", "--merged", defaultBranch,
+    "--format=%(refname:short)").Output()
   if err != nil {
     return false, fmt.Errorf("failed to check merged branches: %w", err)
   }
 
   for _, line := range strings.Split(string(out), "\n") {
-    if strings.TrimSpace(strings.TrimPrefix(line, "* ")) == branch {
+    if strings.TrimSpace(line) == branch {
       return true, nil
     }
   }
