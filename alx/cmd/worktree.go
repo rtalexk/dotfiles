@@ -20,4 +20,5 @@ func init() {
   worktreeCmd.AddCommand(worktree.ProjectCmd)
   worktreeCmd.AddCommand(worktree.RootCmd)
   worktreeCmd.AddCommand(worktree.MainCmd)
+  worktreeCmd.AddCommand(worktree.CurrentCmd)
 }
