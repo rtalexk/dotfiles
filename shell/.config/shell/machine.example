@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Copy this file under the same directory named just as "machine"
+# This file holds what is true of this machine alone and belongs in no
+# repository. Employer and client configuration lives in the private config
+# repo, under shell-private/work/, one file per employer or client.
+
+# Clone URL for the private dotfiles config repo, read by ./setup.
+# export DOTFILES_PRIVATE_REPO="git@github.com:<user>/<repo>.git"

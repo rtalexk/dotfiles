@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# Switch the active AWS CLI profile for this shell.
+#   awsp          show the active profile and list the available ones
+#   awsp <name>   set AWS_PROFILE to <name>
+#   awsp off      unset AWS_PROFILE
+awsp() {
+  if [ -z "$1" ]; then
+    echo "*    Active: ${AWS_PROFILE:-<none>}"
+    echo "  Available: $(aws configure list-profiles | paste -sd, - | sed 's/,/, /g')"
+    return
+  fi
+  if [ "$1" = "off" ]; then
+    unset AWS_PROFILE
+    return
+  fi
+  if ! aws configure list-profiles | grep -qx "$1"; then
+    echo "awsp: unknown profile '$1'" >&2
+    return 1
+  fi
+  export AWS_PROFILE="$1"
+}
+
+if [ -n "$ZSH_VERSION" ]; then
+  _awsp() { compadd off $(aws configure list-profiles 2>/dev/null); }
+  compdef _awsp awsp 2>/dev/null
+fi

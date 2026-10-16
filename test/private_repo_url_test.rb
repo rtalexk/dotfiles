@@ -91,9 +91,41 @@ class PrivateRepoUrlTest < Minitest::Test
 
   def test_defaults_to_xdg_config_home
     FileUtils.mkdir_p(File.join(@tmpdir, "shell"))
+    File.write(File.join(@tmpdir, "shell", "machine"), %(export DOTFILES_PRIVATE_REPO="#{URL}"\n))
+
+    stdout, _stderr, status = run_script
+
+    assert status.success?
+    assert_equal URL, stdout.strip
+  end
+
+  def test_falls_back_to_the_legacy_work_file
+    FileUtils.mkdir_p(File.join(@tmpdir, "shell"))
     File.write(File.join(@tmpdir, "shell", "work"), %(export DOTFILES_PRIVATE_REPO="#{URL}"\n))
 
     stdout, _stderr, status = run_script
+
+    assert status.success?
+    assert_equal URL, stdout.strip
+  end
+
+  def test_machine_file_wins_over_the_legacy_work_file
+    FileUtils.mkdir_p(File.join(@tmpdir, "shell"))
+    File.write(File.join(@tmpdir, "shell", "machine"), %(export DOTFILES_PRIVATE_REPO="#{URL}"\n))
+    File.write(File.join(@tmpdir, "shell", "work"), %(export DOTFILES_PRIVATE_REPO="from-work"\n))
+
+    stdout, _stderr, status = run_script
+
+    assert status.success?
+    assert_equal URL, stdout.strip
+  end
+
+  def test_first_candidate_without_the_variable_falls_through_to_the_next
+    other = File.join(@tmpdir, "machine")
+    File.write(other, %(export CURRENT_EMPLOYER="somewhere"\n))
+    File.write(@work, %(export DOTFILES_PRIVATE_REPO="#{URL}"\n))
+
+    stdout, _stderr, status = run_script(other, @work)
 
     assert status.success?
     assert_equal URL, stdout.strip

@@ -1,20 +1,34 @@
 #!/bin/bash
 
 # Prints the private config repo URL, or nothing when it cannot be resolved.
-# Always exits 0 so a caller running under `set -e` survives a broken work file.
+# Always exits 0 so a caller running under `set -e` survives a broken file.
 
 if [ -n "${DOTFILES_PRIVATE_REPO:-}" ]; then
     printf '%s\n' "$DOTFILES_PRIVATE_REPO"
     exit 0
 fi
 
-work_file="${1:-${XDG_CONFIG_HOME:-$HOME/.config}/shell/work}"
-[ -f "$work_file" ] || exit 0
+shell_config="${XDG_CONFIG_HOME:-$HOME/.config}/shell"
+# "work" is what the machine-local file was called before it became "machine",
+# so a machine that has not migrated still resolves the URL.
+if [ "$#" -gt 0 ]; then
+    candidates=("$@")
+else
+    candidates=("$shell_config/machine" "$shell_config/work")
+fi
 
-# The work file is sourced by zsh and may hold syntax bash cannot parse, so read
-# the value out of a subshell where a failure cannot propagate. Its stdin is
-# closed because a prompt in the work file would otherwise hang setup unseen.
-url=$(bash -c 'source "$1" >/dev/null 2>&1; printf "%s" "${DOTFILES_PRIVATE_REPO:-}"' _ "$work_file" </dev/null 2>/dev/null) || url=""
+for file in "${candidates[@]}"; do
+    [ -f "$file" ] || continue
 
-[ -n "$url" ] && printf '%s\n' "$url"
+    # The file is sourced by zsh and may hold syntax bash cannot parse, so read
+    # the value out of a subshell where a failure cannot propagate. Its stdin is
+    # closed because a prompt in the file would otherwise hang setup unseen.
+    url=$(bash -c 'source "$1" >/dev/null 2>&1; printf "%s" "${DOTFILES_PRIVATE_REPO:-}"' _ "$file" </dev/null 2>/dev/null) || url=""
+
+    if [ -n "$url" ]; then
+        printf '%s\n' "$url"
+        exit 0
+    fi
+done
+
 exit 0

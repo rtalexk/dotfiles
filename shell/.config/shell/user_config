@@ -5,9 +5,26 @@ export EDITOR="nvim"
 
 export PROJECTS="$HOME/com.github"
 export DOTFILES="$PROJECTS/dotfiles/main"
-export ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
-export BRAIN="$HOME/Documents/Notes"
-export MASTER="$ICLOUD/Documents/Educación/Maestría/"
+
+# Labels bin/tmux_pr_count counts as work in progress
+export GITHUB_WIP_LABELS="WIP,POC"
+
+# Private shell configuration from the private config repo: personal paths
+# first, then one file per employer or client, all of them sourced. It comes
+# before the aliases, which expand the paths it exports at source time. A
+# machine without the private repo runs on the public configuration alone.
+SHELL_PRIVATE="$XDG_CONFIG_HOME/shell-private"
+if [ -f "$SHELL_PRIVATE/personal" ]; then
+  source "$SHELL_PRIVATE/personal"
+fi
+if [ -n "$(find "$SHELL_PRIVATE/work" -maxdepth 1 ! -type d 2>/dev/null)" ]; then
+  for file in "$SHELL_PRIVATE/work/"*; do
+    if [ -f "$file" ]; then
+      source "$file"
+    fi
+  done
+fi
+unset SHELL_PRIVATE
 
 export FZF_DEFAULT_OPTS="--tiebreak=length,begin,index"
 
@@ -30,27 +47,16 @@ esac
 
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
-# Work specific shell configuration
-if [ -f "$XDG_CONFIG_HOME/shell/work" ]; then
-  source "$XDG_CONFIG_HOME/shell/work"
+# Machine-local configuration, in no repository: the private config repo's
+# clone URL, and anything else true of this machine alone.
+if [ -f "$XDG_CONFIG_HOME/shell/machine" ]; then
+  source "$XDG_CONFIG_HOME/shell/machine"
 fi
 
 # Golang
 export GOPATH="$HOME/go"
 export GOBIN="$GOPATH/bin"
 export PATH="$GOBIN:$PATH"
-
-# OMC loads from the patched tree built by omc-patch. --plugin-dir is not a
-# setting, so it has to be on every invocation. A missing or half-built tree
-# degrades to plain claude rather than failing to start.
-export OMC_PATCHED="$HOME/.local/share/omc-patched"
-claude() {
-    if [ -f "$OMC_PATCHED/.claude-plugin/plugin.json" ]; then
-        OMC_PLUGIN_ROOT="$OMC_PATCHED" command claude --plugin-dir "$OMC_PATCHED" "$@"
-    else
-        command claude "$@"
-    fi
-}
 
 # Rust
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"

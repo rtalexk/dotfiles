@@ -1,3 +1,5 @@
+**/shell/machine
+# the machine-local file before it was renamed to "machine"
 **/shell/work
 git-tools/.config/gh-dash/nuvo-os.yml
 

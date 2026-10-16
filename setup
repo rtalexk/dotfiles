@@ -46,10 +46,19 @@ if ! command -v stow &>/dev/null; then
     brew install stow
 fi
 
-# Work specific settings
-if [ ! -f "$PWD/shell/.config/shell/work" ]; then
-    log "Creating work config from example..."
-    cp "$PWD/shell/.config/shell/work.example" "$PWD/shell/.config/shell/work"
+# Machine-local settings, in no repository
+if [ ! -f "$PWD/shell/.config/shell/machine" ]; then
+    log "Creating machine config from example..."
+    cp "$PWD/shell/.config/shell/machine.example" "$PWD/shell/.config/shell/machine"
+fi
+
+# The machine-local file used to be called "work" and to carry employer config,
+# which now lives in the private repo under shell-private/work/. Nothing sources
+# the old file any more, so say so rather than leaving it silently dead.
+if [ -f "$PWD/shell/.config/shell/work" ]; then
+    warn "shell/.config/shell/work is no longer sourced"
+    warn "move what is machine-local into shell/.config/shell/machine and the rest"
+    warn "into the private repo under home/shell/.config/shell-private/, then delete it"
 fi
 
 # Oh My Zsh (must be installed before stowing shell configs)
@@ -83,7 +92,7 @@ stow --restow --dir="$PWD" --target="$HOME" shell tmux nvim terminal git-tools d
 success "Configurations stowed"
 
 # Private config, cloned beside the worktrees so no worktree has to ignore it
-PRIVATE_REPO="$("$PWD/bin/private_repo_url" "$PWD/shell/.config/shell/work")"
+PRIVATE_REPO="$("$PWD/bin/private_repo_url" "$PWD/shell/.config/shell/machine" "$PWD/shell/.config/shell/work")"
 PRIVATE_ROOT="$(dirname "$PWD")/private"
 
 if [ -z "$PRIVATE_REPO" ]; then
