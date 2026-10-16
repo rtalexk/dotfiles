@@ -16,7 +16,7 @@ Not managed by `setup`, these have to be redone by hand on a new machine.
 - **`DOTFILES_PRIVATE_REPO`**: the clone URL of a private sibling repository
   holding the configuration that cannot be public. It is in no repository, so it
   is the one value that has to be looked up again. Set it in
-  `shell/.config/shell/work` (see `shell/.config/shell/work.example`), which
+  `shell/.config/shell/machine` (see `shell/.config/shell/machine.example`), which
   `setup` creates on its first run, so pass it on that run:
   `DOTFILES_PRIVATE_REPO=... ./setup`
 
