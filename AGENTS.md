@@ -188,3 +188,6 @@ The rest of the repository has no automated tests. Manual testing involves:
 
 - Do not add comment lines for functions or variables unless necessary.
   - If the comment is quite similar to the function/variable name, it is redundant.
+- Do not write specs for the helper scripts in `bin/` or for shell and tmux
+  configuration. They are verified by running them. `alx` keeps its Go test
+  suite.
