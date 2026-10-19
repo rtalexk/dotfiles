@@ -10,7 +10,7 @@ Always use `alx worktree` (alias: `alx wt`) to create and remove worktrees. Neve
 alx worktree add <path> [branch]
 alx worktree remove <name>
 alx worktree remove <name> --force
-alx worktree remove <name> --fuzzy
+alx worktree remove --fuzzy          # takes no name, picks interactively
 alx worktree list
 alx worktree list --name-only
 ```
