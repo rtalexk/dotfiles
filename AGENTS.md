@@ -4,19 +4,19 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## Repository Overview
 
-This is a personal dotfiles repository that manages configuration files and development environment setup for macOS and Linux systems. The repository includes configurations for terminal applications, editors, shell environments, and custom utility scripts.
+This is a personal dotfiles repository that manages configuration files and development environment setup for macOS. The repository includes configurations for terminal applications, editors, shell environments, and custom utility scripts.
 
 ## Key Components
 
 ### Setup and Installation
 
 - **Main setup script**: `./setup` - Primary installation script that symlinks configurations and installs dependencies
-- **XDG_CONFIG_HOME**: Must be set before running setup script
+- **XDG_CONFIG_HOME**: Optional. Setup exports `$HOME/.config` when it is unset
 - **Machine-local config**: Creates `shell/.config/shell/machine` from `shell/.config/shell/machine.example` if it doesn't exist. It holds what is true of this machine alone, starting with `DOTFILES_PRIVATE_REPO`. Employer and client configuration lives in the private repo, not here. Setup warns when the file this replaced, `shell/.config/shell/work`, is still present, because nothing sources it any more
 - **Submodules**: Clone with `--recurse-submodules`, or let `./setup` run `git submodule update --init --recursive`. Two vendored themes are submodules: `terminal/.config/alacritty/themes` (alacritty-theme) and `tmux/.config/tmux/plugins/catppuccin/tmux` (pinned to v2.1.3). A plain clone leaves both directories empty and the tmux status modules fail to load.
 - **demux**: Setup clones it to `$PROJECTS/demux` in the same bare-worktree layout as any other project and builds it with `go build`, version-stamped from `git describe`, symlinked into `~/.local/bin`. It is not installed from Homebrew, so the binary tracks the checkout.
 - **Pre-existing config files**: Setup backs up `~/.zshrc` and `~/.tmux.conf` to `*.pre-dotfiles.bak` when they are regular files rather than symlinks, otherwise stow refuses to link over them. `~/.claude/settings.json` belongs to the private repo, which does its own backing up.
-- **Destination directories**: Setup creates `~/.claude` before stowing. Stow links a directory whole when the target lacks it, which would redirect everything later written there into this repository.
+- **Destination directories**: Setup creates `~/.claude`, `~/.config/opencode` and `$XDG_CONFIG_HOME/git` before stowing. Stow links a directory whole when the target lacks it, which would redirect everything later written there into this repository.
 
 ### Private Configuration
 
@@ -52,6 +52,10 @@ Configurations are organized by tool category and symlinked to `$XDG_CONFIG_HOME
   - Contains `.config/alacritty/`, `.config/ghostty/`, `.config/zellij/`
 - **git-tools/**: Git workflow and session management tools
   - Contains `.config/lazygit/`, `.config/gh-dash/`, and `.config/gitmux/`
+- **agents/**: Coding agent configuration
+  - Contains `.config/opencode/` with opencode's global `AGENTS.md`, its skills, and its plugins
+- **demux/**: Session manager configuration
+  - Contains `.config/demux/` (`private.toml` is gitignored)
 
 ### Custom Scripts (`bin/`)
 
@@ -70,7 +74,7 @@ Utility scripts for development workflow:
 # Clone (submodules carry the alacritty and catppuccin themes)
 git clone --recurse-submodules git@github.com:rtalexk/dotfiles.git
 
-# Full setup (requires XDG_CONFIG_HOME set)
+# Full setup (XDG_CONFIG_HOME defaults to ~/.config)
 ./setup
 
 # Build custom CLI
@@ -115,7 +119,7 @@ demux session connect NAME    # Connect to a named session
 alx worktree main             # Connect to the current project's main session
 
 # Git shortcuts (from shell/.config/shell/aliases/git)
-gcwip                # Quick WIP commit (git add . && git commit --no-verify -m 'wip')
+gcwip                # WIP commit of what is already staged, plus deleted files (--no-verify, --no-gpg-sign)
 gbdm                 # Delete merged branches (excludes main/master/dev)
 difon                # Show changed files vs origin/main
 difo                 # Show diff vs origin/main
@@ -147,7 +151,7 @@ nvz                  # Launch alternate neovim config (nvim_lz)
 - **Theme**: Catppuccin Mocha with custom status modules. The theme is vendored as a submodule and loaded with `run '~/.config/tmux/plugins/catppuccin/tmux/catppuccin.tmux'`, not as a TPM plugin, so the version stays pinned
 - **Plugin manager**: TPM (Tmux Plugin Manager), for every plugin except Catppuccin
 - **Custom modules**: Located in `tmux/.config/tmux/modules/`. Each sources `utils/status_module.conf` from the Catppuccin submodule, so module paths must track the submodule, not `~/.tmux/plugins/`
-- **Status line**: Shows git status, PR count, battery, time
+- **Status line**: Shows git status, demux sessions, keyboard layout, battery, time. `open_pr_count` is defined in `modules/` but left out of the `status-right` override at the end of `tmux/.tmux.conf`
 - **Vim integration**: Uses vim-tmux-navigator for pane switching
 
 ### Shell Environment
@@ -162,14 +166,14 @@ nvz                  # Launch alternate neovim config (nvim_lz)
 **macOS (Homebrew)**:
 
 - Core: `nvim`, `tmux`, `rg`, `fzf`, `zoxide`
-- Terminal: `alacritty`
+- Terminal: `ghostty` (cask). The `alacritty` cask line is commented out in `setup`, though its config and theme submodule are still stowed
 - Git tools: `lazygit`, `gh`
 - Fonts: `font-hack-nerd-font`
 
-**Linux (apt)**:
+**Linux**:
 
-- `build-essential`, `ripgrep`, `tmux`, `fd-find`
-- Node.js via nvm, Ruby via rvm
+Nothing runs on Linux today: `setup` exits when Homebrew is absent, and the apt,
+rvm and nvm commands sit commented out after the "Setup complete!" line.
 
 ## Testing and Linting
 
