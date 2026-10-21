@@ -67,18 +67,21 @@ end
 -- A wrapped row is drawn as virtual lines over its concealed source line, so
 -- upstream shows the raw source line while the cursor is on it. Neovim counts
 -- a concealed cursor line as zero height and does not know where its row is
--- drawn, so the cursor is hidden and the window is scrolled here. A row too
--- tall to scroll into view falls back to the raw source line.
+-- drawn, so the cursor is hidden and the window is scrolled here.
 local function keep_hovered_rows_rendered()
   local Updater = require('render-markdown.core.ui').updater
   local env = require('render-markdown.lib.env')
   local drawn = setmetatable({}, { __mode = 'k' })
   local tinted = setmetatable({}, { __mode = 'k' })
-  local too_tall = setmetatable({}, { __mode = 'k' })
   local cursored = setmetatable({}, { __mode = 'k' })
   local hovered = nil
   local last_drawn = nil
   local saved = nil
+  local view_win = nil
+  local split = nil
+  local planned = nil
+  local cursor_at = nil
+  local on_fitted_row = false
 
   local function tint_fragments(lines)
     return vim.tbl_map(function(line)
@@ -191,14 +194,16 @@ local function keep_hovered_rows_rendered()
   function Updater:hide(extmark, range)
     local mark = extmark:get()
     if mark.hover_only then
-      return hide(self, extmark, range) or env.row.get(self.buf, self.win) ~= mark.start_row
+      local hidden = hide(self, extmark, range) or env.row.get(self.buf, self.win) ~= mark.start_row
+      on_fitted_row = on_fitted_row or not hidden
+      return hidden
     end
     if not mark.replace then
       return hide(self, extmark, range)
     end
     drawn[mark] = drawn[mark] or mark.replace
     mark.replace = drawn[mark]
-    if too_tall[mark] or env.row.get(self.buf, self.win) ~= mark.start_row then
+    if env.row.get(self.buf, self.win) ~= mark.start_row then
       return hide(self, extmark, range)
     end
     mark.replace = nil
@@ -213,14 +218,14 @@ local function keep_hovered_rows_rendered()
   end
 
   -- Scrolloff counts buffer lines, and would undo the scroll made here
-  local function enter(win)
+  local function enter(win, hide_cursor)
     if not saved then
       local scrolloff = vim.api.nvim_get_option_value('scrolloff', { scope = 'local', win = win })
       saved = { win = win, guicursor = vim.o.guicursor, scrolloff = scrolloff }
     end
     vim.api.nvim_set_hl(0, 'RenderMarkdownHiddenCursor', { blend = 100, nocombine = true })
     vim.api.nvim_set_hl(0, 'RenderMarkdownFakeCursor', { link = 'Cursor', default = true })
-    vim.o.guicursor = 'a:RenderMarkdownHiddenCursor'
+    vim.o.guicursor = hide_cursor and 'a:RenderMarkdownHiddenCursor' or saved.guicursor
     vim.api.nvim_set_option_value('scrolloff', 0, { scope = 'local', win = win })
   end
 
@@ -234,59 +239,175 @@ local function keep_hovered_rows_rendered()
     end
   end
 
-  -- Concealed rows hang their virtual lines above the next visible line
-  local function placement(self, mark)
-    local first = mark.replace[1]
-    for _, extmark in ipairs(self.decorator.generated) do
-      local group = extmark:get()
-      for i, line in ipairs(group.opts.virt_lines) do
-        if line == first then
-          return group.start_row, i - 1
+  local function concealed_rows(visible)
+    local hidden = {}
+    for _, mark in ipairs(visible) do
+      if mark.opts.conceal_lines then
+        local end_row = mark.opts.end_row or mark.start_row
+        if end_row > mark.start_row and mark.opts.end_col == 0 then
+          end_row = end_row - 1
+        end
+        for row = mark.start_row, end_row do
+          hidden[row] = true
         end
       end
     end
+    return hidden
   end
 
-  local function reveal(self, mark)
-    local anchor, offset = placement(self, mark)
-    if not anchor then
-      return true
+  local function sum(heights, from, to)
+    local total = 0
+    for i = from, to do
+      total = total + heights[i]
     end
-    local info = vim.fn.getwininfo(self.win)[1]
-    local bottom = offset + #mark.replace
-    local function fits(top)
-      local above = vim.api.nvim_win_text_height(self.win, { start_row = top, end_row = anchor - 1 }).all
-      return above + bottom <= info.height
+    return total
+  end
+
+  -- Upstream hangs a run of concealed rows above the line after it, and
+  -- Neovim scrolls past all virtual lines of a line at once, so a long run
+  -- cannot scroll. The rows before a split point hang below the line before
+  -- the run instead, which turns the split into a scroll position in rows.
+  -- Neovim cannot place a concealed cursor line, so the window is laid out
+  -- here, with the hovered row next to where the cursor was on screen.
+  local replacements = require('render-markdown.lib.replacements')
+  local resolve = replacements.resolve
+  function replacements.resolve(visible, line_count)
+    if not hovered or not view_win then
+      split = nil
+      return resolve(visible, line_count)
     end
-    local top = info.topline - 1
-    while not fits(top) do
-      if top >= mark.start_row then
-        return false
+    local hidden = concealed_rows(visible)
+    local above, below = hovered.start_row - 1, hovered.start_row + 1
+    while above >= 0 and hidden[above] do
+      above = above - 1
+    end
+    while below < line_count and hidden[below] do
+      below = below + 1
+    end
+    local run = vim.tbl_filter(function(mark)
+      return mark.replace and mark.start_row > above and mark.start_row < below
+    end, visible)
+    table.sort(run, function(a, b)
+      return a.start_row < b.start_row
+    end)
+    local heights = vim.tbl_map(function(mark)
+      return #mark.replace
+    end, run)
+    local index = {}
+    for i, mark in ipairs(run) do
+      index[mark.start_row] = i
+    end
+    local n = index[hovered.start_row]
+
+    local win, buf = view_win, vim.api.nvim_win_get_buf(view_win)
+    local height = vim.api.nvim_win_get_height(win)
+    local own = (split and split.win == win and split.above == above) and split.lines or 0
+    local function text_height(from, to, fill)
+      local opts = { start_row = from, end_row = to, start_vcol = not fill and 0 or nil }
+      return from > to and 0 or vim.api.nvim_win_text_height(win, opts).all
+    end
+    local function lead(row)
+      return text_height(row, above) - own
+    end
+
+    local y = 0
+    local was = cursor_at and cursor_at.win == win and cursor_at.buf == buf and cursor_at or nil
+    if not was then
+      local view = vim.api.nvim_win_call(win, vim.fn.winsaveview)
+      if view.topline - 1 <= above then
+        y = lead(view.topline - 1) + view.topfill + sum(heights, 1, n - 1)
+      elseif split and split.win == win and split.above == above and n > split.kept then
+        y = sum(heights, split.kept + 1, n - 1)
       end
-      top = top + 1
+    elseif index[was.row] then
+      local i = index[was.row]
+      y = i <= n and was.y + sum(heights, i, n - 1) or was.y - sum(heights, n, i - 1)
+    elseif was.row <= above then
+      y = was.y + lead(was.row) + sum(heights, 1, n - 1)
+    elseif was.row >= below then
+      y = was.y - sum(heights, n, #run) - text_height(below, was.row - 1)
     end
-    if top ~= info.topline - 1 then
-      vim.api.nvim_win_call(self.win, function()
-        vim.fn.winrestview({ topline = top + 1, topfill = 0 })
-      end)
+    y = math.max(0, math.min(y, height - heights[n]))
+
+    local top, topfill, kept = nil, 0, 0
+    local gap = y - sum(heights, 1, n - 1)
+    if above >= 0 and gap >= 0 then
+      for row = above, 0, -1 do
+        local lines = lead(row)
+        local fill = text_height(row, row, true) - text_height(row, row)
+        if lines > gap then
+          if lines + sum(heights, 1, n) <= height then
+            top = row
+          elseif row < above then
+            top = row + 1
+            topfill = text_height(row + 1, row + 1, true) - text_height(row + 1, row + 1)
+          end
+          break
+        elseif lines + fill >= gap then
+          top, topfill = row, gap - lines
+          break
+        elseif row == 0 then
+          top, topfill = 0, fill
+        end
+      end
     end
-    return true
+    if top then
+      y = lead(top) + topfill + sum(heights, 1, n - 1)
+    else
+      top = run[1].start_row
+      while sum(heights, kept + 1, n - 1) > y do
+        kept = kept + 1
+      end
+      y = sum(heights, kept + 1, n - 1)
+    end
+    planned = { topline = top + 1, topfill = topfill }
+    cursor_at = { win = win, buf = buf, row = hovered.start_row, y = y }
+
+    local lines = {}
+    for i = 1, kept do
+      vim.list_extend(lines, run[i].replace)
+    end
+    split = { win = win, above = above, kept = kept, lines = #lines }
+    if kept == 0 then
+      return resolve(visible, line_count)
+    end
+    local groups = resolve(
+      vim.tbl_filter(function(mark)
+        return not vim.list_contains(vim.list_slice(run, 1, kept), mark)
+      end, visible),
+      line_count
+    )
+    groups[#groups + 1] = { conceal = true, start_row = above, start_col = 0, opts = { virt_lines = lines, strict = false } }
+    return groups
   end
 
   local display = Updater.display
   function Updater:display()
     hovered = nil
+    on_fitted_row = false
+    view_win = self.win == vim.api.nvim_get_current_win() and self.win or nil
     display(self)
-    if hovered and self.win == vim.api.nvim_get_current_win() then
-      enter(self.win)
-      if not reveal(self, hovered) then
-        too_tall[hovered] = true
-        hovered = nil
-        display(self)
-      end
-    end
-    if not hovered then
+    if view_win and (hovered or on_fitted_row) then
+      enter(self.win, hovered ~= nil)
+    else
       leave()
+    end
+    if planned then
+      local view = planned
+      vim.api.nvim_win_call(self.win, function()
+        local current = vim.fn.winsaveview()
+        if current.topline ~= view.topline or current.topfill ~= view.topfill then
+          vim.fn.winrestview(view)
+        end
+      end)
+      planned = nil
+    elseif view_win then
+      cursor_at = {
+        win = self.win,
+        buf = self.buf,
+        row = vim.api.nvim_win_get_cursor(self.win)[1] - 1,
+        y = vim.api.nvim_win_call(self.win, vim.fn.winline) - 1,
+      }
     end
     -- Neovim leaves stale virtual lines on screen below concealed lines
     local drawing = hovered and hovered.replace
