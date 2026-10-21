@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Strip /* ... */ comments and blank lines from a CSS file, for pasting
+# into tools with a character limit (e.g. the Custom CSS by Denis
+# extension, 7500 chars per domain). Comments stay in the source file;
+# this only affects what gets printed or copied.
+
+set -e
+
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <file.css> [--copy]" >&2
+  exit 1
+fi
+
+FILE="$1"
+
+if [ ! -f "$FILE" ]; then
+  echo "$0: no such file: $FILE" >&2
+  exit 1
+fi
+
+STRIPPED=$(perl -0777 -pe 's{/\*.*?\*/}{}gs' "$FILE" | grep -v '^[[:space:]]*$')
+CHARS=$(printf '%s' "$STRIPPED" | wc -c | tr -d ' ')
+
+if [ "${2:-}" = "--copy" ]; then
+  printf '%s' "$STRIPPED" | pbcopy
+  echo "Copied to clipboard: $CHARS characters" >&2
+else
+  printf '%s\n' "$STRIPPED"
+  echo "$CHARS characters" >&2
+fi
+
+if [ "$CHARS" -gt 7500 ]; then
+  echo "Warning: over the 7500 character limit" >&2
+fi
