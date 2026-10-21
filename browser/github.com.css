@@ -1,0 +1,196 @@
+/* ==========================================================================
+   GitHub diff readability overrides
+
+   For the "Custom CSS by Denis" Chrome extension (per-domain custom CSS),
+   rule set for github.com. Paired with browser zoom set to 80%.
+
+   Goal: bump font-size, via the --readable-font-size variable below,
+   only for content that is actually read (diff code, PR description/
+   comments, filenames, change stats, branch names, sidebar file tree),
+   leave surrounding UI chrome at default size.
+
+   Background and the recurring CSS gotchas (explicit font-size on a
+   leaf element beats inherited size from a parent; utility classes are
+   often !important; virtualized lists lock row height independent of
+   content) are documented in the browser-readability-css skill.
+   ========================================================================== */
+
+:root {
+  --readable-font-size: 1.2rem;
+}
+
+/* Conversation tab: widen the inline diff viewer used in PR review comments */
+#diff-comparison-viewer-container {
+  min-width: 1600px;
+
+  [data-component="SplitPageLayout.Header"] {
+    min-width: 1600px;
+  }
+
+  [data-component="SplitPageLayout.Content"] {
+    max-width: unset;
+
+    & > div {
+      max-width: unset;
+    }
+  }
+}
+
+/* Conversation tab: PR description body + comment bodies */
+div.pull-discussion-timeline .comment-body {
+  font-size: var(--readable-font-size);
+}
+
+/* Conversation tab: code diff snippets inside review comments and
+   "Suggested change" blocks (same classic diff-table markup as the old
+   /files viewer, just not scoped under #files here) */
+div.pull-discussion-timeline .blob-code-inner,
+div.pull-discussion-timeline .blob-num {
+  font-size: var(--readable-font-size);
+  line-height: 1.5;
+}
+
+/* Conversation tab: sticky PR-title bar shown on scroll. It's
+   position:fixed and self-centers independently of the diff viewer
+   below it, so it drifts out of alignment. Giving it the same
+   min-width:1600px as #diff-comparison-viewer-container (and clearing
+   its own max-width) makes both the same width, centered the same way,
+   so they align without a hardcoded offset. */
+[class*="stickyHeader__"] .container-xl {
+  min-width: 1600px;
+  max-width: unset;
+}
+
+/* ==========================================================================
+   Old "Files changed" viewer, at /files - classic table-based diff
+   ========================================================================== */
+#files {
+  /* diff code text, line numbers, per-file path, per-file +/- stat */
+  .blob-code-inner,
+  .blob-num,
+  .file-info,
+  .diffstat {
+    font-size: var(--readable-font-size);
+  }
+
+  /* diff code + line numbers: more breathing room once text got bigger */
+  .blob-code-inner,
+  .blob-num {
+    line-height: 1.5;
+  }
+
+  /* "Binary file not shown." message */
+  .data.highlight.empty {
+    font-size: var(--readable-font-size);
+  }
+}
+
+/* old viewer: overall PR +/- stat, top right, outside #files */
+#diffstat {
+  font-size: var(--readable-font-size);
+}
+
+/* old viewer: sidebar file-tree filenames */
+.diff-sidebar .ActionList-item-label {
+  font-size: var(--readable-font-size);
+}
+
+/* old viewer: sidebar file-tree row spacing (text grew, row padding didn't) */
+.diff-sidebar .ActionList-content {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* ==========================================================================
+   New "Files changed" viewer, at /changes - React diff experience
+   ========================================================================== */
+[data-testid="progressive-diffs-list"] {
+  /* diff code text, line numbers, filename in each file's header,
+     "Binary file not shown." message */
+  code.diff-text,
+  td.new-diff-line-number,
+  h3[class*="file-name__"] code,
+  .fgColor-muted.p-2 {
+    font-size: var(--readable-font-size);
+  }
+
+  /* diff code + line numbers: more breathing room once text got bigger */
+  code.diff-text,
+  td.new-diff-line-number {
+    line-height: 1.5;
+  }
+
+  /* per-file +/- change count, next to each file's header.
+     Primer's .f6 utility class sets font-size !important, so this needs
+     !important too or it's silently ignored. */
+  [class*="diff-file-header__"] .f6 {
+    font-size: var(--readable-font-size) !important;
+  }
+}
+
+/* new viewer: overall PR +/- stat, top right of the PR header (same .f6
+   utility class issue as above, needs !important) */
+[class*="rightContentWrapper__"] .f6 {
+  font-size: var(--readable-font-size) !important;
+}
+
+#diff-comparison-viewer-container {
+  /* "<user> wants to merge N commits into X from Y" line, "N / M viewed"
+     progress text, and the branch-name pills inside that line */
+  [class*="summaryContainer__"],
+  [class*="ProgressContainer__"],
+  [class*="branchName__"] {
+    font-size: var(--readable-font-size);
+  }
+}
+
+#pr-file-tree {
+  /* sidebar file-tree node label (file or folder name) */
+  .PRIVATE_TreeView-item-content-text {
+    font-size: var(--readable-font-size);
+  }
+
+  /* sidebar file-tree row padding, for breathing room once text got bigger */
+  .PRIVATE_TreeView-item-content {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  /* sidebar file-tree row box. GitHub virtualizes these rows with
+     contain:strict + content-visibility:auto, which locks each row's
+     height independent of its content, so padding/font-size alone makes
+     rows visually overlap. Height must be raised explicitly to match,
+     and contain-intrinsic-size kept in sync so off-screen rows still
+     reserve the right scroll space. */
+  [class*="file-tree-row__"] {
+    height: 48px !important;
+    contain-intrinsic-size: auto 48px !important;
+  }
+}
+
+/* ==========================================================================
+   Repo root / code browse view, at /<owner>/<repo> and its subpaths
+   ========================================================================== */
+
+/* README body: same font-size as the Conversation tab's comment body */
+article.markdown-body {
+  font-size: var(--readable-font-size);
+  max-width: unset;
+}
+
+/* Widen the file-list+README column against the About/Languages sidebar,
+   same intent as the PR diff viewer's width. [class*="ContentWrapper-"]
+   and its child are unnamed, numbered CSS-module classes under the hood
+   (Box_1, Box_11, ...), unlike the descriptively-prefixed classes used
+   elsewhere in this file, so they're more likely to break on a GitHub
+   redeploy; re-derive with the browser-readability-css skill's
+   procedure if this stops working. */
+[class*="PageLayout-PageLayoutContent-"] {
+  min-width: 1600px;
+  max-width: unset;
+}
+[class*="ContentWrapper-"],
+[class*="ContentWrapper-"] > div,
+[class*="SharedMarkdownContent"] {
+  max-width: unset;
+}
