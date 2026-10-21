@@ -23,15 +23,33 @@ vim.keymap.set('n', '<leader>xe', vim.diagnostic.open_float, { desc = 'Show diag
 vim.keymap.set('n', '<leader>xq', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- better up/down
-vim.keymap.set({ 'n', 'x' }, 'j', "v:count == 0 ? 'gj' : 'j'", { desc = 'Down', expr = true, silent = true })
-vim.keymap.set({ 'n', 'x' }, '<Down>', "v:count == 0 ? 'gj' : 'j'", { desc = 'Down', expr = true, silent = true })
-vim.keymap.set({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { desc = 'Up', expr = true, silent = true })
-vim.keymap.set({ 'n', 'x' }, '<Up>', "v:count == 0 ? 'gk' : 'k'", { desc = 'Up', expr = true, silent = true })
+-- A line hidden by conceal_lines still wraps, invisibly: g motions on it walk
+-- screen lines nobody can see, and gk into it lands on its last screen line
+local function concealed(lnum)
+  if lnum < 1 or lnum > vim.fn.line('$') then
+    return false
+  end
+  local height = vim.api.nvim_win_text_height(0, { start_row = lnum - 1, end_row = lnum - 1 })
+  return height.all == height.fill
+end
+
+local function screen_line_motion(motion)
+  local step = ({ j = 1, k = -1 })[motion] or 0
+  return function()
+    local line = vim.fn.line('.')
+    local hidden = concealed(line) or concealed(line + step)
+    return (vim.v.count == 0 and vim.wo.wrap and not hidden) and 'g' .. motion or motion
+  end
+end
+vim.keymap.set({ 'n', 'x' }, 'j', screen_line_motion('j'), { desc = 'Down', expr = true, silent = true })
+vim.keymap.set({ 'n', 'x' }, '<Down>', screen_line_motion('j'), { desc = 'Down', expr = true, silent = true })
+vim.keymap.set({ 'n', 'x' }, 'k', screen_line_motion('k'), { desc = 'Up', expr = true, silent = true })
+vim.keymap.set({ 'n', 'x' }, '<Up>', screen_line_motion('k'), { desc = 'Up', expr = true, silent = true })
 
 -- Better start/end of line
-vim.keymap.set({ 'n', 'x' }, '0', "v:count == 0 && &wrap ? 'g0' : '0'", { desc = 'Start of line', expr = true, silent = true })
-vim.keymap.set({ 'n', 'x' }, '$', "v:count == 0 && &wrap ? 'g$' : '$'", { desc = 'End of line', expr = true, silent = true })
-vim.keymap.set({ 'n', 'x' }, '^', "v:count == 0 && &wrap ? 'g^' : '^'", { desc = 'Start of line (non-blank)', expr = true, silent = true })
+vim.keymap.set({ 'n', 'x' }, '0', screen_line_motion('0'), { desc = 'Start of line', expr = true, silent = true })
+vim.keymap.set({ 'n', 'x' }, '$', screen_line_motion('$'), { desc = 'End of line', expr = true, silent = true })
+vim.keymap.set({ 'n', 'x' }, '^', screen_line_motion('^'), { desc = 'Start of line (non-blank)', expr = true, silent = true })
 
 -- Word wrap
 vim.keymap.set('n', '<leader>uw', function()
