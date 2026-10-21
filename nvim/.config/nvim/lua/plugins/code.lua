@@ -36,6 +36,16 @@ return {
         shfmt = {
           prepend_args = { '-i', '2' },
         },
+        prettier = {
+          -- Prettier skips git-ignored files, such as notes under tmp/, and
+          -- leaves tables wider than the print width unaligned
+          prepend_args = function(_, ctx)
+            if vim.bo[ctx.buf].filetype ~= 'markdown' then
+              return {}
+            end
+            return { '--ignore-path', '.prettierignore', '--print-width', '1000' }
+          end,
+        },
       },
       formatters_by_ft = {
         lua = { 'stylua' },
