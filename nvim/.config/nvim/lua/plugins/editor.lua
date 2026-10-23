@@ -1,3 +1,4 @@
+-- Aerial
 -- Comment
 -- Copilot Chat
 -- Early Retirement
@@ -694,6 +695,30 @@ return {
     keys = {
       { ']]', desc = 'Next Reference' },
       { '[[', desc = 'Prev Reference' },
+    },
+  },
+
+  { -- Symbols outline sidebar
+    'stevearc/aerial.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
+    cmd = { 'AerialToggle', 'AerialOpen' },
+    keys = {
+      { '<leader>co', '<cmd>AerialToggle! right<cr>', desc = 'Code Outline' },
+    },
+    opts = {
+      layout = { default_direction = 'right', min_width = 30 },
+      filter_kind = {
+        'Class',
+        'Constructor',
+        'Enum',
+        'Function',
+        'Interface',
+        'Module',
+        'Method',
+        'Struct',
+        'Constant',
+        'Variable',
+      },
     },
   },
 
