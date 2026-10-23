@@ -239,7 +239,7 @@ return {
             or origin[1] ~= vim.api.nvim_get_current_win()
             or not vim.deep_equal(origin[2], vim.api.nvim_win_get_cursor(0))
           if moved then
-            require('config.flash').at_cursor(1)
+            require('config.flash').at_cursor()
           end
         end,
       })
@@ -676,7 +676,7 @@ return {
       local function map(key, dir, buffer)
         vim.keymap.set('n', key, function()
           require('illuminate')['goto_' .. dir .. '_reference'](true)
-          require('config.flash').at_cursor(#vim.fn.expand('<cword>'))
+          require('config.flash').at_cursor()
         end, { desc = dir:sub(1, 1):upper() .. dir:sub(2) .. ' Reference', buffer = buffer })
       end
 
