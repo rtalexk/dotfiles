@@ -23,6 +23,11 @@ return {
     opts = {
       notify_on_error = false,
       format_after_save = function(bufnr)
+        -- Claude Code rewrites its settings in JSON.stringify layout, which
+        -- prettier disagrees with, so each save would churn the file
+        if vim.api.nvim_buf_get_name(bufnr):match '/%.claude/settings%.json$' then
+          return
+        end
         -- Disable "format_after_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
