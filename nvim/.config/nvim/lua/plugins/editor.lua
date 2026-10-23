@@ -222,6 +222,26 @@ return {
       vim.keymap.set({ 'n', 'x', 'o' }, 'm', '<Plug>(leap-forward)', { desc = 'Leap forward' })
       vim.keymap.set({ 'n', 'x', 'o' }, 'M', '<Plug>(leap-backward)', { desc = 'Leap backward' })
       vim.keymap.set({ 'n', 'x', 'o' }, 'gm', '<Plug>(leap-from-window)', { desc = 'Leap from window' })
+
+      -- LeapLeave also fires on cancel, so only flash when the cursor moved.
+      local origin
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'LeapEnter',
+        callback = function()
+          origin = { vim.api.nvim_get_current_win(), vim.api.nvim_win_get_cursor(0) }
+        end,
+      })
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'LeapLeave',
+        callback = function()
+          local moved = not origin
+            or origin[1] ~= vim.api.nvim_get_current_win()
+            or not vim.deep_equal(origin[2], vim.api.nvim_win_get_cursor(0))
+          if moved then
+            require('config.flash').at_cursor(1)
+          end
+        end,
+      })
     end,
   },
 
@@ -655,6 +675,7 @@ return {
       local function map(key, dir, buffer)
         vim.keymap.set('n', key, function()
           require('illuminate')['goto_' .. dir .. '_reference'](true)
+          require('config.flash').at_cursor(#vim.fn.expand('<cword>'))
         end, { desc = dir:sub(1, 1):upper() .. dir:sub(2) .. ' Reference', buffer = buffer })
       end
 
