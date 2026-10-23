@@ -1,8 +1,8 @@
 /* ==========================================================================
    GitHub diff readability overrides
 
-   For the "Custom CSS by Denis" Chrome extension (per-domain custom CSS),
-   rule set for github.com. Paired with browser zoom set to 80%.
+   For the Stylus extension, one style per section below, each applied with
+   the URL regex in its banner. Paired with browser zoom set to 80%.
 
    Goal: bump font-size, via the --readable-font-size variable below,
    only for content that is actually read (diff code, PR description/
@@ -18,6 +18,11 @@
 :root {
   --readable-font-size: 1.2rem;
 }
+
+/* ==========================================================================
+   PR Conversation tab
+   Stylus URL regex: https://github.com/[\w.-]+/[\w.-]+/pull/\d+
+   ========================================================================== */
 
 /* Conversation tab: widen the inline diff viewer used in PR review comments */
 #diff-comparison-viewer-container {
@@ -63,6 +68,7 @@ div.pull-discussion-timeline .blob-num {
 
 /* ==========================================================================
    Old "Files changed" viewer, at /files - classic table-based diff
+   Stylus URL regex: https://github.com/[\w.-]+/[\w.-]+/pull/\d+/files
    ========================================================================== */
 #files {
   /* diff code text, line numbers, per-file path, per-file +/- stat */
@@ -103,6 +109,7 @@ div.pull-discussion-timeline .blob-num {
 
 /* ==========================================================================
    New "Files changed" viewer, at /changes - React diff experience
+   Stylus URL regex: https://github.com/[\w.-]+/[\w.-]+/pull/\d+/changes
    ========================================================================== */
 [data-testid="progressive-diffs-list"] {
   /* diff code text, line numbers, filename in each file's header,
@@ -170,6 +177,7 @@ div.pull-discussion-timeline .blob-num {
 
 /* ==========================================================================
    Repo root / code browse view, at /<owner>/<repo> and its subpaths
+   Stylus URL regex: https://github.com/[\w.-]+/[\w.-]+(/(tree|blob)/.*)?(\?.*)?
    ========================================================================== */
 
 /* README body: same font-size as the Conversation tab's comment body */
