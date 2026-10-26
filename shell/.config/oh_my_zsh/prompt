@@ -25,10 +25,20 @@ _prompt_render() {
     spacer=${(l:gap:: :)empty}
   fi
 
-  PROMPT="%F{8}╭─%f${head}${spacer}${tail}"$'\n'"%F{8}╰─%f%F{green}\$%f "
+  PROMPT="${_prompt_lead}%F{8}╭─%f${head}${spacer}${tail}"$'\n'"%F{8}╰─%f%F{green}\$%f "
 }
 
-precmd_functions+=(_prompt_render)
+_prompt_mark_command() { _prompt_command_ran=1 }
+
+# Lead is fixed per prompt so a resize redraw keeps it
+_prompt_set_lead() {
+  _prompt_lead=""
+  (( _prompt_command_ran )) && _prompt_lead=$'\n'
+  _prompt_command_ran=0
+}
+
+preexec_functions+=(_prompt_mark_command)
+precmd_functions+=(_prompt_set_lead _prompt_render)
 RPROMPT=''
 
 TRAPWINCH() {
