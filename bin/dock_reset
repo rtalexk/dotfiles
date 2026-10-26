@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# The Dock stops honoring "Switch to Desktop N" shortcuts after a display is
+# connected or disconnected, and restarting it is the only way to reload them.
+# The restart leaves apps sizing windows around the hidden Dock until auto-hide
+# is toggled, which makes the system announce the usable screen area again.
+
+set -euo pipefail
+
+killall Dock
+sleep 3
+
+osascript \
+  -e 'tell application "System Events" to set autohide of dock preferences to false' \
+  -e 'delay 1' \
+  -e 'tell application "System Events" to set autohide of dock preferences to true'
