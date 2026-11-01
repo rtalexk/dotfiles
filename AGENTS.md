@@ -56,6 +56,10 @@ Configurations are organized by tool category and symlinked to `$XDG_CONFIG_HOME
   - Contains `.config/opencode/` with opencode's global `AGENTS.md`, its skills, and its plugins
 - **demux/**: Session manager configuration
   - Contains `.config/demux/` (`private.toml` is gitignored)
+- **claude-plugins/**: Claude Code plugins, as a local marketplace named `dotfiles`. Not a stow package
+  - Claude Code reads each plugin from this folder, so an edit needs only `/reload-plugins`
+  - Registered in the private repo's `settings.json` under `extraKnownMarketplaces` and `enabledPlugins`, by an absolute path to this worktree
+  - Test and validate a plugin with `claude plugin test <dir>` and `claude plugin validate <dir>`
 
 ### Custom Scripts (`bin/`)
 
