@@ -1,0 +1,12 @@
+{
+  "name": "dotfiles",
+  "owner": { "name": "Alejandro Rivera" },
+  "plugins": [
+    {
+      "name": "message-timestamps",
+      "source": "./message-timestamps",
+      "description": "A gray timestamp above each prompt and reply in the transcript.",
+      "version": "0.1.0"
+    }
+  ]
+}
