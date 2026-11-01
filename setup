@@ -146,7 +146,7 @@ fi
 # Install packages
 log "Installing packages with Homebrew..."
 
-brew install rg fd gnu-sed wget fzf zoxide
+brew install rg fd gnu-sed wget fzf zoxide direnv
 success "General utility packages installed"
 
 # brew install --cask alacritty
