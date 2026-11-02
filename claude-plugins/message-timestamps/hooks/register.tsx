@@ -159,9 +159,10 @@ export const register: Register = (on, options) => {
     }
 
     // The engine's row opens with a blank line, so the stamp floats over it. Drawn after the row, it
-    // also sits above it for the pointer, which a row laid over the stamp would take instead.
+    // also sits above it for the pointer, which a row laid over the stamp would take instead. The
+    // margin gives back the blank line the stamp took, which kept the row apart from the one above.
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" marginTop={1}>
         {await next(e)}
         <Box key="stamp" position="absolute" top={0} left={2}>
           {shown}
