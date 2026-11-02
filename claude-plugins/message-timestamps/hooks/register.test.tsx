@@ -1,5 +1,4 @@
 import type { On } from 'claude-code'
-import type { Mounted } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
 
 const SENT = Date.UTC(2026, 9, 30, 14, 32)
@@ -8,7 +7,7 @@ const sentClock = () => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-// These tests read the stamp as plain text; a hover pattern draws it through a Client instead.
+// A hover pattern pads the stamp to the hover text's width, so these tests turn the hover off.
 const FIXED = { formatToday: 'HH:mm', formatWeek: 'HH:mm', formatYear: 'HH:mm', formatOlder: 'HH:mm', formatHover: '' }
 const sameForAll = (pattern: string) => ({ formatToday: pattern, formatWeek: pattern, formatYear: pattern, formatOlder: pattern, formatHover: '' })
 
@@ -236,7 +235,7 @@ for (const [units, hasAgo, minute, hours] of [
   })
 }
 
-test('hovering the timestamp shows the hover pattern in its place', { options: { ...FIXED, formatHover: 'YYYY-MM-DD HH:mm:ss Z' } }, async ($, on) => {
+test('the hover text is revealed over the stamp, both padded to the same width', { options: { ...FIXED, formatHover: 'YYYY-MM-DD HH:mm:ss Z' } }, async ($, on) => {
   mock.clock(on, { now: SENT })
   mock.session(on)
   ROW_TEXT(on)
@@ -247,28 +246,28 @@ test('hovering the timestamp shows the hover pattern in its place', { options: {
   const zone = `${minutes < 0 ? '-' : '+'}${two(Math.floor(Math.abs(minutes) / 60))}:${two(Math.abs(minutes) % 60)}`
   const iso = `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())} ${zone}`
 
-  await $.session.append(prompt('h1'))
-  const ui = (await $.ui.mount(USER_ROW('terminal', 'h1'))) as Mounted<'terminal', 'UserMessage'>
-  const scope = { in: 'stamp-h1' }
-  expect(await ui.drawn(scope)).toMatchObject({ type: 'Text', children: [sentClock()] })
-
-  await ui.pointer({ type: 'enter', x: 0, y: 0, ...scope })
-  expect(await ui.drawn(scope)).toMatchObject({ type: 'Text', children: [iso] })
-
-  await ui.pointer({ type: 'leave', x: -1, y: 0, ...scope })
-  expect(await ui.drawn(scope)).toMatchObject({ type: 'Text', children: [sentClock()] })
-  await ui.unmount()
-})
-
-test('vscode has no Client, so the stamp stays plain text there', { options: { ...FIXED, formatHover: 'YYYY' } }, async ($, on) => {
-  mock.clock(on, { now: SENT })
-  mock.session(on)
-  ROW_TEXT(on)
-
-  await $.session.append(prompt('h3'))
-  const ui = await $.ui.mount(USER_ROW('vscode', 'h3'))
-  expect((await ui.find({ key: 'stamp' }))?.text).toBe(sentClock())
-  await ui.unmount()
+  for (const surface of ['terminal', 'vscode'] as const) {
+    await $.session.append(prompt(`h-${surface}`))
+    const ui = await $.ui.mount(USER_ROW(surface, `h-${surface}`))
+    const scope = `stamp-h-${surface}`
+    // A drawn tree carries each Box's hover beside its props, where find leaves it out.
+    expect(await ui.drawn()).toMatchObject({
+      children: [
+        { type: 'Text' },
+        {
+          props: { key: 'stamp', width: iso.length },
+          hover: { scope },
+          children: [{ type: 'Text', children: [sentClock().padEnd(iso.length)] }],
+        },
+        {
+          props: { key: 'hover', width: iso.length, display: 'none' },
+          hover: { scope, display: 'flex' },
+          children: [{ type: 'Text', children: [iso] }],
+        },
+      ],
+    })
+    await ui.unmount()
+  }
 })
 
 test('an empty hover pattern draws no hover', { options: { ...FIXED, formatHover: '' } }, async ($, on) => {
@@ -278,7 +277,8 @@ test('an empty hover pattern draws no hover', { options: { ...FIXED, formatHover
 
   await $.session.append(prompt('h2'))
   const ui = await $.ui.mount(USER_ROW('terminal', 'h2'))
-  expect(JSON.stringify(await ui.drawn())).not.toContain('Client')
+  expect(await ui.find({ key: 'hover' })).toBeUndefined()
   expect((await ui.find({ key: 'stamp' }))?.text).toBe(sentClock())
+  expect(JSON.stringify(await ui.drawn())).not.toContain('"hover":')
   await ui.unmount()
 })
