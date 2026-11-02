@@ -78,6 +78,10 @@ While the pointer is on a timestamp, `formatHover` is shown in its place. It tak
 
 `z` is the zone's short name as the system knows it. A zone with no common abbreviation shows its offset instead, `GMT-7`; to show a name of your own, write it in brackets: `[MZT]`.
 
+### Icon
+
+`icon` goes before the timestamp and `iconHover` before the hover text, each followed by a space. Both are empty by default. Any text works; a [Nerd Font](https://www.nerdfonts.com/) glyph such as `` (`nf-fa-clock_o`, U+F017) needs a terminal font that has it.
+
 ## Limits
 
 - Timestamps start when the mod loads: the messages before it, and the history of a resumed session, have none.

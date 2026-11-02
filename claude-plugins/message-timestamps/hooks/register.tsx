@@ -122,6 +122,7 @@ export const register: Register = (on, options) => {
     new Set(Object.values(settings.formats)).size > 1 ||
     patterns.some(pattern => pattern.replace(/\[[^\]]*\]/g, '').includes('relative'))
   const refreshMs = Math.max(1, Number(options.refreshSeconds) || 15) * 1000
+  const withIcon = (icon: unknown, shown: string) => (icon ? `${String(icon)} ${shown}` : shown)
 
   on('session.start', async ($, e, next) => {
     if (isLive) {
@@ -156,8 +157,8 @@ export const register: Register = (on, options) => {
     const at = await read($, memberOf(sentAt, e))
     if (at === null) return next(e)
     const current = isLive ? Math.max(at, await read($, now)) : at
-    const stamp = label(at, current, settings)
-    const hover = hoverFormat && formatTime(at, current, hoverFormat, settings)
+    const stamp = withIcon(options.icon, label(at, current, settings))
+    const hover = hoverFormat && withIcon(options.iconHover, formatTime(at, current, hoverFormat, settings))
 
     const { Box, Text } = $.ui.resolve(e)
     let shown = <Text dimColor>{stamp}</Text>

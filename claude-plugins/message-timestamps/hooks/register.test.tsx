@@ -295,3 +295,18 @@ test('z names the time zone', { options: { ...FIXED, formatToday: 'z' } }, async
   expect((await ui.find({ key: 'stamp' }))?.text).toBe(zone)
   await ui.unmount()
 })
+
+test('an icon goes before the timestamp and another before the hover text', { options: { ...FIXED, formatHover: 'HH', icon: '>', iconHover: '*' } }, async ($, on) => {
+  mock.clock(on, { now: SENT })
+  mock.session(on)
+  ROW_TEXT(on)
+
+  await $.session.append(prompt('i1'))
+  const ui = (await $.ui.mount(USER_ROW('terminal', 'i1'))) as Mounted<'terminal', 'UserMessage'>
+  const scope = { in: 'stamp-i1' }
+  expect(await ui.drawn(scope)).toMatchObject({ type: 'Text', children: [`> ${sentClock()}`] })
+
+  await ui.pointer({ type: 'enter', x: 0, y: 0, ...scope })
+  expect(await ui.drawn(scope)).toMatchObject({ type: 'Text', children: [`* ${sentClock().slice(0, 2)}`] })
+  await ui.unmount()
+})

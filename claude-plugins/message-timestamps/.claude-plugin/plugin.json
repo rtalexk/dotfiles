@@ -34,6 +34,18 @@
       "description": "Shown in place of the timestamp while the pointer is on it. Same tokens as Format: today. Empty turns the hover off.",
       "default": "ddd MMM D [at] h:mm:ss a z"
     },
+    "icon": {
+      "type": "string",
+      "title": "Icon",
+      "description": "Shown before the timestamp, followed by a space. Empty shows none.",
+      "default": ""
+    },
+    "iconHover": {
+      "type": "string",
+      "title": "Icon: on hover",
+      "description": "Shown before the hover text, followed by a space. Empty shows none.",
+      "default": ""
+    },
     "relativeUnits": {
       "type": "string",
       "title": "Relative units",
