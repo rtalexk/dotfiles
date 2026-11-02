@@ -49,7 +49,7 @@ A pattern is text with tokens in it. The token names follow Moment.js and Day.js
 | `DD` | 05 | `ss` / `s` | seconds, padded / not |
 | `D` | 5 | `A` | PM |
 | `ddd` | Mon | `a` | pm |
-| `relative` | how long ago: `just now`, `5m ago` | | |
+| `relative` | how long ago: `just now`, `5m ago` | `Z` | -06:00, the UTC offset |
 
 Text in `[brackets]` is shown as written. Any other letters that match a token are replaced, so write `[at] h:mm a` rather than `at h:mm a`, which would show `pmt 3:06 pm`. Month and weekday names are in English.
 
@@ -71,17 +71,24 @@ formatOlder  MMM D YYYY, h:mm a
 
 Under a minute it reads `just now`. `refreshSeconds` (default 15, from 1 to 3600) is how often the timestamps are brought up to date, so a relative time is at most that far behind.
 
+### Hover
+
+While the pointer is on a timestamp, `formatHover` is shown in its place. It takes the same tokens as the other formats and defaults to `YYYY-MM-DD HH:mm:ss Z`, which reads `2026-10-31 15:14:29 -06:00`. Leave it empty to turn the hover off.
+
 ## Limits
 
 - Timestamps start when the mod loads: the messages before it, and the history of a resumed session, have none.
 - The prompt Claude Code pins to the top of the screen while you scroll shows no timestamp: a mod cannot draw there.
+- The hover needs a surface that reports the pointer: the terminal does so only in fullscreen mode (`"tui": "fullscreen"`).
+- With a hover pattern, the area that answers the pointer is as wide as the longer of the two texts, so it can reach a few blank cells past a short timestamp.
 
 ## How it works
 
 One hooks module ([`hooks/register.tsx`](hooks/register.tsx)):
 
 - A `session.append` hook records the time each prompt and reply is stored, by its id, in `$.state`.
-- A `ui.render` hook on `UserMessage` and on the first `AssistantMessage` block of each reply draws the timestamp above the engine's own row. The row opens with a blank line of its own, so the timestamp takes that line's place and the row moves up one.
+- A `ui.render` hook on `UserMessage` and on the first `AssistantMessage` block of each reply draws the timestamp over the blank line the engine's own row opens with, in a box placed `position: "absolute"`. Drawn after the row, the box sits above it for the pointer too.
+- The hover text sits in a second box drawn `display: "none"`, revealed by a `hover` that shares a `scope` with the timestamp's box. A hover can reveal a box but not hide one, so the hover text covers the timestamp. Both are padded to the same width, so when the hover text hides again no cell is left that the timestamp does not draw over.
 - A row is drawn before its message is stored, so the hook reads the time from `$.state` and is drawn again once the time is recorded.
 - A timer writes the time to `$.state` every `refreshSeconds`, which redraws each timestamp that reads it. It runs only when a pattern uses `relative` or the four patterns differ.
 
