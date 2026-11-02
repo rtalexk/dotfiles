@@ -151,24 +151,21 @@ export const register: Register = (on, options) => {
     const hover = hoverFormat && formatTime(at, current, hoverFormat, settings)
 
     const { Box, Text } = $.ui.resolve(e)
-    const scope = `stamp-${e.requestId}`
-    const width = Math.max(stamp.length, hover ? hover.length : 0)
+    let shown = <Text dimColor>{stamp}</Text>
+    // Only a Client hears the pointer, and VS Code and mobile have none, so there the stamp stays plain text.
+    if (hover && (e.surface === 'terminal' || e.surface === 'desktop')) {
+      const { Client } = $.ui.resolve(e)
+      shown = <Client key={`stamp-${e.requestId}`} module="./stamp.tsx" props={{ stamp, hover }} />
+    }
 
     // The engine's row opens with a blank line, so the stamp floats over it. Drawn after the row, it
     // also sits above it for the pointer, which a row laid over the stamp would take instead.
-    // A hover can reveal a box but not hide one, so the hover text is revealed over the stamp. Both
-    // span the same cells, so hiding the hover text again leaves no cell the stamp does not redraw.
     return (
       <Box flexDirection="column">
         {await next(e)}
-        <Box key="stamp" position="absolute" top={0} left={2} width={width} hover={hover ? { scope } : undefined}>
-          <Text dimColor>{stamp.padEnd(width)}</Text>
+        <Box key="stamp" position="absolute" top={0} left={2}>
+          {shown}
         </Box>
-        {hover && (
-          <Box key="hover" position="absolute" top={0} left={2} width={width} display="none" hover={{ scope, display: 'flex' }}>
-            <Text dimColor>{hover.padEnd(width)}</Text>
-          </Box>
-        )}
       </Box>
     )
   })
