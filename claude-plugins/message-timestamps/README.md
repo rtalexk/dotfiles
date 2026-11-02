@@ -79,8 +79,7 @@ While the pointer is on a timestamp, `formatHover` is shown in its place. It tak
 
 - Timestamps start when the mod loads: the messages before it, and the history of a resumed session, have none.
 - The prompt Claude Code pins to the top of the screen while you scroll shows no timestamp: a mod cannot draw there.
-- The hover needs a surface that reports the pointer: the terminal does so only in fullscreen mode (`"tui": "fullscreen"`).
-- With a hover pattern, the area that answers the pointer is as wide as the longer of the two texts, so it can reach a few blank cells past a short timestamp.
+- The hover works in the terminal and the desktop app, not in VS Code. The terminal reports the pointer only in fullscreen mode (`"tui": "fullscreen"`).
 
 ## How it works
 
@@ -88,7 +87,7 @@ One hooks module ([`hooks/register.tsx`](hooks/register.tsx)):
 
 - A `session.append` hook records the time each prompt and reply is stored, by its id, in `$.state`.
 - A `ui.render` hook on `UserMessage` and on the first `AssistantMessage` block of each reply draws the timestamp over the blank line the engine's own row opens with, in a box placed `position: "absolute"`. Drawn after the row, the box sits above it for the pointer too.
-- The hover text sits in a second box drawn `display: "none"`, revealed by a `hover` that shares a `scope` with the timestamp's box. A hover can reveal a box but not hide one, so the hover text covers the timestamp. Both are padded to the same width, so when the hover text hides again no cell is left that the timestamp does not draw over.
+- With a hover pattern, the timestamp is drawn by a `Client` surface module ([`hooks/stamp.tsx`](hooks/stamp.tsx)), which hears the pointer and swaps the timestamp for the hover text in place. VS Code and mobile have no `Client`, so there the timestamp is plain text with no hover.
 - A row is drawn before its message is stored, so the hook reads the time from `$.state` and is drawn again once the time is recorded.
 - A timer writes the time to `$.state` every `refreshSeconds`, which redraws each timestamp that reads it. It runs only when a pattern uses `relative` or the four patterns differ.
 
