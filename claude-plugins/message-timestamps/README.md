@@ -49,7 +49,8 @@ A pattern is text with tokens in it. The token names follow Moment.js and Day.js
 | `DD` | 05 | `ss` / `s` | seconds, padded / not |
 | `D` | 5 | `A` | PM |
 | `ddd` | Mon | `a` | pm |
-| `relative` | how long ago: `just now`, `5m ago` | `Z` | -06:00, the UTC offset |
+| `relative` | how long ago: `just now`, `5m ago` | `Z` | -07:00, the UTC offset |
+| | | `z` | PST, the zone's short name |
 
 Text in `[brackets]` is shown as written. Any other letters that match a token are replaced, so write `[at] h:mm a` rather than `at h:mm a`, which would show `pmt 3:06 pm`. Month and weekday names are in English.
 
@@ -73,7 +74,9 @@ Under a minute it reads `just now`. `refreshSeconds` (default 15, from 1 to 3600
 
 ### Hover
 
-While the pointer is on a timestamp, `formatHover` is shown in its place. It takes the same tokens as the other formats and defaults to `YYYY-MM-DD HH:mm:ss Z`, which reads `2026-10-31 15:14:29 -06:00`. Leave it empty to turn the hover off.
+While the pointer is on a timestamp, `formatHover` is shown in its place. It takes the same tokens as the other formats and defaults to `ddd MMM D [at] h:mm:ss a z`, which reads `Sun Nov 1 at 5:16:12 pm PST`. Leave it empty to turn the hover off.
+
+`z` is the zone's short name as the system knows it. A zone with no common abbreviation shows its offset instead, `GMT-7`; to show a name of your own, write it in brackets: `[MZT]`.
 
 ## Limits
 

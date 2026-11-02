@@ -12,7 +12,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // Longer tokens come first so MMM is not read as MM followed by M.
-const TOKEN = /\[([^\]]*)\]|relative|YYYY|YY|MMM|MM|M|DD|D|ddd|HH|H|hh|h|mm|m|ss|s|A|a|Z/g
+const TOKEN = /\[([^\]]*)\]|relative|YYYY|YY|MMM|MM|M|DD|D|ddd|HH|H|hh|h|mm|m|ss|s|A|a|Z|z/g
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -61,6 +61,14 @@ function offset(d: Date): string {
   return `${sign}${pad(Math.floor(Math.abs(minutes) / 60))}:${pad(Math.abs(minutes) % 60)}`
 }
 
+// Intl names a zone by its abbreviation where it has a common one (PST) and by its offset (GMT-7)
+// where it has none.
+function zoneName(d: Date): string {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(d)
+
+  return parts.find(part => part.type === 'timeZoneName')?.value ?? offset(d)
+}
+
 function formatTime(at: number, current: number, format: string, settings: Settings): string {
   const d = new Date(at)
   const hour12 = d.getHours() % 12 || 12
@@ -85,6 +93,7 @@ function formatTime(at: number, current: number, format: string, settings: Setti
     A: () => (d.getHours() < 12 ? 'AM' : 'PM'),
     a: () => (d.getHours() < 12 ? 'am' : 'pm'),
     Z: () => offset(d),
+    z: () => zoneName(d),
   }
 
   return format.replace(TOKEN, (token, literal?: string) => literal ?? tokens[token]?.() ?? token)
@@ -106,7 +115,7 @@ export const register: Register = (on, options) => {
     hasAgo: options.relativeAgo !== false,
   }
   // Unset falls back to the default; an empty string turns the hover off.
-  const hoverFormat = String(options.formatHover ?? 'YYYY-MM-DD HH:mm:ss Z')
+  const hoverFormat = String(options.formatHover ?? 'ddd MMM D [at] h:mm:ss a z')
   const patterns = [...Object.values(settings.formats), hoverFormat]
   // A message moves to another pattern as days pass, so differing patterns need the clock too.
   const isLive =

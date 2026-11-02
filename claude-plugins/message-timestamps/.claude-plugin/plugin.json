@@ -7,7 +7,7 @@
     "formatToday": {
       "type": "string",
       "title": "Format: today",
-      "description": "For messages from today. Tokens: YYYY YY MMM MM M DD D ddd HH H hh h mm m ss s A a Z, and relative. Text in [brackets] is shown as written.",
+      "description": "For messages from today. Tokens: YYYY YY MMM MM M DD D ddd HH H hh h mm m ss s A a Z z, and relative. Text in [brackets] is shown as written.",
       "default": "HH:mm · relative"
     },
     "formatWeek": {
@@ -32,7 +32,7 @@
       "type": "string",
       "title": "Format: on hover",
       "description": "Shown in place of the timestamp while the pointer is on it. Same tokens as Format: today. Empty turns the hover off.",
-      "default": "YYYY-MM-DD HH:mm:ss Z"
+      "default": "ddd MMM D [at] h:mm:ss a z"
     },
     "relativeUnits": {
       "type": "string",

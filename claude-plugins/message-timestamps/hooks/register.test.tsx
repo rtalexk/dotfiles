@@ -282,3 +282,16 @@ test('an empty hover pattern draws no hover', { options: { ...FIXED, formatHover
   expect((await ui.find({ key: 'stamp' }))?.text).toBe(sentClock())
   await ui.unmount()
 })
+
+test('z names the time zone', { options: { ...FIXED, formatToday: 'z' } }, async ($, on) => {
+  mock.clock(on, { now: SENT })
+  mock.session(on)
+  ROW_TEXT(on)
+
+  const zone = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(new Date(SENT)).find(part => part.type === 'timeZoneName')?.value
+
+  await $.session.append(prompt('z1'))
+  const ui = await $.ui.mount(USER_ROW('vscode', 'z1'))
+  expect((await ui.find({ key: 'stamp' }))?.text).toBe(zone)
+  await ui.unmount()
+})
