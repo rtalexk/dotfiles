@@ -29,7 +29,7 @@ if [[ "$cmd" == "alx" ]]; then
   esac
 else
   case "$cmd" in
-    claude)                       icon="" ;;
+    claude)                       icon="✳" ;;
     opencode)                     icon="󰨔" ;;
     nvim)                         icon="󰘦" ;;
     lazygit)                      icon="" ;;
