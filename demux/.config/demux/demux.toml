@@ -128,7 +128,7 @@ bg = "#89dceb"
 
 [[sidebar.processes]]
 match = "claude*"
-label = " "
+label = "✳ "
 fg = "#cba6f7"
 
 [[sidebar.processes]]
@@ -271,7 +271,7 @@ shells = ["zsh", "bash", "sh", "fish", "dash", "nu", "pwsh"]
 
 [tools.claude]
 name = "Claude"
-icon = ""
+icon = "✳"
 color = "#cba6f7"
 
 [tools.opencode]
