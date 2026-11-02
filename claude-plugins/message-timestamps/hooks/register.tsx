@@ -63,8 +63,10 @@ function offset(d: Date): string {
 
 // Intl names a zone by its abbreviation where it has a common one (PST) and by its offset (GMT-7)
 // where it has none.
+const ZONE = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+
 function zoneName(d: Date): string {
-  const parts = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(d)
+  const parts = ZONE.formatToParts(d)
 
   return parts.find(part => part.type === 'timeZoneName')?.value ?? offset(d)
 }
@@ -103,25 +105,27 @@ const label = (at: number, current: number, settings: Settings) =>
   formatTime(at, current, formatFor(at, current, settings), settings)
 
 export const register: Register = (on, options) => {
-  const text = (key: string, fallback: string) => String(options[key] || fallback)
+  // The engine fills each option from the manifest's default, so plugin.json holds them all. A
+  // format cleared to nothing would draw an empty stamp, so it falls back to the time alone.
+  const format = (key: string) => String(options[key] || 'HH:mm')
   const settings: Settings = {
     formats: {
-      today: text('formatToday', 'HH:mm · relative'),
-      week: text('formatWeek', 'ddd, HH:mm · relative'),
-      year: text('formatYear', 'MMM D, HH:mm · relative'),
-      older: text('formatOlder', 'MMM D YYYY, HH:mm'),
+      today: format('formatToday'),
+      week: format('formatWeek'),
+      year: format('formatYear'),
+      older: format('formatOlder'),
     },
     isLongUnits: options.relativeUnits === 'long',
     hasAgo: options.relativeAgo !== false,
   }
-  // Unset falls back to the default; an empty string turns the hover off.
-  const hoverFormat = String(options.formatHover ?? 'ddd MMM D [at] h:mm:ss a z')
+  // An empty hover pattern turns the hover off.
+  const hoverFormat = String(options.formatHover ?? '')
   const patterns = [...Object.values(settings.formats), hoverFormat]
   // A message moves to another pattern as days pass, so differing patterns need the clock too.
   const isLive =
     new Set(Object.values(settings.formats)).size > 1 ||
     patterns.some(pattern => pattern.replace(/\[[^\]]*\]/g, '').includes('relative'))
-  const refreshMs = Math.max(1, Number(options.refreshSeconds) || 15) * 1000
+  const refreshMs = Math.max(1, Number(options.refreshSeconds)) * 1000
   const withIcon = (icon: unknown, shown: string) => (icon ? `${String(icon)} ${shown}` : shown)
 
   on('session.start', async ($, e, next) => {

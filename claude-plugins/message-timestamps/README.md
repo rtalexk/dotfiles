@@ -35,7 +35,7 @@ Each age range has its own pattern:
 | `formatYear` | earlier this year | `MMM D, HH:mm · relative` | `Oct 20, 13:25 · 11d ago` |
 | `formatOlder` | earlier years | `MMM D YYYY, HH:mm` | `Oct 20 2025, 13:25` |
 
-A timestamp moves to the next pattern as days pass, at the next refresh. For one format everywhere, give all four the same pattern.
+A timestamp moves to the next pattern as days pass, at the next refresh. For one format everywhere, give all four the same pattern. A pattern left empty shows the time alone, `HH:mm`.
 
 A pattern is text with tokens in it. The token names follow Moment.js and Day.js:
 
