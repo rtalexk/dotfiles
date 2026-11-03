@@ -26,3 +26,8 @@ repeating until it is off:
 ```bash
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 ```
+
+```bash
+defaults write com.apple.finder QLInlinePreviewMinimumSupportedSize -int 514
+killall Finder
+```
