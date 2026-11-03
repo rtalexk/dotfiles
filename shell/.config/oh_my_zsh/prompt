@@ -12,8 +12,17 @@ _prompt_visible_length() {
   print -r -- ${#expanded}
 }
 
+_prompt_dir() {
+  local common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+  if [[ ${common:t} == .bare ]]; then
+    print -r -- "../${PWD:h:t}/${PWD:t}/"
+  else
+    print -r -- "../${PWD:t}"
+  fi
+}
+
 _prompt_render() {
-  local head="%F{green}[ %n ]%f %F{cyan}../%c%f$(git_prompt_info)"
+  local head="%F{green}[ %n ]%f %F{cyan}${$(_prompt_dir)//\%/%%}%f$(git_prompt_info)"
   local tail="%F{245}%D{%b %-d at %H:%M:%S}%f"
   local empty="" spacer
 
