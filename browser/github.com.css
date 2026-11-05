@@ -127,6 +127,11 @@ div.pull-discussion-timeline .blob-num {
     line-height: 1.5;
   }
 
+  .diff-line-row td.new-diff-line-number {
+    word-wrap: normal;
+    min-width: 55px;
+  }
+
   /* per-file +/- change count, next to each file's header.
      Primer's .f6 utility class sets font-size !important, so this needs
      !important too or it's silently ignored. */
