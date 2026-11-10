@@ -134,6 +134,7 @@ return {
         map('n', '<leader>gbl', function()
           gs.blame_line { full = true }
         end, 'Blame line')
+        map('n', '<leader>gbb', '<cmd>Gitsigns blame<CR>', 'Blame buffer')
         map('n', '<leader>gbt', '<cmd>Gitsigns toggle_current_line_blame<CR>', 'Toggle line blame')
 
         map('n', '<leader>gdl', gs.diffthis, 'Diff this')
